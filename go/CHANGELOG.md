@@ -20,6 +20,8 @@ Primeira versão. Segue a spec `openapi/v0.1.0`; as pré-versões `go/v0.1.0-rc.
 - Log opcional com `slog`, sem query, corpo, token, credenciais nem dado pessoal.
 - `Problem`, `ProblemFrom`, `APIError.Problem`, `UncertainResultError.Problem`, `ProblemContentType` e `CatalogoErrosURL`: os erros do SDK no formato da RFC 9457, ligados ao catálogo `docs/erros.md`.
 - `ErrArgumentoInvalido`: casa com a validação local feita antes de enviar. O texto dos erros não muda.
+- Chaves e erros não vazam dado pessoal: `ChaveMigracao` e `ChaveEdicao` ganham `LogValue` e `GoString`, e `APIError` e `UncertainResultError` ganham `GoString`, todos sem UC, e-mail nem corpo.
+- O cliente HTTP padrão do pedido de token não segue redirecionamento (um 307 reenviaria o `client_secret`); `WithHTTPClient` mantém a política do chamador.
 
 ### Limites conhecidos
 

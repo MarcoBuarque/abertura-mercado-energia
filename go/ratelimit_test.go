@@ -3,7 +3,11 @@ package abertura
 import (
 	"context"
 	"errors"
+	"io"
 	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -242,5 +246,86 @@ func TestLimitador_ClienteDeTokenPreservaOClienteDoUsuario(t *testing.T) {
 	}
 	if usuario.Transport != nil {
 		t.Error("o cliente do usuário foi alterado")
+	}
+}
+
+// TestClienteDeToken_WhenRedirecionamento_NaoReenviaOFormulario prova que o
+// cliente padrão do token não segue um 307, que reenviaria o client_secret do
+// formulário a outro host. Um cliente do usuário mantém a política dele.
+func TestClienteDeToken_WhenRedirecionamento_NaoReenviaOFormulario(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		usuario    *http.Client
+		wantSegue  bool
+		wantStatus int
+	}{
+		{"cliente padrão do SDK não segue", nil, false, http.StatusTemporaryRedirect},
+		{"cliente do usuário mantém a política dele", &http.Client{}, true, http.StatusOK},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			var recebeuB atomic.Bool
+			b := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				recebeuB.Store(true)
+			}))
+			defer b.Close()
+			a := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Redirect(w, r, b.URL, http.StatusTemporaryRedirect)
+			}))
+			defer a.Close()
+
+			cli := clienteDeToken(tc.usuario, limitadores{})
+			resp, err := cli.PostForm(a.URL, url.Values{"client_secret": {"segredo-inventado"}})
+			if err != nil {
+				t.Fatalf("PostForm: %v", err)
+			}
+			defer func() {
+				if err := resp.Body.Close(); err != nil {
+					t.Errorf("fechar corpo: %v", err)
+				}
+			}()
+			if resp.StatusCode != tc.wantStatus || recebeuB.Load() != tc.wantSegue {
+				t.Errorf("status = %d, segundo servidor recebeu = %v; quer %d e %v",
+					resp.StatusCode, recebeuB.Load(), tc.wantStatus, tc.wantSegue)
+			}
+		})
+	}
+}
+
+type corpoRastreado struct {
+	fechado atomic.Bool
+}
+
+func (c *corpoRastreado) Read([]byte) (int, error) { return 0, io.EOF }
+func (c *corpoRastreado) Close() error             { c.fechado.Store(true); return nil }
+
+// TestTransporteLimitado_WhenLimitadorFalha_FechaOCorpo prova o contrato do
+// http.RoundTripper: o corpo da requisição é fechado também quando o
+// transporte devolve erro sem enviar.
+func TestTransporteLimitado_WhenLimitadorFalha_FechaOCorpo(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancela := context.WithCancel(context.Background())
+	cancela()
+	corpo := &corpoRastreado{}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://example.org/token", corpo)
+	if err != nil {
+		t.Fatalf("NewRequest: %v", err)
+	}
+	tr := transporteLimitado{base: http.DefaultTransport, limites: novosLimitadores(RateLimits{Default: RateLimit{Requests: 1, Per: time.Hour}})}
+	resp, err := tr.RoundTrip(req)
+	if resp != nil {
+		if cerr := resp.Body.Close(); cerr != nil {
+			t.Errorf("fechar corpo da resposta: %v", cerr)
+		}
+	}
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("RoundTrip: %v, quer context.Canceled", err)
+	}
+	if !corpo.fechado.Load() {
+		t.Error("o corpo da requisição não foi fechado")
 	}
 }
