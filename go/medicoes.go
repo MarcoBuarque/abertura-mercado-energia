@@ -2,7 +2,6 @@ package abertura
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"iter"
 	"net/http"
@@ -70,11 +69,11 @@ func (m *Medicoes) ListarPagina(ctx context.Context, f FiltroMedicoes, cursor st
 func validarFiltroMedicoes(f FiltroMedicoes) error {
 	switch {
 	case f.UC == "":
-		return errors.New("a UC é obrigatória")
+		return argumentoInvalido("a UC é obrigatória")
 	case f.Concessionaria <= 0:
-		return errors.New("a concessionária é obrigatória")
+		return argumentoInvalido("a concessionária é obrigatória")
 	case f.Inicio.IsZero() || f.Fim.IsZero():
-		return errors.New("o início e o fim são obrigatórios")
+		return argumentoInvalido("o início e o fim são obrigatórios")
 	}
 	return nil
 }

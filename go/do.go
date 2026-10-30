@@ -55,15 +55,15 @@ func (c *Client) Do(ctx context.Context, method, path string, body, out any, opt
 func operacaoLivre(method, path string, body any) (operacao, error) {
 	metodo := strings.ToUpper(strings.TrimSpace(method))
 	if metodo == "" {
-		return operacao{}, fmt.Errorf("%s: método vazio", operacaoDo)
+		return operacao{}, argumentoInvalido("%s: método vazio", operacaoDo)
 	}
 	if !strings.HasPrefix(path, "/") {
-		return operacao{}, fmt.Errorf("%s: o caminho precisa começar com \"/\"", operacaoDo)
+		return operacao{}, argumentoInvalido("%s: o caminho precisa começar com \"/\"", operacaoDo)
 	}
 	rota, bruta, _ := strings.Cut(path, "?")
 	query, err := url.ParseQuery(bruta)
 	if err != nil {
-		return operacao{}, fmt.Errorf("%s: query inválida", operacaoDo)
+		return operacao{}, argumentoInvalido("%s: query inválida", operacaoDo)
 	}
 	return operacao{
 		id:      operacaoDo,
