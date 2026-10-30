@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
@@ -208,4 +209,66 @@ func TestLogSemDadoPessoal(t *testing.T) {
 	if achados := vazamentos(texto); len(achados) > 0 {
 		t.Errorf("o log contém dado que não podia vazar: %q\n%s", achados, texto)
 	}
+}
+
+// TestChavesEErrosSemDadoPessoal registra e formata as chaves naturais e os
+// erros por todos os caminhos que um chamador usa (slog.JSONHandler,
+// slog.TextHandler, %v, %+v, %#v e %s) e confere que nada vaza UC, documento,
+// e-mail, consumo, token ou corpo.
+func TestChavesEErrosSemDadoPessoal(t *testing.T) {
+	t.Parallel()
+
+	corpo := []byte(`{"error":"ERR_X","message":"m","uc":"000000000000001","email":"contato@example.org"}`)
+	apiErr := &APIError{Operation: "criarMigracao", StatusCode: 502, rawBody: corpo, metodo: http.MethodPost}
+	chaveMig := ChaveMigracao{UC: ucInventada, Concessionaria: 999001, Mes: Mes{}, Perfil: 1}
+	chaveEd := ChaveEdicao{ID: idMigracaoTst, Desejado: EdicaoMigracao{Email: "novo@example.org", Perfil: 1}}
+	incerto := &UncertainResultError{Operation: "criarMigracao", Key: chaveMig, Err: apiErr}
+	incertoEd := &UncertainResultError{Operation: "editarMigracao", Key: chaveEd, Err: apiErr}
+
+	valores := []struct {
+		name string
+		v    any
+	}{
+		{"ChaveMigracao", chaveMig},
+		{"ChaveMigracao ponteiro", &chaveMig},
+		{"ChaveEdicao", chaveEd},
+		{"ChaveEdicao ponteiro", &chaveEd},
+		{"APIError", apiErr},
+		{"UncertainResultError", incerto},
+		{"UncertainResultError de edição", incertoEd},
+		{"ChaveNatural da incerteza", incerto.Key},
+	}
+	for _, tc := range valores {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			saidas := map[string]string{
+				"%v": fmt.Sprintf("%v", tc.v), "%+v": fmt.Sprintf("%+v", tc.v),
+				"%#v": fmt.Sprintf("%#v", tc.v), "%s": fmt.Sprintf("%s", tc.v),
+			}
+			var bj, bt bytes.Buffer
+			slog.New(slog.NewJSONHandler(&bj, nil)).Info("registro", "valor", tc.v)
+			slog.New(slog.NewTextHandler(&bt, nil)).Info("registro", "valor", tc.v)
+			saidas["slog json"] = bj.String()
+			saidas["slog texto"] = bt.String()
+			for nome, saida := range saidas {
+				if achados := vazamentos(saida); len(achados) > 0 {
+					t.Errorf("%s vazou %q: %s", nome, achados, saida)
+				}
+				// O corpo cru, em claro ou em hexadecimal.
+				if strings.Contains(saida, "ERR_X") || strings.Contains(saida, "7b226572726f72") || strings.Contains(strings.ToLower(saida), "0x7b") {
+					t.Errorf("%s vazou o corpo: %s", nome, saida)
+				}
+			}
+		})
+	}
+
+	t.Run("slog json da chave dentro do erro", func(t *testing.T) {
+		t.Parallel()
+		var b bytes.Buffer
+		l := slog.New(slog.NewJSONHandler(&b, nil))
+		l.Warn("incerto", "chave", incerto.Key, "erro", incerto, "edicao", incertoEd.Key)
+		if achados := vazamentos(b.String()); len(achados) > 0 {
+			t.Errorf("vazou %q: %s", achados, b.String())
+		}
+	})
 }
