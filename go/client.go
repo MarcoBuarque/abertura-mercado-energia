@@ -37,7 +37,7 @@ type RateLimit struct {
 
 // Sandbox e Production são os ambientes da documentação pública.
 var (
-	Sandbox = Environment{
+	Sandbox = Environment{ //nolint:gosec // G101: a TokenURL é pública, da documentação da CCEE; não há credencial aqui
 		Name:     "sandbox",
 		APIURL:   "https://sandbox-api-abm.ccee.org.br",
 		TokenURL: "https://sandbox-api-abm.ccee.org.br/sso/oauth/token",
@@ -45,7 +45,7 @@ var (
 		// usam o balde geral.
 		RateLimits: RateLimits{Default: RateLimit{Requests: 900, Per: 5 * time.Minute}},
 	}
-	Production = Environment{
+	Production = Environment{ //nolint:gosec // G101: a TokenURL é pública, da documentação da CCEE; não há credencial aqui
 		Name:     "production",
 		APIURL:   "https://api-abm.ccee.org.br",
 		TokenURL: "https://api-abm.ccee.org.br/sso/oauth/token",

@@ -28,7 +28,7 @@ func TestClient_NewClientValidaAConfiguracao(t *testing.T) {
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: "token-inventado-1"})
 	agente := WithAgent(agenteInventado, perfilInventado)
 	cred := WithCredentials(idInventado, segredoInventado)
-	env := Environment{Name: "x", APIURL: "https://api.exemplo.invalid", TokenURL: "https://api.exemplo.invalid/sso/oauth/token"}
+	env := Environment{Name: "x", APIURL: "https://api.exemplo.invalid", TokenURL: "https://api.exemplo.invalid/sso/oauth/token"} //nolint:gosec // G101: URL inventada de teste, não é credencial
 
 	tests := []struct {
 		name    string
@@ -87,7 +87,7 @@ func TestClient_NewClientValidaAConfiguracao(t *testing.T) {
 func TestClient_PadroesEOpcoes(t *testing.T) {
 	t.Parallel()
 
-	env := Environment{APIURL: "https://api.exemplo.invalid", TokenURL: "https://api.exemplo.invalid/t"}
+	env := Environment{APIURL: "https://api.exemplo.invalid", TokenURL: "https://api.exemplo.invalid/t"} //nolint:gosec // G101: URL inventada de teste, não é credencial
 	base := []Option{WithCredentials(idInventado, segredoInventado), WithAgent(agenteInventado, perfilInventado)}
 
 	padrao, err := NewClient(env, base...)
@@ -128,7 +128,7 @@ func TestClient_PadroesEOpcoes(t *testing.T) {
 func TestClient_OpcoesDeChamada(t *testing.T) {
 	t.Parallel()
 
-	c, err := NewClient(Environment{APIURL: "https://a.invalid", TokenURL: "https://a.invalid/t"},
+	c, err := NewClient(Environment{APIURL: "https://a.invalid", TokenURL: "https://a.invalid/t"}, //nolint:gosec // G101: URL inventada de teste, não é credencial
 		WithCredentials(idInventado, segredoInventado), WithAgent(agenteInventado, perfilInventado), WithTimeout(7*time.Second))
 	if err != nil {
 		t.Fatal(err)
@@ -171,7 +171,7 @@ func TestClient_AmbientesDaDocumentacaoPublica(t *testing.T) {
 		{
 			name: "Sandbox",
 			env:  Sandbox,
-			want: Environment{
+			want: Environment{ //nolint:gosec // G101: URLs públicas da documentação, não são credenciais
 				Name:       "sandbox",
 				APIURL:     "https://sandbox-api-abm.ccee.org.br",
 				TokenURL:   "https://sandbox-api-abm.ccee.org.br/sso/oauth/token",
@@ -181,7 +181,7 @@ func TestClient_AmbientesDaDocumentacaoPublica(t *testing.T) {
 		{
 			name: "Production",
 			env:  Production,
-			want: Environment{
+			want: Environment{ //nolint:gosec // G101: URLs públicas da documentação, não são credenciais
 				Name:       "production",
 				APIURL:     "https://api-abm.ccee.org.br",
 				TokenURL:   "https://api-abm.ccee.org.br/sso/oauth/token",
@@ -239,7 +239,7 @@ func TestClient_FormatarNaoVazaOSegredo(t *testing.T) {
 		"%v":           fmt.Sprintf("%v", c),
 		"%+v":          fmt.Sprintf("%+v", c),
 		"%#v":          fmt.Sprintf("%#v", c),
-		"%s":           fmt.Sprintf("%s", c),
+		"%s":           fmt.Sprint(c),
 		"%+v do valor": fmt.Sprintf("%+v", *c),
 		"%#v do valor": fmt.Sprintf("%#v", *c),
 		"%+v da fonte": fmt.Sprintf("%+v", c.fonte),

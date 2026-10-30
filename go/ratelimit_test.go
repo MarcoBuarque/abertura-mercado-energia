@@ -3,6 +3,7 @@ package abertura
 import (
 	"context"
 	"errors"
+	"net/http"
 	"testing"
 	"time"
 )
@@ -208,5 +209,38 @@ func TestLimitador_RetriesGastamDoBalde(t *testing.T) {
 	}
 	if srv.reqs.Load() != 2 {
 		t.Errorf("requisições = %d, quer 2", srv.reqs.Load())
+	}
+}
+
+// O limitador também barra o pedido de token quando o balde acabou.
+func TestLimitador_TokenEsperaOBalde(t *testing.T) {
+	t.Parallel()
+
+	srv := novoServidor(t, sequencia(t, resposta{status: 200, corpo: corpoOK}))
+	c, _ := novoClienteTeste(t, srv, WithRateLimits(RateLimits{Default: RateLimit{Requests: 1, Per: time.Hour}}))
+	ctx, cancela := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancela()
+
+	// A tentativa gasta o único item do balde; o pedido de token já não cabe.
+	_, _, err := c.enviar(ctx, opLeitura(), callConfig{})
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("erro = %v, quer DeadlineExceeded", err)
+	}
+	if srv.tokens.Load() != 0 {
+		t.Errorf("tokens buscados = %d, quer 0", srv.tokens.Load())
+	}
+	assertSemVazamento(t, err.Error(), srv.URL)
+}
+
+func TestLimitador_ClienteDeTokenPreservaOClienteDoUsuario(t *testing.T) {
+	t.Parallel()
+
+	usuario := &http.Client{Timeout: 7 * time.Second}
+	copia := clienteDeToken(usuario, limitadores{})
+	if copia == usuario || copia.Timeout != 7*time.Second {
+		t.Errorf("a cópia devia manter o Timeout e ser outro cliente")
+	}
+	if usuario.Transport != nil {
+		t.Error("o cliente do usuário foi alterado")
 	}
 }

@@ -20,7 +20,7 @@ import (
 
 const (
 	// codigoCredencialInvalida é o código do 403 do autorizador.
-	codigoCredencialInvalida = "ERR_CREDENCIAL_INVALIDA"
+	codigoCredencialInvalida = "ERR_CREDENCIAL_INVALIDA" //nolint:gosec // G101: nome de código de erro da API, não é credencial
 	// cabecalhoGateway marca respostas do API Gateway (autorizador, limite).
 	cabecalhoGateway = "x-amzn-ErrorType"
 )
@@ -423,19 +423,17 @@ func (c *Client) avaliar(ctx context.Context, op operacao, t tentativa, tok *oau
 	default:
 		d.corpoIlegivel = true
 	}
-	if t.err != nil {
-		return d, nil
+	var apiErr *APIError
+	if t.err == nil {
+		d.gateway = t.header.Get(cabecalhoGateway) != ""
+		if !d.gateway {
+			c.fonte.marcarAceito(tok)
+		}
+		if t.status < 200 || t.status > 299 {
+			apiErr = decodificarErro(op.id, &http.Response{StatusCode: t.status, Header: t.header}, t.corpo)
+			d.credencialInvalida = apiErr.Code == codigoCredencialInvalida
+		}
 	}
-
-	d.gateway = t.header.Get(cabecalhoGateway) != ""
-	if !d.gateway {
-		c.fonte.marcarAceito(tok)
-	}
-	if t.status >= 200 && t.status <= 299 {
-		return d, nil
-	}
-	apiErr := decodificarErro(op.id, &http.Response{StatusCode: t.status, Header: t.header}, t.corpo)
-	d.credencialInvalida = apiErr.Code == codigoCredencialInvalida
 	return d, apiErr
 }
 

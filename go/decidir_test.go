@@ -164,3 +164,53 @@ func TestDecidir_TabelaDeRetries(t *testing.T) {
 		})
 	}
 }
+
+func TestDecidir_AcaoTemNome(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		a    acao
+		want string
+	}{
+		{acaoSucesso, "sucesso"},
+		{acaoRepetir, "repetir"},
+		{acaoRenovarRepetir, "renovar e repetir"},
+		{acaoErro, "erro"},
+		{acaoIncerto, "incerto"},
+		{acao(0), "desconhecida"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.want, func(t *testing.T) {
+			t.Parallel()
+
+			if got := tc.a.String(); got != tc.want {
+				t.Errorf("String() = %q, quer %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestLog_NomeDaFalha(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		d    desfecho
+		want string
+	}{
+		{"sem falha", desfecho{}, ""},
+		{"transporte", desfecho{falha: falhaTransporte}, "transporte"},
+		{"timeout", desfecho{falha: falhaTimeout}, "timeout"},
+		{"contexto", desfecho{falha: falhaContexto}, "contexto"},
+		{"corpo ilegível", desfecho{corpoIlegivel: true}, "corpo"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := nomeFalha(tc.d); got != tc.want {
+				t.Errorf("nomeFalha = %q, quer %q", got, tc.want)
+			}
+		})
+	}
+}
