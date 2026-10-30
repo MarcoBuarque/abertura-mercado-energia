@@ -239,10 +239,10 @@ duplicata são fato observado.
 
 - **Falha antes de escrever** (DNS, conexão recusada, erro de TLS, nada saiu):
   repita, em qualquer método. Nada chegou ao servidor.
-- **GET**: repita em erro de transporte, tempo esgotado, 429, 500, 502, 503 e
-  504. A leitura é segura de repetir.
+- **GET**: repita em erro de transporte, tempo esgotado, 429 e qualquer 5xx
+  menos o 501. A leitura é segura de repetir.
 - **POST e PUT** depois de o corpo ter saído: erro de transporte, tempo
-  esgotado, 500, 502, 503 e 504 são **resultado incerto** (seção 4, item 3).
+  esgotado e qualquer 5xx menos o 501 são **resultado incerto** (seção 4, item 3).
   Não repita sozinho.
 - **429 em POST e PUT**: repita só se a resposta traz o cabeçalho
   `x-amzn-ErrorType` (a recusa veio do gateway, antes do backend). Sem ele,

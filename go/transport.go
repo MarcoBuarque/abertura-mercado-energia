@@ -171,8 +171,10 @@ func decidir(metodo string, r desfecho) acao {
 			return repetir
 		}
 		return acaoErro
-	case r.status == http.StatusInternalServerError, r.status == http.StatusBadGateway,
-		r.status == http.StatusServiceUnavailable, r.status == http.StatusGatewayTimeout:
+	case r.status >= 500 && r.status <= 599 && r.status != http.StatusNotImplemented:
+		// Todo 5xx, menos o 501, segue a linha do 500: o backend pode ter
+		// aplicado a escrita antes de falhar. O 501 (método não implementado)
+		// é definitivo e cai no default.
 		if leitura {
 			return repetir
 		}

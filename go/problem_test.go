@@ -165,6 +165,10 @@ func TestProblem_RetryableEUncertain_WhenMetodoEStatus_BateComTabelaDeRetries(t 
 		{name: "PUT 502", metodo: "PUT", status: 502, wantUncertain: true},
 		{name: "PUT 503", metodo: "PUT", status: 503, wantUncertain: true},
 		{name: "POST 504", metodo: "POST", status: 504, wantUncertain: true},
+		{name: "GET 507", metodo: "GET", status: 507, wantRetryable: true},
+		{name: "POST 520", metodo: "POST", status: 520, wantUncertain: true},
+		{name: "GET 501 é definitivo", metodo: "GET", status: 501},
+		{name: "POST 501 é definitivo", metodo: "POST", status: 501},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

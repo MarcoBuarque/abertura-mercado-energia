@@ -37,7 +37,7 @@ O endereço de `type` vale a partir da publicação do repositório; até lá, l
 | [Recusa sem código da API](#recusa-sem-codigo) | nenhum | 4xx | não | não |
 | [Recurso não encontrado](#nao-encontrado) | nenhum | 404 | não | não |
 | [Limite de requisições excedido](#limite-de-requisicoes) | nenhum | 429 | sim, com espera | só com a marca do gateway |
-| [Erro interno da API](#erro-interno) | nenhum | 500, 503 e outros 5xx | sim | incerto: confira |
+| [Erro interno da API](#erro-interno) | nenhum | 500, 503 e outros 5xx, menos 501 | sim | incerto: confira |
 | [Falha no gateway da API](#falha-do-gateway) | nenhum | 502, 504 | sim | incerto: confira |
 | [Falha de rede](#erro-de-transporte) | nenhum | sem resposta | sim | sim se nada saiu; senão incerto |
 | [Tempo esgotado](#tempo-esgotado) | nenhum | sem resposta | sim | sim se nada saiu; senão incerto |
@@ -157,10 +157,10 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 ## Erro interno da API
 
 - **Código da API:** nenhum conhecido.
-- **Status:** 500, 503 e outros 5xx.
+- **Status:** 500, 503 e qualquer outro 5xx, menos o 501. O 501 (não implementado) é definitivo: o SDK não repete e não trata a escrita como incerta.
 - **Quando acontece:** o backend falhou. Nunca foi observado no sandbox.
 - **O que fazer:** em leitura, o SDK já tentou de novo; tente mais tarde. Numa **escrita**, o resultado é incerto: o backend pode ter aplicado a mudança antes de falhar. Siga o passo a passo de [resultado incerto](#resultado-incerto).
-- **Repetir:** GET, sim. POST e PUT, não: confira antes.
+- **Repetir:** GET, sim. POST e PUT, não: confira antes. No 501, nem GET.
 - **Sentinela Go:** nenhuma.
 - **Confiança:** baixa.
 
