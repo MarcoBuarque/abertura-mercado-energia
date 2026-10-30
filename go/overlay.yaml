@@ -1,0 +1,39 @@
+# Overlay 1.0 aplicado pelo oapi-codegen. Mexe só no que o Go precisa e deixa
+# a spec limpa. JSONPath sem alvo passa calado, então internal/gen/gen_test.go
+# tem uma asserção de compilação para cada ação.
+overlay: 1.0.0
+info:
+  title: Ajustes do gerador Go
+  version: 0.1.0
+actions:
+  # Valores decimais da migração: json.Number preserva a precisão e aceita
+  # número ou string numérica.
+  - target: $.components.schemas.MigracaoResumo.properties.valorDHC
+    update:
+      x-go-type: json.Number
+  - target: $.components.schemas.MigracaoResumo.properties.valorMusd
+    update:
+      x-go-type: json.Number
+  - target: $.components.schemas.MigracaoDetalhe.properties.valorDHC
+    update:
+      x-go-type: json.Number
+  - target: $.components.schemas.MigracaoDetalhe.properties.valorMusd
+    update:
+      x-go-type: json.Number
+  # Medição: o tipo real não foi observado (Postman mostra string).
+  - target: $.components.schemas.Medicao.properties.consumo
+    update:
+      x-go-type: json.Number
+  - target: $.components.schemas.Medicao.properties.codigoAgenteConcessionaria
+    update:
+      x-go-type: json.Number
+  # not-before-policy não vira identificador Go.
+  - target: $.components.schemas.Token.properties.not-before-policy
+    update:
+      x-go-name: NotBeforePolicy
+  # Datas e e-mails ficam string: o tipo do runtime do oapi-codegen traria uma
+  # dependência além da biblioteca padrão, e a decodificação tolerante não
+  # pode falhar por formato.
+  - target: $..[?(@.format=='date' || @.format=='email' || @.format=='date-time')]
+    update:
+      x-go-type: string

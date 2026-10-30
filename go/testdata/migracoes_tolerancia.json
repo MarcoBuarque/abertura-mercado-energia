@@ -1,0 +1,35 @@
+{
+  "migracao": [
+    {
+      "idMigracao": "00000000-0000-4000-8000-000000000004",
+      "codigoUnidadeConsumidora": "000000000000004",
+      "codigoAgenteConcessionariaUnidadeConsumidora": "900001_000000000000004",
+      "codigoAgenteConcessionaria": 900001,
+      "codigoAgenteSupridora": null,
+      "tipoDocumento": "CNPJ",
+      "numeroDocumento": "11111111111111",
+      "codigoAgenteVarejista": 900002,
+      "mesReferencia": "12-2026",
+      "dataDenuncia": "2027-01-15",
+      "codigoPerfilVarejista": 900003,
+      "dataSolicitacao": "2027-01-10",
+      "statusMigracao": "STATUS_NOVO",
+      "submercado": "SUL",
+      "valorDHC": null,
+      "valorMusd": null,
+      "pagamentoMulta": "NAO",
+      "justificativa": null,
+      "dataValidacao": null,
+      "emailUnidadeConsumidora": "contato@example.org",
+      "comentario": "Inventado: exemplo de comentário",
+      "idCelebracaoCER": null,
+      "indicadorProcessoSiga": null,
+      "campoNovoInventado": "Inventado: campo que o SDK ainda não conhece",
+      "outroCampoNovo": {
+        "aninhado": true
+      }
+    }
+  ],
+  "indexProximaPagina": null,
+  "metadadoNovo": 1
+}
