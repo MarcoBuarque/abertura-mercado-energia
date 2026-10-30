@@ -91,7 +91,7 @@ go-lint:
 
 go-contrato: ## contrato do sandbox: vet, lint e os testes sem rede, com -tags sandbox (nunca fala com a API)
 	cd go && go vet -tags sandbox ./contrato/...
-	cd go && go test -tags sandbox ./contrato/... -run 'TestOrcamento|TestNomesDeCampos|TestDocumentoDoAmbiente' -count=1
+	cd go && go test -tags sandbox ./contrato/... -run 'TestOrcamento|TestNomesDeCampos|TestDocumentoDoAmbiente|TestEscolha' -count=1
 	cd go && go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION) run --build-tags sandbox ./...
 
 go-vuln:
