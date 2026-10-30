@@ -1,10 +1,27 @@
 package abertura
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
 	"net/http"
+	"net/http/httptrace"
+	"net/url"
 	"strconv"
+	"sync/atomic"
 	"time"
+
+	"golang.org/x/oauth2"
+)
+
+const (
+	// codigoCredencialInvalida é o código do 403 do autorizador.
+	codigoCredencialInvalida = "ERR_CREDENCIAL_INVALIDA"
+	// cabecalhoGateway marca respostas do API Gateway (autorizador, limite).
+	cabecalhoGateway = "x-amzn-ErrorType"
 )
 
 // Tempos de espera entre tentativas (arquitetura §4.4).
@@ -222,5 +239,211 @@ func dormirCtx(ctx context.Context, d time.Duration) error {
 		return nil
 	case <-ctx.Done():
 		return ctx.Err()
+	}
+}
+
+// operacao descreve uma chamada à API para o laço de envio.
+type operacao struct {
+	id      string       // operationId: "listarMigracoes"
+	metodo  string       // GET, POST, PUT
+	modelo  string       // "/v1.1/varejista/migracoes/{idMigracao}", para o log
+	caminho string       // já preenchido e escapado
+	query   url.Values   // nunca vai para o log nem para os erros
+	corpo   any          // nil em GET; vai como JSON
+	grupo   grupoLimite  // balde do limitador
+	chave   ChaveNatural // para o UncertainResultError
+}
+
+// limiteResposta é o máximo de bytes lidos de uma resposta.
+const limiteResposta = 32 << 20
+
+// parametros são os valores de uma chamada depois de somar cliente e chamada.
+type parametros struct {
+	agente, perfil int
+	timeout        time.Duration
+}
+
+func (c *Client) parametros(cc callConfig) parametros {
+	p := parametros{agente: c.agente, perfil: c.perfil, timeout: c.timeout}
+	if cc.temAgente {
+		p.agente, p.perfil = cc.agente, cc.perfil
+	}
+	if cc.timeout > 0 {
+		p.timeout = cc.timeout
+	}
+	return p
+}
+
+// tentativa é o que uma única requisição trouxe.
+type tentativa struct {
+	status     int
+	header     http.Header
+	corpo      []byte
+	err        error // erro de transporte, sem resposta
+	errLeitura error // erro ao ler o corpo de uma resposta
+	escreveu   bool  // os cabeçalhos foram escritos (httptrace.WroteHeaders)
+	duracao    time.Duration
+}
+
+// enviar é o laço único de envio: limitador, token, cabeçalhos, tentativa,
+// decisão (decidir) e espera. Devolve o status e o corpo de uma resposta 2xx.
+// Qualquer outra saída é erro: *APIError, *UncertainResultError, o erro do
+// ctx, ou um erro de transporte sem a URL.
+func (c *Client) enviar(ctx context.Context, op operacao, cc callConfig) (int, []byte, error) {
+	var corpo []byte
+	if op.corpo != nil {
+		var err error
+		if corpo, err = json.Marshal(op.corpo); err != nil {
+			return 0, nil, fmt.Errorf("%s: codificar o corpo: %w", op.id, err)
+		}
+	}
+	alvo := c.apiURL + op.caminho
+	if len(op.query) > 0 {
+		alvo += "?" + op.query.Encode()
+	}
+	// O erro de montagem do net/http cita a URL, e a URL leva a query; o
+	// protótipo valida o que sobra sem repetir o texto.
+	proto, err := http.NewRequestWithContext(ctx, op.metodo, alvo, nil)
+	if err != nil {
+		var ue *url.Error
+		if errors.As(err, &ue) {
+			return 0, nil, fmt.Errorf("%s: caminho inválido", op.id)
+		}
+		return 0, nil, fmt.Errorf("%s: requisição inválida: %w", op.id, err)
+	}
+	p := c.parametros(cc)
+
+	retries, jaRenovou := 0, false
+	for {
+		if err := c.limites.esperar(ctx, op.grupo); err != nil {
+			return 0, nil, err
+		}
+		tok, err := c.fonte.token(ctx)
+		if err != nil {
+			return 0, nil, err
+		}
+
+		t := c.tentar(ctx, proto, corpo, tok, p)
+		d, apiErr := c.avaliar(ctx, op, t, tok, retries, jaRenovou)
+
+		switch decidir(op.metodo, d) {
+		case acaoSucesso:
+			return t.status, t.corpo, nil
+		case acaoRepetir:
+			espera := esperaRetry(t.status, t.header.Get("Retry-After"), retries, c.agora(), c.rnd)
+			retries++
+			if err := c.dormir(ctx, espera); err != nil {
+				return 0, nil, err
+			}
+		case acaoRenovarRepetir:
+			c.fonte.invalidar(tok)
+			jaRenovou = true
+		case acaoIncerto:
+			return 0, nil, &UncertainResultError{Operation: op.id, Key: op.chave, Err: c.causa(ctx, op, d, t, apiErr)}
+		default:
+			if d.falha == falhaContexto {
+				return 0, nil, ctx.Err()
+			}
+			return 0, nil, c.causa(ctx, op, d, t, apiErr)
+		}
+	}
+}
+
+// tentar faz uma requisição, com o prazo da tentativa, e lê a resposta inteira.
+func (c *Client) tentar(ctx context.Context, proto *http.Request, corpo []byte, tok *oauth2.Token, p parametros) tentativa {
+	var escreveu atomic.Bool
+	actx, cancela := context.WithTimeout(ctx, p.timeout)
+	defer cancela()
+	actx = httptrace.WithClientTrace(actx, &httptrace.ClientTrace{
+		WroteHeaders: func() { escreveu.Store(true) },
+	})
+
+	req := proto.Clone(actx)
+	if corpo != nil {
+		req.Body = io.NopCloser(bytes.NewReader(corpo))
+		req.ContentLength = int64(len(corpo))
+		req.Header["Content-Type"] = []string{"application/json"}
+	}
+	tok.SetAuthHeader(req)
+	// Os nomes seguem a documentação da API; o mapa evita a canonicalização.
+	req.Header["codigoAgente"] = []string{strconv.Itoa(p.agente)}
+	req.Header["codigoPerfil"] = []string{strconv.Itoa(p.perfil)}
+	req.Header["Accept"] = []string{"application/json"}
+	req.Header["User-Agent"] = []string{c.userAgnt}
+
+	inicio := time.Now()
+	t := tentativa{}
+	resp, err := c.http.Do(req)
+	if err != nil {
+		t.err = err
+	} else {
+		t.status, t.header = resp.StatusCode, resp.Header
+		var errFechar error
+		t.corpo, t.errLeitura = io.ReadAll(io.LimitReader(resp.Body, limiteResposta))
+		if errFechar = resp.Body.Close(); errFechar != nil && t.errLeitura == nil {
+			t.errLeitura = errFechar
+		}
+	}
+	t.escreveu = escreveu.Load()
+	t.duracao = time.Since(inicio)
+	return t
+}
+
+// avaliar traduz a tentativa no desfecho que decidir entende. Devolve também
+// o *APIError de uma resposta fora de 2xx. Marca o token como aceito quando a
+// resposta não veio do autorizador.
+func (c *Client) avaliar(ctx context.Context, op operacao, t tentativa, tok *oauth2.Token, retries int, jaRenovou bool) (desfecho, *APIError) {
+	d := desfecho{
+		escreveu:    t.escreveu,
+		status:      t.status,
+		renovavel:   c.fonte.renovavel(),
+		jaRenovou:   jaRenovou,
+		tokenAceito: c.fonte.foiAceito(tok),
+		retries:     retries,
+		maxRetries:  c.retries,
+	}
+
+	falha := t.err
+	if falha == nil && t.status >= 200 && t.status <= 299 {
+		falha = t.errLeitura
+	}
+	switch {
+	case falha == nil:
+	case ctx.Err() != nil:
+		d.falha = falhaContexto
+	case errors.Is(falha, context.DeadlineExceeded):
+		d.falha = falhaTimeout
+	case t.err != nil:
+		d.falha = falhaTransporte
+	default:
+		d.corpoIlegivel = true
+	}
+	if t.err != nil {
+		return d, nil
+	}
+
+	d.gateway = t.header.Get(cabecalhoGateway) != ""
+	if !d.gateway {
+		c.fonte.marcarAceito(tok)
+	}
+	if t.status >= 200 && t.status <= 299 {
+		return d, nil
+	}
+	apiErr := decodificarErro(op.id, &http.Response{StatusCode: t.status, Header: t.header}, t.corpo)
+	d.credencialInvalida = apiErr.Code == codigoCredencialInvalida
+	return d, apiErr
+}
+
+// causa é o erro que explica por que a tentativa não deu certo, sem a URL.
+func (c *Client) causa(ctx context.Context, op operacao, d desfecho, t tentativa, apiErr *APIError) error {
+	switch {
+	case d.falha == falhaContexto:
+		return ctx.Err()
+	case t.err != nil:
+		return fmt.Errorf("%s: %w", op.id, erroSemURL(t.err))
+	case d.corpoIlegivel || apiErr == nil:
+		return fmt.Errorf("%s: corpo da resposta ilegível: %w", op.id, erroSemURL(t.errLeitura))
+	default:
+		return apiErr
 	}
 }
