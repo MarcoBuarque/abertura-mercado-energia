@@ -111,9 +111,10 @@ func WithTokenSource(ts oauth2.TokenSource) Option {
 //
 // O cliente padrão do SDK não segue redirecionamentos, para que os cabeçalhos
 // do agente não saiam para outro host e um 307 no pedido de token não reenvie
-// o formulário com o client_secret. Um cliente próprio segue a política dele,
-// também no pedido de token: para manter essa proteção, defina CheckRedirect
-// devolvendo http.ErrUseLastResponse.
+// o formulário com o client_secret. Um cliente próprio segue a política dele
+// (CheckRedirect) nas chamadas à API. O pedido de token usa uma cópia dele que
+// nunca segue redirecionamento, para o client_secret não sair para outro host;
+// Timeout e Transport da cópia são os do seu cliente.
 func WithHTTPClient(hc *http.Client) Option {
 	return optionFunc(func(c *config) { c.httpClient = hc })
 }
