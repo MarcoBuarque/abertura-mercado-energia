@@ -7,10 +7,15 @@
 ARG PRISM_IMAGE=docker.io/stoplight/prism@sha256:3f6d29e31bfe0b99587f0f6f79c423858dd6a2ea7e1e4658273ed930a78a9acf
 FROM ${PRISM_IMAGE}
 
+# Versão da spec (info.version). O Makefile e o compose a preenchem a partir de
+# openapi/abertura.yaml; scripts/mock-smoke.sh confere o rótulo da imagem.
+ARG SPEC_VERSION=desconhecida
+
 LABEL org.opencontainers.image.title="mock da API de Abertura de Mercado (descrição não oficial)" \
       org.opencontainers.image.description="Prism servindo os exemplos inventados da spec. Projeto independente, sem afiliação ao operador." \
+      org.opencontainers.image.source="https://github.com/MarcoBuarque/abertura-mercado-energia" \
       org.opencontainers.image.licenses="Apache-2.0" \
-      io.github.abertura.spec-version="0.1.0" \
+      io.github.abertura.spec-version="${SPEC_VERSION}" \
       io.github.abertura.prism-version="5.15.10"
 
 COPY openapi/abertura.yaml /spec/abertura.yaml

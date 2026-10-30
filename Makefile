@@ -15,6 +15,10 @@ PRISM_IMAGE             := docker.io/stoplight/prism@sha256:3f6d29e31bfe0b99587f
 REDOCLY_IMAGE           := docker.io/redocly/cli@sha256:d39a229ebd8250fea62f44c377ddb04797e8a155140eda49db17f1caaa9334ff # 2.72.1, amd64+arm64
 OPENAPI_GENERATOR_IMAGE := docker.io/openapitools/openapi-generator-cli@sha256:a304ddf1e2e5f24f68fa3153568d6174cea4959d09aa8e3db6d526fd0782326d # v7.26.0, amd64+arm64
 
+# info.version da spec: vira o rótulo da imagem do mock (ARG SPEC_VERSION).
+SPEC_VERSION := $(shell sed -n 's/^  version:[[:space:]]*\([0-9][^[:space:]]*\).*/\1/p' openapi/abertura.yaml | head -1)
+export SPEC_VERSION
+
 # O go run perde o código de saída do programa (devolve sempre 1), então o
 # gitleaks é instalado na versão fixada em out/bin e chamado direto.
 GITLEAKS := $(CURDIR)/out/bin/gitleaks
@@ -106,7 +110,7 @@ checa-tag: ## confere a tag de release contra info.version, version.Version e CH
 MOCK_IMAGEM ?= abertura-mercado-energia-mock
 MOCK_TAG    ?= local
 mock-imagem: ## constrói a imagem do mock (linux/amd64, como o Prism fixado) com o nome $(MOCK_IMAGEM):$(MOCK_TAG)
-	docker build --platform linux/amd64 -f mock/Dockerfile -t $(MOCK_IMAGEM):$(MOCK_TAG) .
+	docker build --platform linux/amd64 --build-arg SPEC_VERSION=$(SPEC_VERSION) -f mock/Dockerfile -t $(MOCK_IMAGEM):$(MOCK_TAG) .
 
 testa-checa-marca: ## prova a checagem da marca (tabela de casos em repositórios temporários)
 	scripts/testa-checa-marca.sh

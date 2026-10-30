@@ -5,6 +5,9 @@ services:
     build:
       context: ..
       dockerfile: mock/Dockerfile
+      args:
+        # O Makefile e o smoke exportam SPEC_VERSION a partir de info.version.
+        SPEC_VERSION: ${SPEC_VERSION:-desconhecida}
     image: abertura-mercado-energia-mock:local
     # O Prism fixado só existe para amd64. No Mac com Apple Silicon roda por
     # emulação (a subida leva alguns segundos a mais); em CI amd64 é nativo.
