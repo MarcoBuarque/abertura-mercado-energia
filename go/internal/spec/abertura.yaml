@@ -37,19 +37,23 @@ servers:
 security:
   - oauth2: []
 tags:
-  - name: Autenticação
+  - name: Autenticacao
+    x-displayName: Autenticação
     description: Emissão do token de acesso.
-  - name: Migrações
+  - name: Migracoes
+    x-displayName: Migrações
     description: Migrações de unidades consumidoras para o mercado livre, lado do varejista.
-  - name: Medições
+  - name: Medicoes
+    x-displayName: Medições
     description: Medições de consumo das unidades consumidoras.
-  - name: Solicitações
+  - name: Solicitacoes
+    x-displayName: Solicitações
     description: Solicitações de alteração (troca de representante, suspensão, retorno ao cativo).
 paths:
   /sso/oauth/token:
     post:
       operationId: obterToken
-      tags: [Autenticação]
+      tags: [Autenticacao]
       summary: Obtém o token de acesso
       description: |
         Troca as credenciais do cliente por um token de acesso (fluxo
@@ -99,7 +103,7 @@ paths:
   /v1.1/varejista/migracoes:
     get:
       operationId: listarMigracoes
-      tags: [Migrações]
+      tags: [Migracoes]
       summary: Lista migrações do varejista
       description: |
         Devolve as migrações do perfil informado, uma página por vez. O perfil
@@ -207,7 +211,7 @@ paths:
           $ref: "#/components/responses/Interno500"
     post:
       operationId: criarMigracao
-      tags: [Migrações]
+      tags: [Migracoes]
       summary: Cria uma migração
       description: |
         Registra a migração de uma unidade consumidora para o varejista. A UC
@@ -279,7 +283,7 @@ paths:
   /v1.1/varejista/migracoes/{idMigracao}:
     get:
       operationId: obterMigracao
-      tags: [Migrações]
+      tags: [Migracoes]
       summary: Obtém uma migração
       description: |
         Devolve a migração pelo identificador. A resposta é uma lista com um
@@ -343,7 +347,7 @@ paths:
   /v1/varejista/migracoes/{idMigracao}:
     put:
       operationId: editarMigracao
-      tags: [Migrações]
+      tags: [Migracoes]
       summary: Edita dados cadastrais de uma migração
       description: |
         Altera dados cadastrais da migração. Não se sabe se o PUT é parcial ou
@@ -398,7 +402,7 @@ paths:
   /v1/varejista/consumo/medicoes:
     get:
       operationId: listarMedicoes
-      tags: [Medições]
+      tags: [Medicoes]
       summary: Lista medições de consumo
       description: |
         Devolve as medições de uma UC em um intervalo, uma página por vez. O
@@ -467,7 +471,7 @@ paths:
   /v1/solicitacoes:
     get:
       operationId: listarSolicitacoes
-      tags: [Solicitações]
+      tags: [Solicitacoes]
       summary: Lista solicitações de alteração
       description: |
         Devolve as solicitações de um tipo. A resposta é um objeto com a lista em
@@ -543,7 +547,7 @@ paths:
   /v1/solicitacoes/representante:
     post:
       operationId: solicitarTrocaRepresentante
-      tags: [Solicitações]
+      tags: [Solicitacoes]
       summary: Solicita troca de representante
       description: |
         O novo varejista pede para representar uma UC a partir de um mês. Se a
@@ -588,7 +592,7 @@ paths:
   /v1/solicitacoes/suspensao-fornecimento-varejista:
     post:
       operationId: solicitarSuspensaoFornecimento
-      tags: [Solicitações]
+      tags: [Solicitacoes]
       summary: Solicita suspensão de fornecimento
       description: |
         O varejista notifica a suspensão do fornecimento de uma UC. Esta
@@ -629,7 +633,7 @@ paths:
   /v1/solicitacoes/{idSolicitacaoAlteracao}:
     post:
       operationId: decidirSolicitacao
-      tags: [Solicitações]
+      tags: [Solicitacoes]
       summary: Aprova ou reprova uma solicitação
       description: |
         Registra a decisão sobre uma solicitação de troca de representante,

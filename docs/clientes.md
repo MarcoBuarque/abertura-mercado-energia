@@ -121,10 +121,11 @@ TypeScript e o Java foram apenas gerados, **não compilados**.
 
 Dois detalhes dos clientes gerados:
 
-- O gerador tira os acentos dos nomes das tags em vez de transliterar, então as
-  classes saem como `AutenticaoApi`, `MigraesApi`, `MediesApi` e
-  `SolicitaesApi`. Os nomes dos métodos vêm do `operationId` (`listar_migracoes`
-  em Python, `listarMigracoes` em TypeScript e Java).
+- As tags da spec não têm acento (`Autenticacao`, `Migracoes`, `Medicoes`,
+  `Solicitacoes`); o nome acentuado vai em `x-displayName`, que a página usa no
+  menu. Por isso as classes saem como `AutenticacaoApi`, `MigracoesApi`,
+  `MedicoesApi` e `SolicitacoesApi`. Os nomes dos métodos vêm do `operationId`
+  (`listar_migracoes` em Python, `listarMigracoes` em TypeScript e Java).
 - Como as datas de resposta ficam sem `format` na spec, elas chegam como `str`:
   convertê-las é com você (ver "O que os clientes gerados não fazem").
 
@@ -141,7 +142,7 @@ Salve como `lista.py` e rode com `"$SAIDA/venv/bin/python" lista.py`:
 
 ```python
 import abertura_cliente as ac
-from abertura_cliente.api import AutenticaoApi, MigraesApi
+from abertura_cliente.api import AutenticacaoApi, MigracoesApi
 
 HOST = "http://localhost:4010"  # o mock; no sandbox, o host está em `servers` da spec
 
@@ -150,13 +151,13 @@ HOST = "http://localhost:4010"  # o mock; no sandbox, o host está em `servers` 
 ID = "id-inventado"
 SEGREDO = "segredo-inventado"
 with ac.ApiClient(ac.Configuration(host=HOST)) as cliente:
-    token = AutenticaoApi(cliente).obter_token(client_id=ID, client_secret=SEGREDO)
+    token = AutenticacaoApi(cliente).obter_token(client_id=ID, client_secret=SEGREDO)
 print("token expira em", token.expires_in, "s")
 
 # 2. Uma página de migrações. O perfil é exigido no cabeçalho E na consulta.
 cfg = ac.Configuration(host=HOST, access_token=token.access_token)
 with ac.ApiClient(cfg) as cliente:
-    pagina = MigraesApi(cliente).listar_migracoes(
+    pagina = MigracoesApi(cliente).listar_migracoes(
         codigo_agente=900002,
         codigo_perfil=900003,
         codigo_perfil_varejista=900003,
@@ -179,7 +180,7 @@ Para ver a última página e um erro, passe o `Prefer` por `_headers`:
 ```python
 from abertura_cliente.exceptions import ApiException
 
-api = MigraesApi(cliente)
+api = MigracoesApi(cliente)
 ultima = api.listar_migracoes(900002, 900003, 900003, _headers={"Prefer": "example=pagina-2"})
 print(ultima.index_proxima_pagina)  # None
 
