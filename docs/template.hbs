@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>{{title}}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Descrição não oficial, escrita à mão, de parte das APIs de varejo da abertura do mercado de energia. Projeto independente." />
+  <style>
+    body { margin: 0; padding: 0; }
+    .faixa-nao-oficial {
+      box-sizing: border-box;
+      width: 100%;
+      margin: 0;
+      padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left));
+      background: #fff1d6;
+      color: #4a2f00;
+      border-bottom: 2px solid #c98a1b;
+      font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      overflow-wrap: anywhere;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .faixa-nao-oficial .longa { display: none; }
+    .faixa-nao-oficial strong { font-weight: 700; }
+    .faixa-nao-oficial a { color: inherit; text-decoration: underline; }
+    @media (min-width: 640px) {
+      .faixa-nao-oficial { text-align: center; }
+      .faixa-nao-oficial .longa { display: inline; }
+    }
+    @media (max-width: 639px) {
+      .faixa-nao-oficial { font-size: 14px; padding-top: 8px; padding-bottom: 8px; }
+    }
+  </style>
+  {{{redocHead}}}
+</head>
+<body>
+  <aside class="faixa-nao-oficial" role="note" aria-label="Aviso de não afiliação">
+    <strong>Atenção: descrição não oficial.</strong>
+    Projeto independente, sem afiliação, patrocínio ou endosso da CCEE.
+    <span class="longa">A spec descreve o que a API devolveu em testes no
+    sandbox e não substitui a documentação do operador. Onde as duas divergem,
+    o arquivo <code>openapi/FONTES.md</code> explica o motivo.</span>
+  </aside>
+  {{{redocHTML}}}
+  <script>
+    // A faixa é fixa no topo; o Redoc 3 aceita a altura dela em --navbar-height
+    // para posicionar o menu lateral logo abaixo.
+    (function () {
+      var faixa = document.querySelector(".faixa-nao-oficial");
+      function aplica() {
+        var raiz = document.querySelector("#redoc > div[style*='navbar-height']");
+        if (!raiz) { return false; }
+        var h = faixa.getBoundingClientRect().height + "px";
+        raiz.style.setProperty("--navbar-height", h);
+        raiz.style.setProperty("--navbar-stack-height", h);
+        return true;
+      }
+      // A hidratação do React pode reescrever o atributo style: reaplica
+      // enquanto a página carrega e a cada mudança de tamanho.
+      var tentativas = 0;
+      var espera = setInterval(function () {
+        aplica();
+        if (++tentativas > 60) { clearInterval(espera); }
+      }, 100);
+      window.addEventListener("resize", aplica);
+      if (window.ResizeObserver) { new ResizeObserver(aplica).observe(faixa); }
+    })();
+  </script>
+</body>
+</html>
