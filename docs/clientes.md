@@ -289,3 +289,97 @@ requisição. Sem a condição 1, o 403 é do backend e não se repete. A repeti
 - Hipótese não verificada: a janela de 5 minutos por IP lembra a regra de taxa
   de um firewall de aplicação, que bloqueia com 403. Um 403 sem código `ERR_*`
   **não** se repete.
+
+## 6. Problem Details em um cliente Python
+
+A API devolve erros com quatro campos (`timestamp`, `status`, `error`,
+`message`) e a spec descreve exatamente isso. O SDK Go entrega o mesmo erro
+como Problem Details da RFC 9457; num cliente Python, a conversão cabe numa
+função, apoiada no [catálogo de erros](erros.md). Salve como `problema.py`,
+suba o mock (`make mock`) e rode `python3 -I problema.py`:
+
+```python
+import json
+import re
+import urllib.error
+import urllib.request
+
+CATALOGO = "https://marcobuarque.github.io/abertura-mercado-energia/erros"
+
+# Título e slug (âncora de docs/erros.md) por código da API. Código fora da
+# tabela cai em "codigo-desconhecido".
+CODIGOS = {
+    "ERR_CREDENCIAL_INVALIDA": ("credencial-invalida-autorizador", "Credencial recusada pelo autorizador"),
+    "ERR_VALIDACAO_CAMPOS": ("validacao-campos", "Campo inválido na requisição"),
+    "ERR_PERFIL_VAREJISTA_OBRIGATORIO": ("perfil-varejista-obrigatorio", "Perfil de varejista obrigatório"),
+    "ERR_MIGRACAO_SOLICITADA": ("migracao-solicitada", "Migração já solicitada"),
+}
+
+
+def para_problema(status, corpo, cabecalhos, operacao):
+    """Converte o erro de quatro campos da API em Problem Details (RFC 9457)."""
+    try:
+        codigo = json.loads(corpo).get("error", "")
+    except (ValueError, AttributeError):
+        codigo = ""
+    if not re.fullmatch(r"ERR_[A-Z0-9_]{1,80}", str(codigo)):
+        codigo = ""  # texto livre do servidor não vai para o Problem
+    if codigo in CODIGOS:
+        slug, titulo = CODIGOS[codigo]
+        if codigo == "ERR_CREDENCIAL_INVALIDA" and not cabecalhos.get("x-amzn-ErrorType"):
+            slug = "credencial-invalida-backend"
+    elif codigo:
+        slug, titulo = "codigo-desconhecido", "Código de erro desconhecido"
+    else:
+        slug, titulo = "recusa-sem-codigo", "Recusa sem código da API"
+    problema = {
+        "type": f"{CATALOGO}#{slug}",
+        "title": titulo,
+        "status": status,
+        # Nunca copie a "message" da API: ela pode citar UC, documento ou e-mail.
+        "detail": f"Operação {operacao}: veja o catálogo.",
+        "operation": operacao,
+    }
+    if codigo:
+        problema["code"] = codigo
+    return problema
+
+
+pedido = urllib.request.Request(
+    "http://localhost:4010/v1.1/varejista/migracoes",
+    data=b"{}",
+    method="POST",
+    headers={
+        "Authorization": "Bearer token-inventado",
+        "Content-Type": "application/json",
+        "codigoAgente": "900002",
+        "codigoPerfil": "900003",
+        "Prefer": "code=400, example=migracao-solicitada",
+    },
+)
+try:
+    urllib.request.urlopen(pedido)
+except urllib.error.HTTPError as erro:
+    problema = para_problema(erro.code, erro.read(), erro.headers, "criarMigracao")
+    print(json.dumps(problema, ensure_ascii=False, indent=2))
+```
+
+Saída esperada (rodada contra o mock em 30/10/2026):
+
+```json
+{
+  "type": "https://marcobuarque.github.io/abertura-mercado-energia/erros#migracao-solicitada",
+  "title": "Migração já solicitada",
+  "status": 400,
+  "detail": "Operação criarMigracao: veja o catálogo.",
+  "operation": "criarMigracao",
+  "code": "ERR_MIGRACAO_SOLICITADA"
+}
+```
+
+Três cuidados, os mesmos do SDK: o `detail` é texto seu e **não** copia a
+`message` da API (ela pode citar UC, documento ou e-mail); o `code` só entra se
+tiver a forma `ERR_` e maiúsculas; e o 403 `ERR_CREDENCIAL_INVALIDA` tem duas
+entradas no catálogo, conforme venha ou não com o cabeçalho `x-amzn-ErrorType`.
+Para devolver o resultado a quem chama o seu serviço, use o tipo de mídia
+`application/problem+json`.

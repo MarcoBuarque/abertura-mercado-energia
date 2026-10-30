@@ -26,4 +26,12 @@ for m, err := range c.Migracoes.Listar(ctx, abertura.FiltroMigracoes{
 
 Métodos: `Migracoes` (`Listar`, `ListarPagina`, `Obter`, `Criar`, `Editar`, `ConferirCriacao`, `ConferirEdicao`), `Medicoes` (`Listar`, `ListarPagina`) e `Client.Do` para rotas ainda sem método. Os exemplos executáveis estão no `godoc`.
 
+Erros: `abertura.ProblemFrom(err)` converte qualquer erro do SDK em um `Problem` no formato da RFC 9457 (`application/problem+json`), sem dado pessoal, com `type` apontando para o [catálogo de erros](../docs/erros.md):
+
+```go
+p := abertura.ProblemFrom(err) // também funciona com o erro embrulhado por %w
+w.Header().Set("Content-Type", abertura.ProblemContentType)
+json.NewEncoder(w).Encode(p) // p.Retryable e p.Uncertain dizem se repetir é seguro
+```
+
 Escrita com resultado incerto, dado pessoal, cobertura da API e a especificação OpenAPI: veja o [README da raiz](../README.md).
