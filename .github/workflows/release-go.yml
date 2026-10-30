@@ -1,0 +1,74 @@
+# Release do SDK Go: tag go/vX.Y.Z (ou go/vX.Y.Z-rc.N). Sem binário: o módulo é
+# o produto, servido pelo proxy do Go a partir da tag.
+name: release-go
+
+on:
+  push:
+    tags: ['go/v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-go-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Tag × version.Version × CHANGELOG
+        run: make checa-tag TIPO=go TAG="$TAG"
+        env:
+          TAG: ${{ github.ref_name }}
+
+  ci:
+    uses: ./.github/workflows/go.yml # a CI completa do SDK, a mesma do go.yml
+
+  release:
+    needs: [tag, ci]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write # cria o release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.26.x'
+          check-latest: true
+          cache: false
+      - name: Release (sem binário)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          flags=()
+          case "$TAG" in *-rc.*) flags+=(--prerelease) ;; esac
+          gh release create "$TAG" \
+            --verify-tag \
+            --title "SDK Go ${TAG#go/}" \
+            --notes "SDK Go. Mudanças em go/CHANGELOG.md nesta tag. Instalação: go get github.com/MarcoBuarque/abertura-mercado-energia/go@${TAG#go/}" \
+            "${flags[@]}"
+      # O proxy só enxerga repositório público; antes disso o passo é pulado.
+      - name: O proxy do Go enxerga o módulo
+        if: github.event.repository.private == false
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          modulo="$(cd go && go list -m)"
+          versao="${TAG#go/}"
+          cd "$(mktemp -d)"
+          for tentativa in 1 2 3 4 5 6 7 8 9 10; do
+            if GOPROXY=https://proxy.golang.org GOFLAGS= go list -m "$modulo@$versao"; then exit 0; fi
+            echo "proxy ainda sem $modulo@$versao (tentativa $tentativa de 10)"
+            sleep 30
+          done
+          echo "o proxy não serviu $modulo@$versao" >&2
+          exit 1

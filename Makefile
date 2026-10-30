@@ -64,7 +64,7 @@ go-tidy: ## falha se go.mod ou go.sum mudariam com `go mod tidy`
 	cd go && go mod tidy -diff
 
 go-gen: ## regenera os modelos e a cópia da spec e falha se os arquivos gerados mudarem (deriva)
-	@set -e; for f in $(GERADOS); do echo "$$f $$(git hash-object $$f)"; done > out/.go-gen-antes; \
+	@set -e; mkdir -p out; for f in $(GERADOS); do echo "$$f $$(git hash-object $$f)"; done > out/.go-gen-antes; \
 	(cd go && go generate ./...); \
 	deriva=0; while read -r f h; do \
 		if [ "$$(git hash-object $$f)" != "$$h" ]; then echo "go-gen: deriva em $$f (diferia do que o gerador produz)" >&2; deriva=1; fi; \
