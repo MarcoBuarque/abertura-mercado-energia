@@ -63,8 +63,11 @@ jobs:
             --notes "Descrição não oficial da API de Abertura de Mercado. Mudanças em openapi/CHANGELOG.md nesta tag." \
             "${flags[@]}"
 
-  # Pages e imagem só depois que o repositório for público. Antes disso o job
-  # é pulado (a condição lê o atributo do repositório no momento da execução).
+  # Pages e imagem só valem com o repositório público. A condição lê
+  # github.event.repository.private do evento do push, não do estado atual:
+  # empurre as tags finais só depois de o repositório estar público. Rodar o
+  # workflow de novo repete o mesmo evento e, portanto, o mesmo valor; para
+  # publicar depois, é preciso um novo push da tag.
   pages:
     needs: verifica
     if: github.event.repository.private == false && !contains(github.ref_name, '-rc.')
