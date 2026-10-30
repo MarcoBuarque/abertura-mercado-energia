@@ -26,7 +26,7 @@ Primeira versão. Segue a spec `openapi/v0.1.0`; as pré-versões `go/v0.1.0-rc.
 - O pedido de token nunca segue redirecionamento (um 307 reenviaria o `client_secret`), também com `WithHTTPClient`: o SDK usa uma cópia do seu cliente com `CheckRedirect` próprio. O `CheckRedirect` do seu cliente vale só para as chamadas à API.
 - Qualquer 5xx, menos o 501, segue a linha do 500: leitura repete, escrita fica incerta (`*UncertainResultError`). O 501 é erro definitivo.
 - `SituacaoRejeitada` (`REJEITADA`) entra entre as situações de medição conhecidas.
-- Uma página que aponta para um cursor já visto encerra com `ErrCursorRepetido` sem entregar os itens dela; antes, contra o mock, a mesma página saía duas vezes.
+- Uma página que aponta para o cursor que acabou de usar (o que o mock faz) encerra com `ErrCursorRepetido` sem entregar os itens dela, que repetiriam a página anterior. Uma página que aponta para um cursor visto antes (ciclo A, B, A) entrega os itens dela e só então devolve `ErrCursorRepetido`, sem buscar de novo.
 
 ### Limites conhecidos
 

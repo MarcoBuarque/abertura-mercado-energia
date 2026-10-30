@@ -242,7 +242,7 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 
 - **Código da API:** nenhum.
 - **Status:** nenhum erro HTTP; a API respondeu 200.
-- **Quando acontece:** a API devolveu como próxima página um cursor já usado. A paginação nunca foi vista funcionando no sandbox; sem a guarda, um cursor fixo giraria para sempre. O iterador `Listar` encerra com este erro.
+- **Quando acontece:** a API devolveu como próxima página um cursor já usado. A paginação nunca foi vista funcionando no sandbox; sem a guarda, um cursor fixo giraria para sempre. O iterador `Listar` encerra com este erro: se a página aponta para o cursor que acabou de usar, os itens dela não são entregues (repetiriam a anterior); se aponta para um cursor visto antes, os itens dela são entregues e o iterador para sem buscar de novo.
 - **O que fazer:** use `ListarPagina` para controlar o cursor e abra uma issue com o `request_id` da última página, que sai no log do SDK (`WithLogger`); o erro não o traz.
 - **Repetir:** não.
 - **Sentinela Go:** `ErrCursorRepetido`.
