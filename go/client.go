@@ -64,6 +64,11 @@ const (
 
 // Client fala com a API de abertura de mercado da CCEE.
 type Client struct {
+	// Migracoes e Medicoes são as operações públicas do SDK. Para uma rota que
+	// o SDK ainda não cobre, use [Client.Do].
+	Migracoes *Migracoes
+	Medicoes  *Medicoes
+
 	env      Environment
 	apiURL   string
 	agente   int
@@ -117,6 +122,7 @@ func NewClient(env Environment, opts ...Option) (*Client, error) {
 		rnd:      rand.Float64,
 		agora:    time.Now,
 	}
+	c.Migracoes, c.Medicoes = &Migracoes{c: c}, &Medicoes{c: c}
 	if cfg.temTimeout {
 		c.timeout = cfg.timeout
 	}

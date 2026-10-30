@@ -74,17 +74,17 @@ func documentoDe(tipo, numero string) Documento {
 // separados do formato de cada um. O mês e a supridora entram com o nome do
 // campo de origem, para a mensagem de erro citar o certo.
 type camposMigracao struct {
-	id, uc                                     string
-	concessionaria, supridora                  int
-	varejista, perfil                          int
-	tipoDocumento, numeroDocumento, email      string
-	campoMes, mes                              string
-	status, submercado                         string
-	valorDHC, valorMUSD                        json.Number
-	pagamentoMulta                             string
-	dataDenuncia, dataSolicitacao, dataValidac string
-	justificativa, comentario, tipoConectado   string
-	idCelebracaoCER, indicadorProcessoSiga     string
+	id, uc                                       string
+	concessionaria, supridora                    int
+	varejista, perfil                            int
+	tipoDocumento, numeroDocumento, email        string
+	campoMes, mes                                string
+	status, submercado                           string
+	valorDHC, valorMUSD                          json.Number
+	pagamentoMulta                               string
+	dataDenuncia, dataSolicitacao, dataValidacao string
+	justificativa, comentario, tipoConectado     string
+	idCelebracaoCER, indicadorProcessoSiga       string
 }
 
 func (c camposMigracao) converter() (Migracao, error) {
@@ -116,7 +116,7 @@ func (c camposMigracao) converter() (Migracao, error) {
 	if m.DataSolicitacao, err = dataDe("dataSolicitacao", c.dataSolicitacao); err != nil {
 		return Migracao{}, err
 	}
-	if m.DataValidacao, err = dataDe("dataValidacao", c.dataValidac); err != nil {
+	if m.DataValidacao, err = dataDe("dataValidacao", c.dataValidacao); err != nil {
 		return Migracao{}, err
 	}
 	return m, nil
@@ -132,7 +132,7 @@ func migracaoDeResumo(r gen.MigracaoResumo) (Migracao, error) {
 		campoMes: "mesReferencia", mes: r.MesReferencia,
 		status: r.StatusMigracao, submercado: r.Submercado,
 		valorDHC: r.ValorDHC, valorMUSD: r.ValorMusd, pagamentoMulta: r.PagamentoMulta,
-		dataDenuncia: r.DataDenuncia, dataSolicitacao: r.DataSolicitacao, dataValidac: r.DataValidacao,
+		dataDenuncia: r.DataDenuncia, dataSolicitacao: r.DataSolicitacao, dataValidacao: r.DataValidacao,
 		justificativa: r.Justificativa, comentario: r.Comentario,
 		idCelebracaoCER: r.IdCelebracaoCER, indicadorProcessoSiga: r.IndicadorProcessoSiga,
 	}.converter()
@@ -149,7 +149,7 @@ func migracaoDeDetalhe(d gen.MigracaoDetalhe) (Migracao, error) {
 		campoMes: "dataReferencia", mes: d.DataReferencia,
 		status: d.StatusMigracao, submercado: d.Submercado,
 		valorDHC: d.ValorDHC, valorMUSD: d.ValorMusd, pagamentoMulta: d.PagamentoMulta,
-		dataDenuncia: d.DataDenuncia, dataSolicitacao: d.DataSolicitacao, dataValidac: d.DataValidacao,
+		dataDenuncia: d.DataDenuncia, dataSolicitacao: d.DataSolicitacao, dataValidacao: d.DataValidacao,
 		justificativa: d.Justificativa, comentario: d.Comentario, tipoConectado: d.TipoConectado,
 		indicadorProcessoSiga: d.IndicadorProcessoSiga,
 	}.converter()

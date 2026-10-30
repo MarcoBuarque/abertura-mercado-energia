@@ -82,7 +82,11 @@ var mapeamentos = map[string]struct {
 		},
 		converter: func(t *testing.T, v any) reflect.Value {
 			t.Helper()
-			m, err := migracaoDeResumo(*v.(*gen.MigracaoResumo))
+			g, ok := v.(*gen.MigracaoResumo)
+			if !ok {
+				t.Fatalf("tipo %T", v)
+			}
+			m, err := migracaoDeResumo(*g)
 			if err != nil {
 				t.Fatalf("migracaoDeResumo: %v", err)
 			}
@@ -129,7 +133,11 @@ var mapeamentos = map[string]struct {
 		},
 		converter: func(t *testing.T, v any) reflect.Value {
 			t.Helper()
-			m, err := migracaoDeDetalhe(*v.(*gen.MigracaoDetalhe))
+			g, ok := v.(*gen.MigracaoDetalhe)
+			if !ok {
+				t.Fatalf("tipo %T", v)
+			}
+			m, err := migracaoDeDetalhe(*g)
 			if err != nil {
 				t.Fatalf("migracaoDeDetalhe: %v", err)
 			}
@@ -157,7 +165,11 @@ var mapeamentos = map[string]struct {
 		},
 		converter: func(t *testing.T, v any) reflect.Value {
 			t.Helper()
-			m, err := medicaoDe(*v.(*gen.Medicao))
+			g, ok := v.(*gen.Medicao)
+			if !ok {
+				t.Fatalf("tipo %T", v)
+			}
+			m, err := medicaoDe(*g)
 			if err != nil {
 				t.Fatalf("medicaoDe: %v", err)
 			}
@@ -533,7 +545,10 @@ func comparar(t *testing.T, got, want any) {
 		gv, wv := g.Field(i).Interface(), w.Field(i).Interface()
 		switch x := gv.(type) {
 		case time.Time:
-			y := wv.(time.Time)
+			y, ok := wv.(time.Time)
+			if !ok {
+				t.Fatalf("%s: tipos diferentes", nome)
+			}
 			if !x.Equal(y) {
 				t.Errorf("%s = %v, quero %v", nome, x, y)
 			} else if !x.IsZero() {
@@ -542,7 +557,10 @@ func comparar(t *testing.T, got, want any) {
 				}
 			}
 		case Documento:
-			y := wv.(Documento)
+			y, ok := wv.(Documento)
+			if !ok {
+				t.Fatalf("%s: tipos diferentes", nome)
+			}
 			if x.Tipo() != y.Tipo() || x.Numero() != y.Numero() {
 				t.Errorf("%s = %v, quero %v", nome, x, y)
 			}
