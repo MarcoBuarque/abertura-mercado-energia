@@ -1,0 +1,63 @@
+# CI do SDK Go. Cada passo chama um alvo do Makefile (que faz cd go); `make ci`
+# roda os mesmos alvos localmente. Também é chamado por release-go.yml.
+name: go
+
+on:
+  push:
+    branches: [main]
+    paths: ['go/**', 'openapi/**', 'scripts/**', 'Makefile', '.github/workflows/go.yml']
+  pull_request:
+    paths: ['go/**', 'openapi/**', 'scripts/**', 'Makefile', '.github/workflows/go.yml']
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: go-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  go:
+    name: go ${{ matrix.go }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # Sempre o patch mais recente de cada série (check-latest), para o
+        # govulncheck não reprovar por stdlib velha. O go.mod fica em go 1.25.0.
+        go: ['1.25.x', '1.26.x']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ matrix.go }}
+          check-latest: true
+          cache-dependency-path: go/go.sum
+      - name: go mod tidy sem mudanças
+        run: make go-tidy
+      - name: Deriva da geração e da cópia da spec
+        run: make go-gen
+      - name: Build, vet e testes
+        run: make go-test
+      - name: Testes com -race e cobertura
+        run: make go-race
+      - name: golangci-lint v2
+        run: make go-lint
+      # A série 1.25 saiu de suporte: mesmo no último patch (1.25.14, conferido em
+      # 30/10/2026) o govulncheck acusa vulnerabilidades da stdlib corrigidas só
+      # na 1.26. O que se checa é a toolchain mais nova; a 1.25 segue na matriz
+      # para provar que o módulo (go 1.25.0) compila e passa nos testes.
+      - name: govulncheck
+        if: matrix.go == '1.26.x'
+        run: make go-vuln
+      - name: Dependências
+        run: make go-deps
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: cobertura-go-${{ matrix.go }}
+          path: out/go-cobertura.out
+          if-no-files-found: error
