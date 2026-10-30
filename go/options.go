@@ -108,6 +108,11 @@ func WithTokenSource(ts oauth2.TokenSource) Option {
 
 // WithHTTPClient troca o cliente HTTP. O Timeout dele fica intocado; o prazo
 // de cada tentativa é o de WithTimeout.
+//
+// O cliente padrão do SDK não segue redirecionamentos, para que os cabeçalhos
+// do agente não saiam para outro host. Um cliente próprio segue a política
+// dele: para manter essa proteção, defina CheckRedirect devolvendo
+// http.ErrUseLastResponse.
 func WithHTTPClient(hc *http.Client) Option {
 	return optionFunc(func(c *config) { c.httpClient = hc })
 }

@@ -4,7 +4,28 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 
 ## [Não lançado]
 
+## [0.1.0]
+
+Primeira versão. Segue a spec `openapi/v0.1.0`; as pré-versões `go/v0.1.0-rc.N` seguem a `openapi/v0.1.0-rc.N` correspondente. Requer Go 1.26 ou mais novo.
+
 ### Adicionado
 
+- `NewClient` com o ambiente como primeiro argumento (`Sandbox`, `Production` ou um `Environment` próprio, como o do mock) e as opções `WithCredentials`, `WithTokenSource`, `WithAgent`, `WithTimeout`, `WithHTTPClient`, `WithRetries`, `WithRateLimits`, `WithLogger` e `WithUserAgent`.
+- Token de client credentials com cache, renovado 30 s antes de vencer; num 403 `ERR_CREDENCIAL_INVALIDA` do autorizador com token já aceito, renova e repete uma vez.
+- Limitador local por processo: 900 requisições a cada 5 minutos no sandbox; em produção, também 9.000 nas medições.
+- `Migracoes`: `Listar`, `ListarPagina`, `Obter`, `Criar`, `Editar`, `ConferirCriacao` e `ConferirEdicao`. `Medicoes`: `Listar` e `ListarPagina`. `Client.Do` para as rotas sem método, como as de solicitações.
+- Retries só em leitura, salvo quando nada saiu ou o autorizador recusou antes do backend. Escrita sem resultado conhecido devolve `*UncertainResultError` com a chave natural.
+- Erros `*APIError` com `Code`, `Message`, `RequestID` e `GatewayErrorType`, e as sentinelas `ErrCredencialInvalida`, `ErrValidacaoCampos`, `ErrPerfilVarejistaObrigatorio`, `ErrMigracaoSolicitada`, `ErrNotFound`, `ErrRateLimited` e `ErrCursorRepetido`.
+- Tipos `Migracao`, `Medicao`, `Mes` (três formatos de mês), `Documento` (mascarado em `fmt`, `slog` e JSON) e `Decimal` (exato, aceita número ou texto).
+- Log opcional com `slog`, sem query, corpo, token, credenciais nem dado pessoal.
 - `Problem`, `ProblemFrom`, `APIError.Problem`, `UncertainResultError.Problem`, `ProblemContentType` e `CatalogoErrosURL`: os erros do SDK no formato da RFC 9457, ligados ao catálogo `docs/erros.md`.
 - `ErrArgumentoInvalido`: casa com a validação local feita antes de enviar. O texto dos erros não muda.
+
+### Limites conhecidos
+
+- A paginação por `indexProximaPagina` nunca foi vista funcionando; um cursor repetido encerra a iteração com `ErrCursorRepetido`.
+- Não se sabe se o PUT de edição é parcial ou total: `Editar` lê a migração e envia o objeto inteiro, sem proteção contra outra escrita no meio.
+- A unidade de `Consumo` não é declarada pela API.
+- O limitador vale por processo; vários processos no mesmo IP ou agente somam requisições sem que ele saiba.
+
+[Não lançado]: go/v0.1.0...HEAD
