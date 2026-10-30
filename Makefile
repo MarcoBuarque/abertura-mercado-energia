@@ -65,8 +65,9 @@ go-lint:
 go-vuln:
 	cd go && go run golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION) ./...
 
-hooks: $(GITLEAKS) ## instala o gancho de pre-commit
-	install -m 755 scripts/pre-commit .git/hooks/pre-commit
-	@echo "gancho instalado em .git/hooks/pre-commit"
+hooks: $(GITLEAKS) ## instala o gancho de pre-commit (funciona em worktree)
+	@dir="$$(git rev-parse --git-path hooks)" && mkdir -p "$$dir" && \
+		install -m 755 scripts/pre-commit "$$dir/pre-commit" && \
+		echo "gancho instalado em $$dir/pre-commit"
 
 ci: segredos testa-regras spec-lint spec-exemplos spec-diff docs mock mock-smoke go-gen go-test go-lint go-vuln
