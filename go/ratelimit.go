@@ -26,7 +26,7 @@ const rajadaMaxima = 30
 // limitadores guarda um balde por grupo. Balde nil não limita.
 //
 // O limite é por processo: vários processos com o mesmo IP ou agente somam
-// requisições na CCEE sem que este limitador saiba.
+// requisições na API sem que este limitador saiba.
 type limitadores struct {
 	geral, medicoes *rate.Limiter
 }
@@ -76,7 +76,7 @@ func (l limitadores) esperar(ctx context.Context, g grupoLimite) error {
 }
 
 // transporteLimitado faz cada requisição do cliente de token esperar o balde
-// geral, porque o pedido de token também conta no limite da CCEE.
+// geral, porque o pedido de token também conta no limite da API.
 type transporteLimitado struct {
 	base    http.RoundTripper
 	limites limitadores
