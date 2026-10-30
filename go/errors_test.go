@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"unicode"
 )
 
 // respostaDe monta uma resposta com status e cabeçalhos para os testes.
@@ -350,4 +351,38 @@ func TestErroSemURL_WhenURLError_RemoveURL(t *testing.T) {
 	if erroSemURL(nil) != nil {
 		t.Error("nil deveria continuar nil")
 	}
+}
+
+// FuzzDecodificarErro prova a decodificação tolerante do corpo de erro: nunca
+// entra em pânico, guarda no máximo 4 KiB do corpo e monta um Error() de uma
+// linha, sem caracteres de controle e com código e mensagem cortados.
+func FuzzDecodificarErro(f *testing.F) {
+	for _, s := range []struct {
+		status int
+		corpo  string
+	}{
+		{400, `{"timestamp":"2027-01-10T10:00:00.000-03:00","status":400,"error":"ERR_VALIDACAO_CAMPOS","message":"Inventado"}`},
+		{403, `{"timestamp" : "2027-01-10T10:00:00-03:00", "status" : 403, "error" : "ERR_CREDENCIAL_INVALIDA", "message" : "Inventado"}`},
+		{502, `Bad Gateway`},
+		{500, `{"error":7,"message":null}`},
+		{400, `{"error":"ERR_X\n","message":"linha1\r\nlinha2"}`},
+		{0, ``},
+	} {
+		f.Add(s.status, []byte(s.corpo))
+	}
+	f.Fuzz(func(t *testing.T, status int, corpo []byte) {
+		e := decodificarErro("listarMigracoes", &http.Response{StatusCode: status, Header: http.Header{}}, corpo)
+		if n := len(e.RawBody()); n > limiteCorpoErro {
+			t.Fatalf("RawBody com %d bytes, mais que %d", n, limiteCorpoErro)
+		}
+		msg := e.Error()
+		if strings.ContainsFunc(msg, unicode.IsControl) {
+			t.Fatalf("Error() com caractere de controle: %q", msg)
+		}
+		// "abertura: listarMigracoes: HTTP <status> <código>: <mensagem>"
+		teto := len([]rune(fmt.Sprintf("abertura: listarMigracoes: HTTP %d", status))) + 1 + limiteCodigoErro + 2 + limiteMensagemErro
+		if n := len([]rune(msg)); n > teto {
+			t.Fatalf("Error() com %d caracteres, mais que %d", n, teto)
+		}
+	})
 }
