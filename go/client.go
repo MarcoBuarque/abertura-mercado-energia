@@ -14,7 +14,7 @@ import (
 	"github.com/MarcoBuarque/abertura-mercado-energia/go/internal/version"
 )
 
-// Environment aponta o SDK para um ambiente da CCEE.
+// Environment aponta o SDK para um ambiente da API.
 type Environment struct {
 	// Name aparece só em mensagens.
 	Name string
@@ -37,7 +37,7 @@ type RateLimit struct {
 
 // Sandbox e Production são os ambientes da documentação pública.
 var (
-	Sandbox = Environment{ //nolint:gosec // G101: a TokenURL é pública, da documentação da CCEE; não há credencial aqui
+	Sandbox = Environment{ //nolint:gosec // G101: a TokenURL é pública, vem da documentação; não há credencial aqui
 		Name:     "sandbox",
 		APIURL:   "https://sandbox-api-abm.ccee.org.br",
 		TokenURL: "https://sandbox-api-abm.ccee.org.br/sso/oauth/token",
@@ -45,7 +45,7 @@ var (
 		// usam o balde geral.
 		RateLimits: RateLimits{Default: RateLimit{Requests: 900, Per: 5 * time.Minute}},
 	}
-	Production = Environment{ //nolint:gosec // G101: a TokenURL é pública, da documentação da CCEE; não há credencial aqui
+	Production = Environment{ //nolint:gosec // G101: a TokenURL é pública, vem da documentação; não há credencial aqui
 		Name:     "production",
 		APIURL:   "https://api-abm.ccee.org.br",
 		TokenURL: "https://api-abm.ccee.org.br/sso/oauth/token",
@@ -62,7 +62,7 @@ const (
 	retriesPadrao = 2
 )
 
-// Client fala com a API de abertura de mercado da CCEE.
+// Client fala com a API de abertura de mercado.
 type Client struct {
 	// Migracoes e Medicoes são as operações públicas do SDK. Para uma rota que
 	// o SDK ainda não cobre, use [Client.Do].
@@ -94,7 +94,7 @@ type Client struct {
 // variáveis de ambiente por conta própria.
 //
 // O limitador local vale por processo: vários processos no mesmo IP ou agente
-// somam requisições na CCEE sem que ele saiba. Toda resposta da API fecha a
+// somam requisições na API sem que ele saiba. Toda resposta da API fecha a
 // conexão, então cada requisição abre TLS e a latência sobe; os prazos ficam
 // por conta de WithTimeout e do ctx de cada chamada.
 func NewClient(env Environment, opts ...Option) (*Client, error) {

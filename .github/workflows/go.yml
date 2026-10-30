@@ -25,9 +25,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Sempre o patch mais recente de cada série (check-latest), para o
-        # govulncheck não reprovar por stdlib velha. O go.mod fica em go 1.25.0.
-        go: ['1.25.x', '1.26.x']
+        # As duas séries com suporte, sempre no patch mais recente (check-latest),
+        # para o govulncheck não reprovar por stdlib velha. O go.mod fica em go 1.26.0.
+        go: ['1.26.x', '1.27.x']
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -47,12 +47,7 @@ jobs:
         run: make go-race
       - name: golangci-lint v2
         run: make go-lint
-      # A série 1.25 saiu de suporte: mesmo no último patch (1.25.14, conferido em
-      # 30/10/2026) o govulncheck acusa vulnerabilidades da stdlib corrigidas só
-      # na 1.26. O que se checa é a toolchain mais nova; a 1.25 segue na matriz
-      # para provar que o módulo (go 1.25.0) compila e passa nos testes.
       - name: govulncheck
-        if: matrix.go == '1.26.x'
         run: make go-vuln
       - name: Dependências
         run: make go-deps

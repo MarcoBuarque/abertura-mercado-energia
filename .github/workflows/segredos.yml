@@ -28,3 +28,5 @@ jobs:
           cache: false
       - name: Guarda de segredos (prova as regras e varre arquivos e histórico)
         run: make segredos
+      - name: Nome do operador só no aviso de não afiliação
+        run: make checa-marca
