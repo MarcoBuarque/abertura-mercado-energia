@@ -22,7 +22,7 @@ Como o SDK entrega, com `abertura.ProblemFrom(err)`:
 {"type":"https://marcobuarque.github.io/abertura-mercado-energia/erros#migracao-solicitada","title":"Migração já solicitada","status":400,"detail":"Operação criarMigracao: Já existe migração ativa para a mesma unidade consumidora e concessionária. Se a criação anterior ficou incerta, ela provavelmente valeu: confira.","code":"ERR_MIGRACAO_SOLICITADA","operation":"criarMigracao","requestId":"req-inventado-0001","retryable":false,"uncertain":false}
 ```
 
-O endereço de `type` vale a partir da publicação do repositório; até lá, leia este arquivo. Para quem não usa Go, a seção "Problem Details em um cliente Python" de [`clientes.md`](clientes.md) mostra a conversão.
+Esta página é publicada no GitHub Pages a cada tag final `openapi/vX.Y.Z`, só com o repositório público (`make docs` gera `out/docs/erros/index.html`); até a primeira publicação o endereço de `type` não responde, e este arquivo é a fonte. Para quem não usa Go, a seção "Problem Details em um cliente Python" de [`clientes.md`](clientes.md) mostra a conversão.
 
 ## Índice
 

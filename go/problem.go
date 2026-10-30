@@ -14,11 +14,15 @@ import (
 // APIs). Use-o no cabeçalho Content-Type ao devolver um [Problem] como JSON.
 const ProblemContentType = "application/problem+json"
 
-// CatalogoErrosURL é a página do catálogo de erros (docs/erros.md). O campo
-// Type de um [Problem] é essa URL mais "#" e o slug da entrada.
+// CatalogoErrosURL é a página do catálogo de erros. O campo Type de um
+// [Problem] é essa URL mais "#" e o slug da entrada.
 //
-// A página vale a partir da publicação do repositório: até lá o endereço ainda
-// não responde, e o catálogo se lê em docs/erros.md.
+// A página é gerada de docs/erros.md por "make docs" (out/docs/erros/index.html,
+// com um id por slug) e publicada no GitHub Pages, ao lado da descrição Redoc,
+// pelo workflow release-openapi a cada tag final openapi/vX.Y.Z (pré-versões
+// -rc.N não publicam) e só com o repositório público. Até a primeira
+// publicação o endereço não responde, e o catálogo se lê em docs/erros.md. O
+// Pages redireciona /erros para /erros/ e o navegador mantém o #fragmento.
 const CatalogoErrosURL = "https://marcobuarque.github.io/abertura-mercado-energia/erros"
 
 // Problem é um erro do SDK no formato da RFC 9457 (Problem Details for HTTP

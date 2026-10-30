@@ -13,6 +13,7 @@ VACUUM_IMAGE            := ghcr.io/daveshanley/vacuum@sha256:5d600e8df2a9c1b110f
 OASDIFF_IMAGE           := docker.io/tufin/oasdiff@sha256:82b1840a77335562bb11ce95f77ad31745a0c6f3a770929333ed1c5ef466e400 # v1.35.0, amd64+arm64
 PRISM_IMAGE             := docker.io/stoplight/prism@sha256:3f6d29e31bfe0b99587f0f6f79c423858dd6a2ea7e1e4658273ed930a78a9acf # `prism --version` 5.15.10 (a tag 5.16.0 não existe), só amd64
 REDOCLY_IMAGE           := docker.io/redocly/cli@sha256:d39a229ebd8250fea62f44c377ddb04797e8a155140eda49db17f1caaa9334ff # 2.72.1, amd64+arm64
+PANDOC_IMAGE            := docker.io/pandoc/core@sha256:c7127705b9d84c1b4acbbe411a86e3a6d67ac57870654dc378b6fe636ab747df # 3.8 (pandoc 3.8.3), amd64+arm64
 OPENAPI_GENERATOR_IMAGE := docker.io/openapitools/openapi-generator-cli@sha256:a304ddf1e2e5f24f68fa3153568d6174cea4959d09aa8e3db6d526fd0782326d # v7.26.0, amd64+arm64
 
 # info.version da spec: vira o rótulo da imagem do mock (ARG SPEC_VERSION).
@@ -49,10 +50,13 @@ spec-diff: ## compara a spec com a última tag openapi/v* (oasdiff); sem tag, pu
 	OASDIFF_IMAGE=$(OASDIFF_IMAGE) scripts/oasdiff.sh
 	OASDIFF_IMAGE=$(OASDIFF_IMAGE) scripts/testa-oasdiff.sh
 
-docs: ## gera a página Redoc em out/docs/index.html (não versionada)
+docs: ## gera a página Redoc (out/docs/index.html) e o catálogo de erros (out/docs/erros/index.html), não versionados
 	mkdir -p out/docs
 	docker run --rm -v "$(CURDIR)":/work -w /work $(REDOCLY_IMAGE) build-docs openapi/abertura.yaml -o out/docs/index.html --inlineBundle --template docs/template.hbs --config docs/redocly.yaml
 	@grep -q "descrição não oficial" out/docs/index.html && echo "faixa 'descrição não oficial' presente em out/docs/index.html"
+	PANDOC_IMAGE=$(PANDOC_IMAGE) scripts/gera-erros.sh
+	scripts/testa-confere-erros.sh
+	scripts/confere-erros.sh
 
 mock: ## constrói e sobe o mock Prism em http://localhost:4010 (docker compose -f mock/compose.yaml down para parar)
 	docker compose -f mock/compose.yaml up -d --build --wait --wait-timeout 180
