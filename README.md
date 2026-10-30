@@ -80,7 +80,7 @@ O teste de contrato (`go test -tags sandbox ./contrato/...`, em `go/`) é manual
 
 ## Contato
 
-[seu e-mail]
+Dúvidas e problemas de uso: abra uma issue neste repositório. Outros assuntos: contato@quantogasta.com.br.
 
 ## Licença
 

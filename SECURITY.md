@@ -2,7 +2,7 @@
 
 ## Como reportar uma falha
 
-Escreva para [seu e-mail] com o assunto "segurança". Esse é o canal até o repositório ficar público; depois dele, o canal passa a ser o relato privado de vulnerabilidade do próprio repositório.
+Use o relato privado de vulnerabilidade do repositório (aba *Security*, botão *Report a vulnerability*). Se não puder usá-lo, escreva para contato@quantogasta.com.br com o assunto "segurança". Não abra issue pública para falha de segurança.
 
 Descreva o que acontece, como reproduzir e qual o efeito. Respondo em até 7 dias.
 
