@@ -1143,15 +1143,6 @@ components:
         - EXPIRADA
         - APROVADA_COM_PENDENCIA
 
-    TipoDocumento:
-      type: string
-      description: Tipo do documento do titular.
-      x-extensible-enum: [CPF, CNPJ]
-
-    SimNao:
-      type: string
-      x-extensible-enum: [SIM, NAO]
-
     MigracaoResumo:
       type: object
       description: Migração no formato da listagem (v1.1).
