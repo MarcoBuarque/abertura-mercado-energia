@@ -1,0 +1,8 @@
+.env
+.env.*
+*.postman_collection.json
+postman*.json
+coverage.*
+out/
+contrato/out/
+.DS_Store
