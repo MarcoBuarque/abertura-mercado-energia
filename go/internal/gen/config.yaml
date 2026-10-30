@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+package: gen
+generate:
+  models: true
+output: gen.go
+output-options:
+  overlay:
+    path: ../../overlay.yaml
+  prefer-skip-optional-pointer: true
+  prefer-skip-optional-pointer-on-container-types: true

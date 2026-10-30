@@ -56,8 +56,9 @@ mock: ## constrói e sobe o mock Prism em http://localhost:4010 (docker compose 
 mock-smoke: ## sobe o mock, chama as 10 operações e derruba o mock
 	scripts/mock-smoke.sh
 
-go-gen: ## pendente: task 07
-	@echo "pendente: task 07"
+go-gen: ## regenera os modelos e a cópia da spec e falha se algo mudar (deriva)
+	cd go && go generate ./...
+	git diff --exit-code -- go
 
 go-test:
 	cd go && go build ./... && go vet ./... && go test ./...

@@ -1,0 +1,6 @@
+{
+  "timestamp": "2027-01-10T10:00:00Z",
+  "status": 403,
+  "error": "ERR_CREDENCIAL_INVALIDA",
+  "message": "Inventado: token, agente ou perfil não aceitos"
+}
