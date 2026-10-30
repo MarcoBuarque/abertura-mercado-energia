@@ -124,7 +124,14 @@ func TestContrato(t *testing.T) {
 			t.Fatalf("ListarPagina: %s", descreve(err))
 		}
 		achado(t, "token: aceito com o grant_type que o SDK envia (client_credentials)")
-		achado(t, "lista de um mês: %d itens, cursor presente: %v", len(pag.Itens), pag.Proxima != "")
+		fora := 0
+		for _, m := range pag.Itens {
+			if m.Mes != mes {
+				fora++
+			}
+		}
+		achado(t, "lista de um mês: %d itens, %d com mês de referência fora do filtro AAAA-MM (0 com itens = o filtro vale; D2), cursor presente: %v",
+			len(pag.Itens), fora, pag.Proxima != "")
 		if len(pag.Itens) > 0 {
 			primeiro = pag.Itens[0]
 		}
