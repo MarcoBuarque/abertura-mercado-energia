@@ -1,5 +1,5 @@
 # Versões fixadas. Confirmadas nas páginas de releases em 30/10/2026.
-GO_MIN                := 1.25
+GO_MIN                := 1.26
 OAPI_CODEGEN_VERSION  := v2.8.1
 KIN_OPENAPI_VERSION   := v0.152.0
 GOLANGCI_LINT_VERSION := v2.15.0
