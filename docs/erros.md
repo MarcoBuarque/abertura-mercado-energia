@@ -44,7 +44,7 @@ O endereço de `type` vale a partir da publicação do repositório; até lá, l
 | [Chamada cancelada](#chamada-cancelada) | nenhum | sem resposta | só você decide | incerto se já saiu |
 | [Resultado incerto da escrita](#resultado-incerto) | depende da causa | depende da causa | não se aplica | não: confira |
 | [Cursor de paginação repetido](#cursor-repetido) | nenhum | sem erro HTTP | não | não se aplica |
-| [Falha ao obter o token](#falha-ao-obter-token) | pode vir do endpoint | do endpoint | sim (429 e 5xx) | não se aplica |
+| [Falha ao obter o token](#falha-ao-obter-token) | pode vir do endpoint | do endpoint | você pode, em 429 e 5xx (o SDK não repete) | idem |
 | [Argumento inválido](#argumento-invalido) | nenhum | sem requisição | não | não |
 | [Erro fora do catálogo](#fora-do-catalogo) | nenhum | sem resposta | depende | depende |
 
@@ -70,7 +70,7 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 
 - **Código da API:** `ERR_CREDENCIAL_INVALIDA`.
 - **Status:** 403, **sem** `x-amzn-ErrorType`.
-- **Quando acontece:** o código vem do backend e não do autorizador. Não foi observado; o SDK o separa do caso anterior porque a regra de renovação não vale aqui: o pedido pode ter sido processado.
+- **Quando acontece:** o código vem do backend e não do autorizador. Não foi observado; o SDK o separa do caso anterior porque a regra de renovação só vale para a recusa do autorizador, que acontece antes do backend. Sem essa marca, o SDK não renova o token nem repete.
 - **O que fazer:** confira credencial, agente, perfil e ambiente. Não repita às cegas.
 - **Repetir:** GET e escrita, não.
 - **Sentinela Go:** `ErrCredencialInvalida`.
@@ -81,7 +81,7 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 
 - **Código da API:** `ERR_VALIDACAO_CAMPOS`.
 - **Status:** 400.
-- **Quando acontece:** um campo do corpo ou da consulta foi recusado (formato de mês, documento, e-mail, valor fora da lista). A API valida **um campo por vez** e para na primeira falha: corrigir um pode revelar o próximo.
+- **Quando acontece:** um campo do corpo ou da consulta foi recusado. No sandbox, a UC com letras, com menos de 15 dígitos ou com dígito verificador errado deu este código; os outros campos (mês, documento, e-mail) não foram testados um a um. A API valida **um campo por vez** e para na primeira falha: corrigir um pode revelar o próximo.
 - **O que fazer:** leia a `message` (em `APIError.Message`), corrija o campo e envie de novo. Num cliente gerado, mande o mês como `AAAA-MM`.
 - **Repetir:** GET e escrita, não, sem corrigir antes.
 - **Sentinela Go:** `ErrValidacaoCampos`.
@@ -93,7 +93,7 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 - **Código da API:** `ERR_PERFIL_VAREJISTA_OBRIGATORIO`.
 - **Status:** 400.
 - **Quando acontece:** a listagem de migrações foi pedida sem o perfil na consulta. O perfil é exigido no cabeçalho **e** na consulta.
-- **O que fazer:** informe o perfil. O SDK já o envia nos dois lugares; num cliente próprio, acrescente `codigoPerfil` à consulta.
+- **O que fazer:** informe o perfil. O SDK já o envia nos dois lugares; num cliente próprio, acrescente `codigoPerfilVarejista` à consulta (o cabeçalho continua `codigoPerfil`).
 - **Repetir:** GET e escrita, não, sem corrigir antes.
 - **Sentinela Go:** `ErrPerfilVarejistaObrigatorio`.
 - **Confiança:** visto no sandbox.
@@ -124,7 +124,7 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 ## Recusa sem código da API
 
 - **Código da API:** nenhum. O corpo não é JSON, ou o campo `error` não tem a forma de um código.
-- **Status:** 4xx que não seja 404 nem 429; por exemplo, um 403 sem `ERR_*`.
+- **Status:** 4xx que não seja 404 nem 429 (por exemplo, um 403 sem `ERR_*`), ou um 3xx, que o SDK não segue.
 - **Quando acontece:** uma recusa de um componente que não fala o formato da API. Hipótese não verificada: um limite de taxa por IP, aplicado por um firewall de aplicação, pode responder 403.
 - **O que fazer:** use o `status` e o `requestId` para investigar com o operador. Não repita: um 403 sem código `ERR_*` não é repetido pelo SDK.
 - **Repetir:** GET e escrita, não.
@@ -147,7 +147,7 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 
 - **Código da API:** nenhum.
 - **Status:** 429, com ou sem a marca `x-amzn-ErrorType` do gateway.
-- **Quando acontece:** o gateway limitou a taxa. O limite conhecido é de 1.000 requisições por IP a cada 5 minutos (900 no geral e 9.000 nas medições, no limitador local do SDK). Nunca foi observado.
+- **Quando acontece:** o gateway limitou a taxa. O limite conhecido é de 1.000 requisições por IP a cada 5 minutos e, em produção, de 10.000 por agente nas medições; o limitador local do SDK usa 900 e 9.000, com folga. Nunca foi observado.
 - **O que fazer:** espere. O SDK repete leituras sozinho, com espera exponencial; `Retry-After`, se vier, manda (teto de 30 s). Se chegou até você, reduza o ritmo.
 - **Repetir:** GET, sim, com espera. Escrita: só se a resposta traz a marca do gateway (ele limitou antes do backend); sem a marca, não.
 - **Sentinela Go:** `ErrRateLimited`.
@@ -168,7 +168,7 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 ## Falha no gateway da API
 
 - **Código da API:** nenhum.
-- **Status:** 502 e 504, em geral com texto puro (não JSON) no corpo.
+- **Status:** 502 e 504. Não observados; o corpo pode não seguir o formato de quatro campos (até texto puro), e o SDK aceita qualquer corpo.
 - **Quando acontece:** o gateway não conseguiu falar com o backend, ou o backend demorou mais que o corte do gateway (perto de 30 s).
 - **O que fazer:** igual ao [erro interno](#erro-interno): leitura, tente mais tarde; escrita, confira antes de repetir.
 - **Repetir:** GET, sim. POST e PUT, não.
@@ -193,7 +193,7 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 - **Status:** nenhum.
 - **Quando acontece:** a tentativa passou de 30 s (ou do `WithTimeout`), o prazo do `context` venceu, ou o limitador local não liberou a vez a tempo. Casa com `context.DeadlineExceeded` por `errors.Is`.
 - **O que fazer:** aumente o prazo se a operação for pesada; reduza o ritmo se foi o limitador local.
-- **Repetir:** GET, sim. Escrita enviada, não: [incerto](#resultado-incerto).
+- **Repetir:** GET, sim, quando foi o prazo da tentativa; se foi o prazo do seu `context`, o SDK para e a decisão é sua. Escrita enviada, não: [incerto](#resultado-incerto).
 - **Sentinela Go:** `context.DeadlineExceeded`.
 - **Confiança:** do SDK.
 
@@ -216,10 +216,10 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 - **Quando acontece:** num `Criar` ou `Editar` (ou num `Do` de escrita), a requisição saiu, mas a resposta não diz se foi aplicada: erro de rede depois do envio, tempo esgotado, 5xx, ou 2xx com corpo ilegível. O erro é um `*UncertainResultError`, com a causa em `Err` e a chave natural em `Key`.
 - **O que fazer, passo a passo:**
   1. Não repita a escrita às cegas.
-  2. Pegue a chave: `var inc *abertura.UncertainResultError; errors.As(err, &inc)`.
-  3. Para uma criação, chame `ConferirCriacao(ctx, inc.Key)` (com a `ChaveMigracao`); lista vazia quer dizer "não criada", e então você pode repetir `Criar`. Achou a migração: a criação valeu.
-  4. Para uma edição, chame `ConferirEdicao(ctx, inc.Key)` (com a `ChaveEdicao`); o segundo retorno diz se a migração já tem os campos desejados.
-  5. Só repita a escrita se a conferência disser que ela não foi aplicada. Se você repetir `Criar` com a migração ativa, recebe [`ERR_MIGRACAO_SOLICITADA`](#migracao-solicitada), que também indica que a primeira valeu.
+  2. Pegue o erro: `var inc *abertura.UncertainResultError; errors.As(err, &inc)`. A chave fica em `inc.Key`, do tipo `ChaveNatural`; converta para o tipo concreto com `k, ok := inc.Key.(abertura.ChaveMigracao)` (ou `abertura.ChaveEdicao`).
+  3. Para uma criação, chame `ConferirCriacao(ctx, k)` com a `ChaveMigracao`; lista vazia quer dizer "não criada", e então você pode repetir `Criar`. Achou alguma: confira `Status` e `DataSolicitacao`, porque uma migração anterior da mesma UC e mês (cancelada, por exemplo) também volta.
+  4. Para uma edição, chame `ConferirEdicao(ctx, k)` com a `ChaveEdicao`; o segundo retorno diz se a migração já tem os campos desejados.
+  5. Só repita a escrita se a conferência disser que ela não foi aplicada. Se você repetir `Criar` com a migração ativa, recebe [`ERR_MIGRACAO_SOLICITADA`](#migracao-solicitada), que indica que a primeira provavelmente valeu: confira de novo.
   6. Em `Do`, `Key` vem vazia: confira por conta própria.
 - **Repetir:** não, até conferir. No Problem: `uncertain` verdadeiro e `retryable` falso.
 - **Sentinela Go:** nenhuma; use `errors.As` com `*UncertainResultError`. A `Key` nunca vai ao Problem, porque pode conter a UC.
@@ -231,7 +231,7 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 - **Código da API:** nenhum.
 - **Status:** nenhum erro HTTP; a API respondeu 200.
 - **Quando acontece:** a API devolveu como próxima página um cursor já usado. A paginação nunca foi vista funcionando no sandbox; sem a guarda, um cursor fixo giraria para sempre. O iterador `Listar` encerra com este erro.
-- **O que fazer:** use `ListarPagina` para controlar o cursor e abra uma issue com o `requestId` da última página.
+- **O que fazer:** use `ListarPagina` para controlar o cursor e abra uma issue com o `request_id` da última página, que sai no log do SDK (`WithLogger`); o erro não o traz.
 - **Repetir:** não.
 - **Sentinela Go:** `ErrCursorRepetido`.
 - **Confiança:** do SDK.
@@ -243,7 +243,7 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 - **Status:** o do endpoint de token (`operation` vale `obterToken`).
 - **Quando acontece:** o pedido de token foi recusado ou falhou: `client_id` ou `client_secret` errados, ambiente trocado, endpoint fora do ar. Erros de rede ao buscar o token aparecem como [falha de rede](#erro-de-transporte) ou [tempo esgotado](#tempo-esgotado). O erro nunca traz o formulário nem o corpo.
 - **O que fazer:** confira as credenciais e o ambiente (`Sandbox` ou `Production`).
-- **Repetir:** buscar token não tem efeito colateral, então 429 e 5xx são seguros de repetir; 4xx, não.
+- **Repetir:** o SDK não repete o pedido de token sozinho. Buscar token não tem efeito colateral, então 429 e 5xx são seguros de repetir (`retryable` verdadeiro); 4xx, não.
 - **Sentinela Go:** nenhuma específica; `ErrCredencialInvalida` casa se o endpoint devolver esse código.
 - **Confiança:** baixa.
 
@@ -263,7 +263,7 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 
 - **Código da API:** nenhum.
 - **Status:** nenhum.
-- **Quando acontece:** `ProblemFrom` recebeu um erro que não vem do SDK (ou uma falha sem classe própria, como uma resposta 2xx de leitura com corpo ilegível). O Problem usa `type` igual a `about:blank`, como a RFC 9457 manda para erro sem semântica própria, e **não** copia o texto do erro.
+- **Quando acontece:** `ProblemFrom` recebeu um erro que não vem do SDK (ou uma falha sem classe própria, como uma resposta 2xx de leitura com corpo ilegível). O Problem usa `type` igual a `about:blank`, como a RFC 9457 prevê para erro sem semântica própria, e **não** copia o texto do erro.
 - **O que fazer:** trate o erro original; ele continua em suas mãos.
 - **Repetir:** depende; o Problem diz `retryable` falso por prudência.
 - **Sentinela Go:** nenhuma.

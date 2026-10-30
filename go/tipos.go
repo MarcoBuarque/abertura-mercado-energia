@@ -175,6 +175,10 @@ type EdicaoMigracao struct {
 // ChaveMigracao identifica uma migração criada pelos seus dados: unidade
 // consumidora e concessionária com migração ativa. Serve para conferir, depois
 // de um resultado incerto, se a criação aconteceu.
+//
+// fmt e slog mostram a UC mascarada; json.Marshal, não: o JSON serve para
+// guardar a chave e conferir depois, e leva a UC em claro. Guarde-o como o
+// resto do dado pessoal e não o use em log.
 type ChaveMigracao struct {
 	UC             string
 	Concessionaria int
@@ -203,6 +207,11 @@ func (ChaveMigracao) chaveNatural() {}
 // ChaveEdicao identifica uma edição pelo id da migração e pelos campos
 // desejados. Serve para conferir, depois de um resultado incerto, se a edição
 // aconteceu.
+//
+// fmt e slog mostram só o id e o que muda; json.Marshal leva o e-mail em claro
+// e o documento mascarado, e o Unmarshal desse JSON falha no documento. Para
+// guardar a chave, guarde os campos à parte (o documento por
+// Desejado.Documento.Numero()), como dado pessoal.
 type ChaveEdicao struct {
 	ID       string
 	Desejado EdicaoMigracao

@@ -44,6 +44,8 @@ type Problem struct {
 	Title string
 	// Status é o status HTTP da resposta da API. Vale 0 quando não houve
 	// resposta (falha de rede, validação local); nesse caso sai omitido do JSON.
+	// O [ErrNotFound] de uma consulta por id que voltou vazia leva 404, embora
+	// a API tenha respondido 200.
 	Status int
 	// Detail explica esta ocorrência com texto do catálogo e o nome da
 	// operação. Nunca traz dado pessoal.
@@ -61,7 +63,7 @@ type Problem struct {
 	RequestID string
 	// Retryable diz se é seguro repetir a mesma chamada agora, sem conferir
 	// nada antes. Segue a tabela de retries do SDK: leituras repetem em 429 e
-	// 5xx; escritas só quando nada foi enviado ou o gateway limitou.
+	// 5xx (menos 501); escritas só quando nada foi enviado ou o gateway limitou.
 	Retryable bool
 	// Uncertain marca uma escrita de resultado incerto: confira o estado
 	// (ConferirCriacao, ConferirEdicao) antes de repetir.
@@ -161,7 +163,7 @@ var catalogo = map[string]entradaCatalogo{
 	},
 	"falha-do-gateway": {
 		titulo:  "Falha no gateway da API",
-		detalhe: "O gateway da API devolveu 502 ou 504, em geral com texto puro em vez de JSON.",
+		detalhe: "O gateway da API devolveu 502 ou 504, talvez sem o formato de erro da API.",
 	},
 	"erro-de-transporte": {
 		titulo:  "Falha de rede",
@@ -242,8 +244,10 @@ func novoProblem(slug string, status int, op string) Problem {
 	return p
 }
 
-// ProblemFrom traduz um erro do SDK em [Problem]. Aceita o erro direto ou
-// embrulhado com %w. Um erro que não é do SDK vira o Problem "about:blank"
+// ProblemFrom traduz um erro do SDK em [Problem]. Aceita o erro direto,
+// embrulhado com %w ou dentro de errors.Join: a busca é a de errors.As e
+// errors.Is, e um [*UncertainResultError] na árvore ganha de um [*APIError].
+// Um erro que não é do SDK vira o Problem "about:blank"
 // (entrada "fora-do-catalogo"), sem o texto do erro. ProblemFrom(nil) devolve
 // o valor zero.
 func ProblemFrom(err error) Problem {
