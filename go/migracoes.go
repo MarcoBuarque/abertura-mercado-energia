@@ -177,7 +177,10 @@ func (m *Migracoes) Editar(ctx context.Context, id string, mudar func(*EdicaoMig
 // ConferirCriacao diz o que existe para a chave depois de um resultado
 // incerto em [Migracoes.Criar]. Lista pela UC e pelo mês, filtra a
 // concessionária e devolve o que achar, da mais recente para a mais antiga.
-// Resultado vazio quer dizer "não criada".
+// Resultado vazio quer dizer "não criada". O filtro não olha o status: uma
+// migração anterior da mesma UC e mês (cancelada, por exemplo) também volta,
+// então confira Status e DataSolicitacao antes de concluir que a criação
+// aconteceu.
 func (m *Migracoes) ConferirCriacao(ctx context.Context, k ChaveMigracao, opts ...CallOption) ([]Migracao, error) {
 	filtro := FiltroMigracoes{De: k.Mes, Ate: k.Mes, UC: k.UC, Perfil: k.Perfil}
 	achadas := make([]Migracao, 0)
