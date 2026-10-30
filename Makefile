@@ -6,6 +6,7 @@ GOLANGCI_LINT_VERSION := v2.15.0
 GOVULNCHECK_VERSION   := v1.1.4
 GITLEAKS_VERSION      := v8.30.1
 ACTIONLINT_VERSION    := v1.7.12
+YQ_VERSION            := v4.54.1
 
 # Imagens por digest (a tag fica só como lembrete da versão).
 VACUUM_IMAGE            := ghcr.io/daveshanley/vacuum@sha256:5d600e8df2a9c1b110fb5683c61c9e80e0c0574a37c118d3b1ff1868710050a5 # v0.36.0, amd64+arm64
@@ -22,7 +23,7 @@ export GITLEAKS
 $(GITLEAKS): Makefile
 	GOBIN=$(CURDIR)/out/bin go install github.com/zricethezav/gitleaks/v8@$(GITLEAKS_VERSION)
 
-.PHONY: segredos spec-lint spec-diff docs mock mock-smoke go-gen go-test go-lint go-vuln hooks ci
+.PHONY: segredos spec-lint spec-exemplos testa-regras spec-diff docs mock mock-smoke go-gen go-test go-lint go-vuln hooks ci
 
 segredos: $(GITLEAKS) ## prova a guarda de segredos e varre o repositório
 	scripts/testa-segredos.sh
@@ -31,8 +32,14 @@ segredos: $(GITLEAKS) ## prova a guarda de segredos e varre o repositório
 		$(GITLEAKS) git --config .gitleaks.toml --no-banner --exit-code 42 .; \
 	else echo "sem commits ainda: varredura do histórico pulada"; fi
 
-spec-lint: ## pendente: task 02
-	@echo "pendente: task 02"
+spec-lint: ## lint da spec com as regras próprias (openapi/vacuum.yaml)
+	docker run --rm -v "$(CURDIR)":/work -w /work $(VACUUM_IMAGE) lint -r openapi/vacuum.yaml -d -b -q --no-clip openapi/abertura.yaml
+
+spec-exemplos: ## confere as regras de exemplo inventado que o vacuum não expressa
+	YQ_VERSION=$(YQ_VERSION) scripts/confere-exemplos.sh
+
+testa-regras: ## prova que cada regra própria do lint reprova a sua spec mínima
+	VACUUM_IMAGE=$(VACUUM_IMAGE) scripts/testa-regras.sh
 
 spec-diff: ## pendente: task 03
 	@echo "pendente: task 03"
@@ -62,4 +69,4 @@ hooks: $(GITLEAKS) ## instala o gancho de pre-commit
 	install -m 755 scripts/pre-commit .git/hooks/pre-commit
 	@echo "gancho instalado em .git/hooks/pre-commit"
 
-ci: segredos spec-lint spec-diff docs mock mock-smoke go-gen go-test go-lint go-vuln
+ci: segredos testa-regras spec-lint spec-exemplos spec-diff docs mock mock-smoke go-gen go-test go-lint go-vuln

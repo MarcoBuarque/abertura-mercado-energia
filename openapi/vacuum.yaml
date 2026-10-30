@@ -1,0 +1,132 @@
+# Regras do lint da spec. Estende o `recommended` do vacuum e acrescenta as
+# regras próprias do projeto, todas com severidade `error`. Cada uma é provada
+# por uma spec mínima em openapi/testes/regras/ (scripts/testa-regras.sh).
+extends:
+  - [vacuum:oas, recommended]
+
+rules:
+  abertura-confianca:
+    description: Toda operação declara x-confianca como alta, media ou baixa.
+    message: "{{error}}"
+    severity: error
+    given: $.paths[*][get,post,put,patch,delete]
+    then:
+      - field: x-confianca
+        function: defined
+      - field: x-confianca
+        function: schema
+        functionOptions:
+          schema:
+            type: string
+            enum: [alta, media, baixa]
+
+  abertura-verificado-em:
+    description: Operação com confiança alta traz x-verificado-em no formato AAAA-MM-DD.
+    message: "{{error}}"
+    severity: error
+    given: $.paths[*][?(@['x-confianca'] == 'alta')]
+    then:
+      - field: x-verificado-em
+        function: defined
+      - field: x-verificado-em
+        function: pattern
+        functionOptions:
+          match: ^[0-9]{4}-[0-9]{2}-[0-9]{2}$
+
+  abertura-operation-id:
+    description: O operationId é camelCase.
+    message: "{{error}}"
+    severity: error
+    given: $.paths[*][get,post,put,patch,delete]
+    then:
+      - field: operationId
+        function: defined
+      - field: operationId
+        function: pattern
+        functionOptions:
+          match: ^[a-z][a-zA-Z0-9]+$
+
+  abertura-cabecalhos-agente:
+    description: Toda operação, menos obterToken, referencia os cabeçalhos codigoAgente e codigoPerfil.
+    message: "{{error}}"
+    severity: error
+    given: $.paths[*][?(@.operationId && @.operationId != 'obterToken')]
+    then:
+      field: parameters
+      function: schema
+      functionOptions:
+        schema:
+          type: array
+          allOf:
+            - contains:
+                type: object
+                required: [name, in]
+                properties:
+                  name: {const: codigoAgente}
+                  in: {const: header}
+            - contains:
+                type: object
+                required: [name, in]
+                properties:
+                  name: {const: codigoPerfil}
+                  in: {const: header}
+
+  abertura-nao-oficial:
+    description: O título diz "não oficial" e os metadados do projeto não usam o nome da CCEE.
+    message: "{{error}}"
+    severity: error
+    given: $
+    then:
+      - field: info.title
+        function: pattern
+        functionOptions:
+          match: não oficial
+      - field: info.contact.name
+        function: pattern
+        functionOptions:
+          notMatch: (?i)ccee
+      - field: info.contact.url
+        function: pattern
+        functionOptions:
+          notMatch: (?i)ccee
+      - field: info.contact.email
+        function: pattern
+        functionOptions:
+          notMatch: (?i)ccee
+      - field: info.license.name
+        function: pattern
+        functionOptions:
+          notMatch: (?i)ccee
+      - field: info.license.url
+        function: pattern
+        functionOptions:
+          notMatch: (?i)ccee
+      - field: externalDocs.url
+        function: pattern
+        functionOptions:
+          notMatch: (?i)ccee
+      - field: externalDocs.description
+        function: pattern
+        functionOptions:
+          notMatch: (?i)ccee
+
+  abertura-email-exemplo:
+    description: Todo emailUnidadeConsumidora em exemplo termina em @example.org.
+    message: "{{error}}"
+    severity: error
+    # O mesmo nome serve ao valor num exemplo (string) e à propriedade do schema
+    # (objeto, cujo `example` também é conferido). Por isso o primeiro passo
+    # aceita objeto e só cobra o sufixo de string.
+    given: $..emailUnidadeConsumidora
+    then:
+      - function: schema
+        functionOptions:
+          schema:
+            anyOf:
+              - type: object
+              - type: string
+                pattern: "@example\\.org$"
+      - field: example
+        function: pattern
+        functionOptions:
+          match: "@example\\.org$"
