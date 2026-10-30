@@ -10,12 +10,14 @@ import (
 )
 
 // respostaDe monta uma resposta com status e cabeçalhos para os testes.
-func respostaDe(status int, cabecalhos map[string]string) *http.Response {
+func respostaDe(t *testing.T, status int, cabecalhos map[string]string) *http.Response {
+	t.Helper()
+
 	h := http.Header{}
 	for k, v := range cabecalhos {
 		h.Set(k, v)
 	}
-	return &http.Response{StatusCode: status, Header: h}
+	return &http.Response{StatusCode: status, Header: h, Body: http.NoBody}
 }
 
 func TestDecodificarErro_WhenFormatoReal_PreencheCampos(t *testing.T) {
@@ -103,7 +105,13 @@ func TestDecodificarErro_WhenFormatoReal_PreencheCampos(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := decodificarErro("listarMigracoes", respostaDe(tc.status, tc.cabecalhos), []byte(tc.corpo))
+			resp := respostaDe(t, tc.status, tc.cabecalhos)
+			defer func() {
+				if err := resp.Body.Close(); err != nil {
+					t.Errorf("fechando o corpo: %v", err)
+				}
+			}()
+			got := decodificarErro("listarMigracoes", resp, []byte(tc.corpo))
 
 			if got.Operation != "listarMigracoes" {
 				t.Errorf("Operation = %q", got.Operation)
@@ -145,7 +153,13 @@ func TestDecodificarErro_WhenRespostaNula_NaoPanica(t *testing.T) {
 func TestAPIError_RawBody_DevolveCopia(t *testing.T) {
 	t.Parallel()
 
-	e := decodificarErro("do", respostaDe(500, nil), []byte("abc"))
+	resp := respostaDe(t, 500, nil)
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			t.Errorf("fechando o corpo: %v", err)
+		}
+	}()
+	e := decodificarErro("do", resp, []byte("abc"))
 	b := e.RawBody()
 	b[0] = 'z'
 	if string(e.RawBody()) != "abc" {
@@ -272,7 +286,7 @@ func TestUncertainResultError_Unwrap_WhenCausa_ExpoeCausaEChave(t *testing.T) {
 	t.Parallel()
 
 	causa := &APIError{Operation: "criarMigracao", StatusCode: 503}
-	var err error = fmt.Errorf("camada: %w", &UncertainResultError{
+	err := fmt.Errorf("camada: %w", &UncertainResultError{
 		Operation: "criarMigracao",
 		Key:       chaveFalsa{},
 		Err:       causa,
