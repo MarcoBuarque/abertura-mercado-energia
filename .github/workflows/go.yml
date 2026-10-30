@@ -47,7 +47,12 @@ jobs:
         run: make go-race
       - name: golangci-lint v2
         run: make go-lint
+      # A série 1.25 saiu de suporte: mesmo no último patch (1.25.14, conferido em
+      # 30/10/2026) o govulncheck acusa vulnerabilidades da stdlib corrigidas só
+      # na 1.26. O que se checa é a toolchain mais nova; a 1.25 segue na matriz
+      # para provar que o módulo (go 1.25.0) compila e passa nos testes.
       - name: govulncheck
+        if: matrix.go == '1.26.x'
         run: make go-vuln
       - name: Dependências
         run: make go-deps
