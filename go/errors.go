@@ -45,6 +45,9 @@ type APIError struct {
 	// do backend.
 	GatewayErrorType string
 
+	// metodo é o método HTTP da chamada, registrado pelo SDK; alimenta
+	// Problem().Retryable e Uncertain. Vazio num APIError montado à mão.
+	metodo  string
 	rawBody []byte
 }
 

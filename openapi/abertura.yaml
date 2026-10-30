@@ -970,7 +970,11 @@ components:
 
   responses:
     Requisicao400:
-      description: Requisição inválida. O `error` diz o motivo; a validação para no primeiro campo com problema.
+      description: |
+        Requisição inválida. O `error` diz o motivo (`ERR_VALIDACAO_CAMPOS`,
+        `ERR_PERFIL_VAREJISTA_OBRIGATORIO` ou `ERR_MIGRACAO_SOLICITADA`); a
+        validação para no primeiro campo com problema. Não repita sem corrigir.
+        Veja o [catálogo de erros](https://marcobuarque.github.io/abertura-mercado-energia/erros).
       headers:
         x-amzn-RequestId:
           $ref: "#/components/headers/RequestId"
@@ -985,7 +989,9 @@ components:
       description: |
         Autenticação ou autorização recusada. O gateway devolve 403 (nunca 401)
         para token inválido e para agente ou perfil que não pertencem à credencial.
-        Os casos só se distinguem pela `message`.
+        Os casos só se distinguem pela `message`. Com o cabeçalho
+        `x-amzn-ErrorType`, a recusa veio do autorizador, antes do backend.
+        Veja o [catálogo de erros](https://marcobuarque.github.io/abertura-mercado-energia/erros#credencial-invalida-autorizador).
       headers:
         x-amzn-RequestId:
           $ref: "#/components/headers/RequestId"
@@ -1003,7 +1009,11 @@ components:
               $ref: "#/components/examples/ErroCredencialInvalida"
       x-divergencias: [9]
     Limite429:
-      description: Limite de requisições excedido. Não observado; sem `Retry-After` conhecido.
+      description: |
+        Limite de requisições excedido. Não observado; sem `Retry-After`
+        conhecido. Espere antes de repetir; numa escrita, só repita se a
+        resposta trouxer `x-amzn-ErrorType`. Veja o
+        [catálogo de erros](https://marcobuarque.github.io/abertura-mercado-energia/erros#limite-de-requisicoes).
       headers:
         x-amzn-RequestId:
           $ref: "#/components/headers/RequestId"
@@ -1016,7 +1026,10 @@ components:
               $ref: "#/components/examples/ErroLimite"
       x-confianca: baixa
     Interno500:
-      description: Falha interna. Não observada.
+      description: |
+        Falha interna. Não observada. Numa escrita, o resultado é incerto:
+        confira o estado antes de repetir. Veja o
+        [catálogo de erros](https://marcobuarque.github.io/abertura-mercado-energia/erros#erro-interno).
       headers:
         x-amzn-RequestId:
           $ref: "#/components/headers/RequestId"
@@ -1044,7 +1057,21 @@ components:
   schemas:
     Erro:
       type: object
-      description: Corpo de erro do backend e do autorizador, com os mesmos quatro campos.
+      description: |
+        Corpo de erro do backend e do autorizador, com os mesmos quatro campos,
+        em `application/json` (não em `application/problem+json`). O SDK Go
+        entrega o mesmo erro como Problem Details da RFC 9457; o catálogo
+        explica cada código e cada situação sem código.
+
+        Códigos conhecidos:
+
+        - `ERR_CREDENCIAL_INVALIDA`: 403. Token, agente ou perfil recusados.
+        - `ERR_VALIDACAO_CAMPOS`: 400. Um campo foi recusado; a validação para no primeiro.
+        - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. A consulta não trouxe o perfil.
+        - `ERR_MIGRACAO_SOLICITADA`: 400. Já existe migração ativa para a UC e a concessionária.
+      externalDocs:
+        description: Catálogo de erros, com o que fazer e quando repetir.
+        url: https://marcobuarque.github.io/abertura-mercado-energia/erros
       required: [error, message]
       properties:
         timestamp:

@@ -431,6 +431,7 @@ func (c *Client) avaliar(ctx context.Context, op operacao, t tentativa, tok *oau
 		}
 		if t.status < 200 || t.status > 299 {
 			apiErr = decodificarErro(op.id, &http.Response{StatusCode: t.status, Header: t.header}, t.corpo)
+			apiErr.metodo = op.metodo
 			d.credencialInvalida = apiErr.Code == codigoCredencialInvalida
 		}
 	}

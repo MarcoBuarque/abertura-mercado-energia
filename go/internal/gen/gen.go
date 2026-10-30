@@ -300,7 +300,17 @@ type EdicaoMigracao struct {
 // EdicaoMigracaoTipoDocumento defines model for EdicaoMigracao.TipoDocumento.
 type EdicaoMigracaoTipoDocumento string
 
-// Erro Corpo de erro do backend e do autorizador, com os mesmos quatro campos.
+// Erro Corpo de erro do backend e do autorizador, com os mesmos quatro campos,
+// em `application/json` (não em `application/problem+json`). O SDK Go
+// entrega o mesmo erro como Problem Details da RFC 9457; o catálogo
+// explica cada código e cada situação sem código.
+//
+// Códigos conhecidos:
+//
+// - `ERR_CREDENCIAL_INVALIDA`: 403. Token, agente ou perfil recusados.
+// - `ERR_VALIDACAO_CAMPOS`: 400. Um campo foi recusado; a validação para no primeiro.
+// - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. A consulta não trouxe o perfil.
+// - `ERR_MIGRACAO_SOLICITADA`: 400. Já existe migração ativa para a UC e a concessionária.
 type Erro struct {
 	// Error Código textual estável do erro.
 	Error string `json:"error"`
@@ -574,16 +584,56 @@ type StatusMigracaoQuery = StatusMigracao
 // TipoSolicitacaoQuery defines model for TipoSolicitacaoQuery.
 type TipoSolicitacaoQuery string
 
-// Acesso403 Corpo de erro do backend e do autorizador, com os mesmos quatro campos.
+// Acesso403 Corpo de erro do backend e do autorizador, com os mesmos quatro campos,
+// em `application/json` (não em `application/problem+json`). O SDK Go
+// entrega o mesmo erro como Problem Details da RFC 9457; o catálogo
+// explica cada código e cada situação sem código.
+//
+// Códigos conhecidos:
+//
+// - `ERR_CREDENCIAL_INVALIDA`: 403. Token, agente ou perfil recusados.
+// - `ERR_VALIDACAO_CAMPOS`: 400. Um campo foi recusado; a validação para no primeiro.
+// - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. A consulta não trouxe o perfil.
+// - `ERR_MIGRACAO_SOLICITADA`: 400. Já existe migração ativa para a UC e a concessionária.
 type Acesso403 = Erro
 
-// Interno500 Corpo de erro do backend e do autorizador, com os mesmos quatro campos.
+// Interno500 Corpo de erro do backend e do autorizador, com os mesmos quatro campos,
+// em `application/json` (não em `application/problem+json`). O SDK Go
+// entrega o mesmo erro como Problem Details da RFC 9457; o catálogo
+// explica cada código e cada situação sem código.
+//
+// Códigos conhecidos:
+//
+// - `ERR_CREDENCIAL_INVALIDA`: 403. Token, agente ou perfil recusados.
+// - `ERR_VALIDACAO_CAMPOS`: 400. Um campo foi recusado; a validação para no primeiro.
+// - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. A consulta não trouxe o perfil.
+// - `ERR_MIGRACAO_SOLICITADA`: 400. Já existe migração ativa para a UC e a concessionária.
 type Interno500 = Erro
 
-// Limite429 Corpo de erro do backend e do autorizador, com os mesmos quatro campos.
+// Limite429 Corpo de erro do backend e do autorizador, com os mesmos quatro campos,
+// em `application/json` (não em `application/problem+json`). O SDK Go
+// entrega o mesmo erro como Problem Details da RFC 9457; o catálogo
+// explica cada código e cada situação sem código.
+//
+// Códigos conhecidos:
+//
+// - `ERR_CREDENCIAL_INVALIDA`: 403. Token, agente ou perfil recusados.
+// - `ERR_VALIDACAO_CAMPOS`: 400. Um campo foi recusado; a validação para no primeiro.
+// - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. A consulta não trouxe o perfil.
+// - `ERR_MIGRACAO_SOLICITADA`: 400. Já existe migração ativa para a UC e a concessionária.
 type Limite429 = Erro
 
-// Requisicao400 Corpo de erro do backend e do autorizador, com os mesmos quatro campos.
+// Requisicao400 Corpo de erro do backend e do autorizador, com os mesmos quatro campos,
+// em `application/json` (não em `application/problem+json`). O SDK Go
+// entrega o mesmo erro como Problem Details da RFC 9457; o catálogo
+// explica cada código e cada situação sem código.
+//
+// Códigos conhecidos:
+//
+// - `ERR_CREDENCIAL_INVALIDA`: 403. Token, agente ou perfil recusados.
+// - `ERR_VALIDACAO_CAMPOS`: 400. Um campo foi recusado; a validação para no primeiro.
+// - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. A consulta não trouxe o perfil.
+// - `ERR_MIGRACAO_SOLICITADA`: 400. Já existe migração ativa para a UC e a concessionária.
 type Requisicao400 = Erro
 
 // SolicitacaoCriada200 defines model for SolicitacaoCriada200.

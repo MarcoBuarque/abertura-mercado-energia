@@ -178,7 +178,10 @@ func (c *cacheToken) buscar(ctx context.Context) (*oauth2.Token, error) {
 	// cabeçalhos e os campos do corpo.
 	var re *oauth2.RetrieveError
 	if errors.As(err, &re) && re.Response != nil {
-		return nil, decodificarErro(operacaoToken, re.Response, re.Body)
+		apiErr := decodificarErro(operacaoToken, re.Response, re.Body)
+		// Pedir token não tem efeito colateral: repetir é seguro como numa leitura.
+		apiErr.metodo = http.MethodGet
+		return nil, apiErr
 	}
 	return nil, fmt.Errorf("%s: %w", operacaoToken, erroSemURL(err))
 }

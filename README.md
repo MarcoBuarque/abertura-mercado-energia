@@ -13,6 +13,7 @@ Status: **0.x**. A spec e o SDK ainda podem mudar de forma incompatível entre v
 - **Ler no navegador:** `make docs` gera `out/docs/index.html`.
 - **Testar sem credenciais:** `make mock` sobe um mock em `http://localhost:4010` com os exemplos da spec, todos inventados. Para parar: `docker compose -f mock/compose.yaml down`.
 - **Gerar um cliente** em Python, TypeScript ou Java, e o que ele não faz sozinho (regras de repetição, resultado incerto): [`docs/clientes.md`](docs/clientes.md).
+- **Erros:** o catálogo didático, com o que fazer e quando repetir, está em [`docs/erros.md`](docs/erros.md). O SDK Go entrega cada erro também como Problem Details (RFC 9457).
 
 ## SDK Go
 

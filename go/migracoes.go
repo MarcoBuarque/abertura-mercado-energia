@@ -146,7 +146,7 @@ func (m *Migracoes) Criar(ctx context.Context, n NovaMigracao, opts ...CallOptio
 func (m *Migracoes) Editar(ctx context.Context, id string, mudar func(*EdicaoMigracao), opts ...CallOption) (Migracao, error) {
 	const op = "editarMigracao"
 	if mudar == nil {
-		return Migracao{}, fmt.Errorf("%s: a função de mudança não pode ser nula", op)
+		return Migracao{}, argumentoInvalido("%s: a função de mudança não pode ser nula", op)
 	}
 	atual, err := m.Obter(ctx, id, opts...)
 	if err != nil {
@@ -222,7 +222,7 @@ func (m *Migracoes) ConferirEdicao(ctx context.Context, k ChaveEdicao, opts ...C
 func validarID(op, id string) (string, error) {
 	id = strings.TrimSpace(id)
 	if id == "" {
-		return "", fmt.Errorf("%s: o id da migração não pode ser vazio", op)
+		return "", argumentoInvalido("%s: o id da migração não pode ser vazio", op)
 	}
 	return id, nil
 }
