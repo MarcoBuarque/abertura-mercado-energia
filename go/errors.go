@@ -36,7 +36,11 @@ type APIError struct {
 	// Code é o campo "error" do corpo, um código textual estável como
 	// "ERR_MIGRACAO_SOLICITADA". Vazio se o corpo não o trouxer.
 	Code string
-	// Message é o campo "message" do corpo, escrito para humanos.
+	// Message é o campo "message" do corpo, escrito para humanos. É texto do
+	// servidor e entra em Error(): nenhuma mensagem vista no sandbox trouxe
+	// dado da unidade consumidora, mas nada impede que traga. Ao registrar o
+	// erro onde dado pessoal não pode ir, prefira Operation, StatusCode, Code e
+	// RequestID.
 	Message string
 	// RequestID é o cabeçalho x-amzn-RequestId, útil para suporte.
 	RequestID string
