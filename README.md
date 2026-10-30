@@ -38,6 +38,24 @@ for m, err := range c.Migracoes.Listar(ctx, abertura.FiltroMigracoes{
 
 O ambiente é sempre explícito: nada aponta para produção sem pedido. O SDK não lê variáveis de ambiente por conta própria.
 
+Contra o mock (`make mock`), o ambiente é um `Environment` próprio, e qualquer credencial serve:
+
+```go
+mock := abertura.Environment{Name: "mock", APIURL: "http://localhost:4010",
+	TokenURL: "http://localhost:4010/sso/oauth/token"}
+c, err := abertura.NewClient(mock,
+	abertura.WithCredentials("id-inventado", "segredo-inventado"),
+	abertura.WithAgent(900002, 900003))
+if err != nil { log.Fatal(err) }
+pag, err := c.Migracoes.ListarPagina(ctx, abertura.FiltroMigracoes{}, "")
+if err != nil { log.Fatal(err) }
+for _, m := range pag.Itens {
+	fmt.Println(m.ID, m.Status, m.Mes) // 00000000-0000-4000-8000-000000000001 CRIADA 2027-03
+}
+```
+
+O mock devolve sempre a mesma página, com o mesmo cursor. Por isso, contra ele, use `ListarPagina`: `Listar` repete a página e para com `ErrCursorRepetido`, a guarda contra cursor que não avança.
+
 O que ele faz por você:
 
 - **Token e limites:** busca e renova o token, e limita as requisições por processo.
