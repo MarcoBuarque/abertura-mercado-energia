@@ -170,10 +170,6 @@ var (
 	ErrRateLimited error = &sentinela{texto: "abertura: limite de requisições excedido", status: http.StatusTooManyRequests}
 )
 
-// ErrCursorRepetido é devolvido pelos iteradores quando a API repete o cursor
-// da página anterior, o que causaria um laço infinito. Não casa com APIError.
-var ErrCursorRepetido error = &sentinela{texto: "abertura: cursor de paginação repetido"}
-
 // ChaveNatural identifica, no lado do servidor, o recurso que uma escrita de
 // resultado incerto talvez tenha criado ou alterado. Serve de entrada para os
 // métodos Conferir*. Só os tipos do pacote a implementam.
