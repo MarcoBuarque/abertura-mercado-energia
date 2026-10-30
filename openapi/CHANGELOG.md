@@ -6,6 +6,10 @@ Esta é uma descrição **não oficial**, escrita à mão. O projeto é independ
 
 ## [Não lançado]
 
+### Alterado
+
+- Descrições do schema `Erro` (um código por linha) e das respostas 400, 403, 429 e 500 apontam para o catálogo de erros (`docs/erros.md`). Só texto: formato e tipos não mudam.
+
 ## [0.1.0]
 
 Primeira versão. Dez operações, de quatro grupos. A coluna de confiança é o `x-confianca` da operação: `alta` quer dizer que o comportamento foi conferido no sandbox em 30/10/2026; `media`, que a operação veio só da coleção pública do Postman e não foi exercitada (ou foi, mas sem itens na resposta).
