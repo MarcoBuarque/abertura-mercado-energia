@@ -55,7 +55,7 @@ for _, m := range pag.Itens {
 }
 ```
 
-O mock devolve sempre a mesma página, com o mesmo cursor. Por isso, contra ele, use `ListarPagina`: `Listar` repete a página e para com `ErrCursorRepetido`, a guarda contra cursor que não avança.
+O mock devolve sempre a mesma página, com o mesmo cursor. Por isso, contra ele, use `ListarPagina`: `Listar` entrega a primeira página uma vez e para com `ErrCursorRepetido` quando a segunda aponta para o mesmo cursor, sem repetir os itens; é a guarda contra cursor que não avança.
 
 O que ele faz por você:
 
