@@ -187,13 +187,18 @@ func (c *cacheToken) buscar(ctx context.Context) (*oauth2.Token, error) {
 	// Falha de rede ao pedir o token: pedir token não tem efeito colateral, então
 	// repetir é seguro como numa leitura.
 	var ue *url.Error
-	if errors.As(err, &ue) && !errors.Is(err, context.Canceled) {
+	switch {
+	case errors.Is(err, context.Canceled):
+		return nil, fmt.Errorf("%s: %w", operacaoToken, erroSemURL(err))
+	case errors.As(err, &ue):
 		return nil, fmt.Errorf("%s: %w", operacaoToken, &erroTransporte{
 			err: erroSemURL(err), metodo: http.MethodGet, escreveu: true,
 			timeout: errors.Is(err, context.DeadlineExceeded),
 		})
+	default:
+		// Por exemplo "server response missing access_token".
+		return nil, fmt.Errorf("%s: %w", operacaoToken, &erroFalhaToken{err: err})
 	}
-	return nil, fmt.Errorf("%s: %w", operacaoToken, erroSemURL(err))
 }
 
 func (c *cacheToken) invalidar(t *oauth2.Token) {
@@ -247,7 +252,7 @@ func (f *fonteExterna) token(ctx context.Context) (*oauth2.Token, error) {
 	}
 	t, err := f.ts.Token()
 	if err != nil {
-		return nil, fmt.Errorf("obter token da fonte externa: %w", erroSemURL(err))
+		return nil, fmt.Errorf("obter token da fonte externa: %w", &erroFalhaToken{err: erroSemURL(err)})
 	}
 	return t, nil
 }

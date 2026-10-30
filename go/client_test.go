@@ -2,6 +2,7 @@ package abertura
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -78,6 +79,12 @@ func TestClient_NewClientValidaAConfiguracao(t *testing.T) {
 			}
 			if !strings.Contains(err.Error(), tc.wantErr) {
 				t.Errorf("erro = %q, quer trecho %q", err, tc.wantErr)
+			}
+			if !errors.Is(err, ErrArgumentoInvalido) {
+				t.Errorf("erro de validação do NewClient devia casar com ErrArgumentoInvalido: %v", err)
+			}
+			if p := ProblemFrom(err); !strings.HasSuffix(p.Type, "#argumento-invalido") {
+				t.Errorf("Type = %q, quero #argumento-invalido", p.Type)
 			}
 			assertSemVazamento(t, err.Error())
 		})

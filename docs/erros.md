@@ -253,7 +253,7 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 
 - **Código da API:** o do endpoint de token, se vier um.
 - **Status:** o do endpoint de token (`operation` vale `obterToken`).
-- **Quando acontece:** o pedido de token foi recusado ou falhou: `client_id` ou `client_secret` errados, ambiente trocado, endpoint fora do ar. Erros de rede ao buscar o token aparecem como [falha de rede](#erro-de-transporte) ou [tempo esgotado](#tempo-esgotado). O erro nunca traz o formulário nem o corpo.
+- **Quando acontece:** o pedido de token foi recusado ou falhou: `client_id` ou `client_secret` errados, ambiente trocado, endpoint fora do ar. Erros de rede ao buscar o token aparecem como [falha de rede](#erro-de-transporte) ou [tempo esgotado](#tempo-esgotado). Isso inclui uma resposta do endpoint sem `access_token` e um erro da fonte de `WithTokenSource`. O erro nunca traz o formulário nem o corpo.
 - **O que fazer:** confira as credenciais e o ambiente (`Sandbox` ou `Production`).
 - **Repetir:** o SDK não repete o pedido de token sozinho. Buscar token não tem efeito colateral, então 429 e 5xx são seguros de repetir (`retryable` verdadeiro); 4xx, não.
 - **Sentinela Go:** nenhuma específica; `ErrCredencialInvalida` casa se o endpoint devolver esse código.
@@ -264,7 +264,7 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 
 - **Código da API:** nenhum.
 - **Status:** nenhum: o SDK recusou antes de enviar.
-- **Quando acontece:** falta algo que a API exige (o filtro de medições sem UC, concessionária, início ou fim), o id está vazio, a função de edição é nula, ou o caminho de `Do` não começa com `/`. A mensagem do erro não repete a UC nem o caminho.
+- **Quando acontece:** falta algo que a API exige (o filtro de medições sem UC, concessionária, início ou fim), o id está vazio, a função de edição é nula, o caminho de `Do` não começa com `/`, o corpo não vira JSON, ou a configuração do `NewClient` é inválida (credencial ou agente faltando, URL do ambiente, prazo, limites). A mensagem do erro não repete a UC nem o caminho.
 - **O que fazer:** corrija a chamada. Nada foi enviado nem gasto do limite de taxa.
 - **Repetir:** não, sem corrigir.
 - **Sentinela Go:** `ErrArgumentoInvalido`.
@@ -275,7 +275,7 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 
 - **Código da API:** nenhum.
 - **Status:** nenhum.
-- **Quando acontece:** `ProblemFrom` recebeu um erro que não vem do SDK, ou que o SDK não classificou. O Problem usa `type` igual a `about:blank`, como a RFC 9457 prevê para erro sem semântica própria, e **não** copia o texto do erro.
+- **Quando acontece:** `ProblemFrom` recebeu um erro que não vem do SDK, ou que o SDK não classificou. O Problem usa esta entrada (`type` termina em `#fora-do-catalogo`, nunca `about:blank`) e **não** copia o texto do erro. O `about:blank` da RFC 9457 fica para quem monta um Problem à mão: o JSON do SDK, nesse caso, usa como `title` a frase padrão do status.
 - **O que fazer:** trate o erro original; ele continua em suas mãos.
 - **Repetir:** depende; o Problem diz `retryable` falso por prudência.
 - **Sentinela Go:** nenhuma.

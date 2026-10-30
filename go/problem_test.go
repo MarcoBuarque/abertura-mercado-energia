@@ -79,7 +79,7 @@ func TestProblemFrom_WhenErroDoSDK_ClassificaNoCatalogo(t *testing.T) {
 		{name: "prazo vencido", err: fmt.Errorf("x: %w", context.DeadlineExceeded), wantType: "tempo-esgotado", wantRetryable: true},
 		{name: "contexto cancelado", err: context.Canceled, wantType: "chamada-cancelada"},
 		{name: "erro de rede", err: fmt.Errorf("listarMigracoes: %w", causaTransporte), wantType: "erro-de-transporte", wantRetryable: true},
-		{name: "erro alheio ao SDK", err: errors.New("outra coisa"), wantType: pontoErroPuro},
+		{name: "erro alheio ao SDK", err: errors.New("outra coisa"), wantType: "fora-do-catalogo"},
 		{name: "APIError dentro de errors.Join", err: errors.Join(errors.New("outra coisa"), apiErro("POST", 400, "ERR_MIGRACAO_SOLICITADA", "")), wantType: "migracao-solicitada", wantStatus: 400, wantCode: "ERR_MIGRACAO_SOLICITADA"},
 		{
 			name:     "incerto ganha do APIError no errors.Join",
@@ -92,10 +92,7 @@ func TestProblemFrom_WhenErroDoSDK_ClassificaNoCatalogo(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			p := ProblemFrom(tc.err)
-			wantType := pontoErroPuro
-			if tc.wantType != pontoErroPuro {
-				wantType = CatalogoErrosURL + "#" + tc.wantType
-			}
+			wantType := CatalogoErrosURL + "#" + tc.wantType
 			if p.Type != wantType {
 				t.Errorf("Type = %q, quero %q", p.Type, wantType)
 			}
@@ -240,8 +237,8 @@ func TestProblem_MarshalJSON_WhenSemResposta_OmiteVazios(t *testing.T) {
 			t.Errorf("%s deveria ser omitido: %s", k, b)
 		}
 	}
-	if m["type"] != pontoErroPuro {
-		t.Errorf("type = %v, quero %s", m["type"], pontoErroPuro)
+	if want := CatalogoErrosURL + "#fora-do-catalogo"; m["type"] != want {
+		t.Errorf("type = %v, quero %s", m["type"], want)
 	}
 }
 

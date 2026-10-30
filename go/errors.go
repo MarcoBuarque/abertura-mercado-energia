@@ -257,3 +257,12 @@ func (e *erroResposta) Unwrap() error { return e.err }
 
 // respostaIlegivel marca err como resposta 2xx ilegível.
 func respostaIlegivel(err error) error { return &erroResposta{err: err} }
+
+// erroFalhaToken é uma falha ao obter o token que não é resposta de erro do
+// endpoint nem falha de rede: resposta sem access_token, ou erro da fonte
+// externa (WithTokenSource). Error() e Unwrap seguem a causa.
+type erroFalhaToken struct{ err error }
+
+func (e *erroFalhaToken) Error() string { return e.err.Error() }
+
+func (e *erroFalhaToken) Unwrap() error { return e.err }
