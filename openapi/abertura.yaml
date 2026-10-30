@@ -550,10 +550,12 @@ paths:
       tags: [Solicitacoes]
       summary: Solicita troca de representante
       description: |
-        O novo varejista pede para representar uma UC a partir de um mês. Se a
-        solicitação vem com antecedência suficiente, a aprovação é automática;
-        senão o varejista atual decide. Esta operação não foi exercitada no
-        sandbox.
+        O novo varejista pede para representar uma UC a partir de um mês, e o
+        varejista atual responde por `decidirSolicitacao`. Pelo Procedimento de
+        Comercialização (item 3.37.3), a falta de resposta leva à transferência
+        compulsória no mês pretendido. A coleção descreve outra regra, de
+        aprovação automática conforme a antecedência; a divergência está na D5
+        de `FONTES.md`. Esta operação não foi exercitada no sandbox.
       x-confianca: media
       x-fonte: Coleção, seção Solicitações, troca de representante.
       x-divergencias: [4, 5, 13, 14]
