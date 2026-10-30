@@ -23,7 +23,7 @@ export GITLEAKS
 $(GITLEAKS): Makefile
 	GOBIN=$(CURDIR)/out/bin go install github.com/zricethezav/gitleaks/v8@$(GITLEAKS_VERSION)
 
-.PHONY: segredos spec-lint spec-exemplos testa-regras spec-diff docs mock mock-smoke mock-imagem go-tidy go-gen go-test go-race go-lint go-vuln go-deps checa-workflows testa-checa-tag checa-tag testa-checa-marca checa-marca hooks ci
+.PHONY: segredos spec-lint spec-exemplos testa-regras spec-diff docs mock mock-smoke mock-imagem go-tidy go-gen go-test go-race go-lint go-contrato go-vuln go-deps checa-workflows testa-checa-tag checa-tag testa-checa-marca checa-marca hooks ci
 
 segredos: $(GITLEAKS) ## prova a guarda de segredos e varre o repositório
 	scripts/testa-segredos.sh
@@ -81,6 +81,11 @@ go-race: ## testes com -race e cobertura (mínimo de 80% no pacote raiz); perfil
 go-lint:
 	cd go && go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION) run ./...
 
+go-contrato: ## contrato do sandbox: vet, lint e os testes sem rede, com -tags sandbox (nunca fala com a API)
+	cd go && go vet -tags sandbox ./contrato/...
+	cd go && go test -tags sandbox ./contrato/... -run 'TestOrcamento|TestNomesDeCampos|TestDocumentoDoAmbiente' -count=1
+	cd go && go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION) run --build-tags sandbox ./...
+
 go-vuln:
 	cd go && go run golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION) ./...
 
@@ -114,4 +119,4 @@ hooks: $(GITLEAKS) ## instala o gancho de pre-commit (funciona em worktree)
 		install -m 755 scripts/pre-commit "$$dir/pre-commit" && \
 		echo "gancho instalado em $$dir/pre-commit"
 
-ci: segredos testa-checa-marca checa-marca checa-workflows testa-checa-tag testa-regras spec-lint spec-exemplos spec-diff docs mock mock-smoke go-tidy go-gen go-test go-race go-lint go-vuln go-deps
+ci: segredos testa-checa-marca checa-marca checa-workflows testa-checa-tag testa-regras spec-lint spec-exemplos spec-diff docs mock mock-smoke go-tidy go-gen go-test go-race go-lint go-contrato go-vuln go-deps
