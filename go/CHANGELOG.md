@@ -23,6 +23,7 @@ Primeira versão. Segue a spec `openapi/v0.1.0`; as pré-versões `go/v0.1.0-rc.
 - Chaves e erros não vazam dado pessoal: `ChaveMigracao` e `ChaveEdicao` ganham `LogValue` e `GoString`, e `APIError` e `UncertainResultError` ganham `GoString`, todos sem UC, e-mail nem corpo.
 - O cliente HTTP padrão do pedido de token não segue redirecionamento (um 307 reenviaria o `client_secret`); `WithHTTPClient` mantém a política do chamador.
 - Qualquer 5xx, menos o 501, segue a linha do 500: leitura repete, escrita fica incerta (`*UncertainResultError`). O 501 é erro definitivo.
+- `SituacaoRejeitada` (`REJEITADA`) entra entre as situações de medição conhecidas.
 
 ### Limites conhecidos
 
