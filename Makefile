@@ -23,7 +23,7 @@ export GITLEAKS
 $(GITLEAKS): Makefile
 	GOBIN=$(CURDIR)/out/bin go install github.com/zricethezav/gitleaks/v8@$(GITLEAKS_VERSION)
 
-.PHONY: segredos spec-lint spec-exemplos testa-regras spec-diff docs mock mock-smoke go-gen go-test go-lint go-vuln hooks ci
+.PHONY: segredos spec-lint spec-exemplos testa-regras spec-diff docs mock mock-smoke mock-imagem go-tidy go-gen go-test go-race go-lint go-vuln go-deps checa-workflows testa-checa-tag checa-tag hooks ci
 
 segredos: $(GITLEAKS) ## prova a guarda de segredos e varre o repositório
 	scripts/testa-segredos.sh
@@ -56,12 +56,27 @@ mock: ## constrói e sobe o mock Prism em http://localhost:4010 (docker compose 
 mock-smoke: ## sobe o mock, chama as 10 operações e derruba o mock
 	scripts/mock-smoke.sh
 
-go-gen: ## regenera os modelos e a cópia da spec e falha se algo mudar (deriva)
-	cd go && go generate ./...
-	git diff --exit-code -- go
+# Arquivos gerados por `go generate`. A deriva é medida só neles: mudança em
+# qualquer outro arquivo de go/ (código à mão, testes, go.mod) não reprova.
+GERADOS := go/internal/gen/gen.go go/internal/spec/abertura.yaml
+
+go-tidy: ## falha se go.mod ou go.sum mudariam com `go mod tidy`
+	cd go && go mod tidy -diff
+
+go-gen: ## regenera os modelos e a cópia da spec e falha se os arquivos gerados mudarem (deriva)
+	@set -e; for f in $(GERADOS); do echo "$$f $$(git hash-object $$f)"; done > out/.go-gen-antes; \
+	(cd go && go generate ./...); \
+	deriva=0; while read -r f h; do \
+		if [ "$$(git hash-object $$f)" != "$$h" ]; then echo "go-gen: deriva em $$f (diferia do que o gerador produz)" >&2; deriva=1; fi; \
+	done < out/.go-gen-antes; \
+	[ "$$deriva" = 0 ] || exit 1; \
+	git diff --exit-code -- $(GERADOS) || { echo "go-gen: arquivos gerados diferem do índice; faça git add" >&2; exit 1; }
 
 go-test:
 	cd go && go build ./... && go vet ./... && go test ./...
+
+go-race: ## testes com -race e cobertura (mínimo de 80% no pacote raiz); perfil em out/go-cobertura.out
+	scripts/go-cobertura.sh 80
 
 go-lint:
 	cd go && go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION) run ./...
@@ -69,9 +84,28 @@ go-lint:
 go-vuln:
 	cd go && go run golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION) ./...
 
+CHECA_DEPS ?= scripts/checa-deps.sh
+go-deps: ## confere as dependências do módulo Go (scripts/checa-deps.sh)
+	$(CHECA_DEPS)
+
+checa-workflows: ## actionlint, actions por SHA, imagens por digest, permissions e alvos do Makefile
+	ACTIONLINT_VERSION=$(ACTIONLINT_VERSION) scripts/checa-workflows.sh
+
+testa-checa-tag: ## prova as checagens de tag (tabela de casos, sem criar tag)
+	scripts/testa-checa-tag.sh
+
+# make checa-tag TIPO=openapi TAG=openapi/v0.1.0-rc.1
+checa-tag: ## confere a tag de release contra info.version, version.Version e CHANGELOG
+	scripts/checa-tag.sh "$(TIPO)" "$(TAG)"
+
+MOCK_IMAGEM ?= abertura-mercado-energia-mock
+MOCK_TAG    ?= local
+mock-imagem: ## constrói a imagem do mock (linux/amd64, como o Prism fixado) com o nome $(MOCK_IMAGEM):$(MOCK_TAG)
+	docker build --platform linux/amd64 -f mock/Dockerfile -t $(MOCK_IMAGEM):$(MOCK_TAG) .
+
 hooks: $(GITLEAKS) ## instala o gancho de pre-commit (funciona em worktree)
 	@dir="$$(git rev-parse --git-path hooks)" && mkdir -p "$$dir" && \
 		install -m 755 scripts/pre-commit "$$dir/pre-commit" && \
 		echo "gancho instalado em $$dir/pre-commit"
 
-ci: segredos testa-regras spec-lint spec-exemplos spec-diff docs mock mock-smoke go-gen go-test go-lint go-vuln
+ci: segredos checa-workflows testa-checa-tag testa-regras spec-lint spec-exemplos spec-diff docs mock mock-smoke go-tidy go-gen go-test go-race go-lint go-vuln go-deps
