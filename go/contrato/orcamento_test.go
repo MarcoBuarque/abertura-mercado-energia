@@ -112,3 +112,28 @@ func TestNomesDeCampos(t *testing.T) {
 		})
 	}
 }
+
+func TestDocumentoDoAmbiente(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name  string
+		valor string
+		tipo  string
+		ok    bool
+	}{
+		{"onze caracteres é CPF", "000.000.000-00", "CPF", true},
+		{"catorze caracteres é CNPJ", "00.000.000/0000-00", "CNPJ", true},
+		{"CNPJ alfanumérico", "AB.CDE.FGH/0001-00", "CNPJ", true},
+		{"vazio é recusado", "", "", false},
+		{"tamanho estranho é recusado", "123", "", false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			d, ok := documentoDoAmbiente(tc.valor)
+			if ok != tc.ok || string(d.Tipo()) != tc.tipo {
+				t.Fatalf("documentoDoAmbiente = %q, %v; quer %q, %v", d.Tipo(), ok, tc.tipo, tc.ok)
+			}
+		})
+	}
+}

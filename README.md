@@ -76,7 +76,7 @@ A v0.1 cobre a v1.1 das APIs de varejo: migrações (listar, obter, criar, edita
 
 `make ci` roda os mesmos passos da integração contínua: guarda de segredos, lint da spec, mock, geração, testes, lint do Go, `govulncheck` e checagem das dependências.
 
-O teste de contrato (`go test -tags sandbox ./contrato/...`, em `go/`) é manual: usa credenciais do sandbox, limita-se a 90 requisições e só escreve com `ABERTURA_CONTRATO_ESCRITA=1`. Os detalhes estão no cabeçalho de `go/contrato/contrato_test.go`.
+O teste de contrato (`go test -tags sandbox ./contrato/...`, em `go/`) é manual: usa credenciais do sandbox, limita-se a 90 requisições e só escreve com `ABERTURA_CONTRATO_ESCRITA=1`, `ABERTURA_UC` e `ABERTURA_DOCUMENTO` (CPF ou CNPJ válido, só do ambiente). Os detalhes estão no cabeçalho de `go/contrato/contrato_test.go`.
 
 ## Contato
 
