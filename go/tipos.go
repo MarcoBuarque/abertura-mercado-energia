@@ -34,8 +34,9 @@ func (s StatusMigracao) Conhecido() bool {
 // SituacaoMedicao é a situação de uma medição. Conjunto aberto, como [StatusMigracao].
 type SituacaoMedicao string
 
-// SituacaoConsistida é a única situação de medição citada na documentação
-// consultada; a lista completa não foi observada.
+// SituacaoConsistida é a situação de medição com constante nesta versão. A
+// documentação pública cita também REJEITADA (ver a spec); nenhuma das duas
+// foi observada no sandbox.
 const SituacaoConsistida SituacaoMedicao = "CONSISTIDA"
 
 // Conhecido informa se a situação é uma das publicadas nesta versão do SDK.
