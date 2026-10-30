@@ -80,6 +80,13 @@ func TestProblemFrom_WhenErroDoSDK_ClassificaNoCatalogo(t *testing.T) {
 		{name: "contexto cancelado", err: context.Canceled, wantType: "chamada-cancelada"},
 		{name: "erro de rede", err: fmt.Errorf("listarMigracoes: %w", causaTransporte), wantType: "erro-de-transporte", wantRetryable: true},
 		{name: "erro alheio ao SDK", err: errors.New("outra coisa"), wantType: pontoErroPuro},
+		{name: "APIError dentro de errors.Join", err: errors.Join(errors.New("outra coisa"), apiErro("POST", 400, "ERR_MIGRACAO_SOLICITADA", "")), wantType: "migracao-solicitada", wantStatus: 400, wantCode: "ERR_MIGRACAO_SOLICITADA"},
+		{
+			name:     "incerto ganha do APIError no errors.Join",
+			err:      errors.Join(apiErro("GET", 404, "", ""), &UncertainResultError{Operation: "criarMigracao", Err: apiErro("POST", 502, "", "")}),
+			wantType: "resultado-incerto", wantStatus: 502, wantUncertain: true,
+		},
+		{name: "prazo dentro de errors.Join", err: errors.Join(errors.New("fechar corpo"), context.DeadlineExceeded), wantType: "tempo-esgotado", wantRetryable: true},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -326,6 +333,24 @@ func TestCatalogo_WhenComparadoComDocs_AncorasBatemComATabela(t *testing.T) {
 	}
 	if CatalogoErrosURL != urlCatalogo {
 		t.Errorf("CatalogoErrosURL = %q, quero %q", CatalogoErrosURL, urlCatalogo)
+	}
+}
+
+// TestCatalogo_WhenComparadoComDocs_TitulosBatemComATabela prova que o título
+// de cada entrada da tabela é o mesmo do cabeçalho logo abaixo da âncora e do
+// link no índice de docs/erros.md: o Problem e o catálogo dizem o mesmo.
+func TestCatalogo_WhenComparadoComDocs_TitulosBatemComATabela(t *testing.T) {
+	t.Parallel()
+
+	doc := lerArquivo(t, "../docs/erros.md")
+	for slug, e := range catalogo {
+		cabecalho := `<a id="` + slug + `"></a>` + "\n## " + e.titulo + "\n"
+		if !strings.Contains(doc, cabecalho) {
+			t.Errorf("entrada %q: o cabeçalho depois da âncora não é %q", slug, "## "+e.titulo)
+		}
+		if indice := "[" + e.titulo + "](#" + slug + ")"; !strings.Contains(doc, indice) {
+			t.Errorf("entrada %q: o índice não traz %q", slug, indice)
+		}
 	}
 }
 
