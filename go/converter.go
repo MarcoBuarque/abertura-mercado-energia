@@ -22,7 +22,7 @@ const (
 // erroCampo descreve um campo ilegível sem repetir o valor recebido, que pode
 // ser dado da unidade consumidora.
 func erroCampo(campo string) error {
-	return fmt.Errorf("abertura: o campo %q da resposta tem um valor ilegível", campo)
+	return respostaIlegivel(fmt.Errorf("abertura: o campo %q da resposta tem um valor ilegível", campo))
 }
 
 // dataDe lê uma data só de dia ("2027-01-15") ou um instante RFC 3339, sempre

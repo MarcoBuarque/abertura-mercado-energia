@@ -43,6 +43,7 @@ Esta página é publicada no GitHub Pages a cada tag final `openapi/vX.Y.Z`, só
 | [Tempo esgotado](#tempo-esgotado) | nenhum | sem resposta | sim | sim se nada saiu; senão incerto |
 | [Chamada cancelada](#chamada-cancelada) | nenhum | sem resposta | só você decide | incerto se já saiu |
 | [Resultado incerto da escrita](#resultado-incerto) | depende da causa | depende da causa | não se aplica | não: confira |
+| [Resposta ilegível](#resposta-ilegivel) | nenhum | 2xx | sim | incerto: confira |
 | [Cursor de paginação repetido](#cursor-repetido) | nenhum | sem erro HTTP | não | não se aplica |
 | [Falha ao obter o token](#falha-ao-obter-token) | pode vir do endpoint | do endpoint | você pode, em 429 e 5xx (o SDK não repete) | idem |
 | [Argumento inválido](#argumento-invalido) | nenhum | sem requisição | não | não |
@@ -180,10 +181,10 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 
 - **Código da API:** nenhum.
 - **Status:** nenhum (não houve resposta).
-- **Quando acontece:** DNS, conexão recusada, TLS ou conexão derrubada. O erro sai **sem a URL**, que traria a UC e o mês na consulta.
+- **Quando acontece:** DNS, conexão recusada, TLS (por exemplo, certificado não confiável) ou conexão fechada sem resposta (`EOF`). O erro sai **sem a URL**, que traria a UC e o mês na consulta.
 - **O que fazer:** confira a rede e o ambiente. O SDK já repetiu até 2 vezes quando era seguro.
 - **Repetir:** GET, sim. Escrita: sim se a falha foi antes de escrever (nada saiu); se a falha foi depois, o resultado é [incerto](#resultado-incerto).
-- **Sentinela Go:** nenhuma; o erro implementa `net.Error` por `errors.As`.
+- **Sentinela Go:** nenhuma; a causa (`x509.UnknownAuthorityError`, `io.EOF`, `net.Error`) continua acessível por `errors.As` e `errors.Is`.
 - **Confiança:** do SDK.
 
 <a id="tempo-esgotado"></a>
@@ -225,6 +226,17 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 - **Sentinela Go:** nenhuma; use `errors.As` com `*UncertainResultError`. A `Key` nunca vai ao Problem, porque pode conter a UC.
 - **Confiança:** do SDK; a duplicata foi vista no sandbox.
 
+<a id="resposta-ilegivel"></a>
+## Resposta ilegível
+
+- **Código da API:** nenhum.
+- **Status:** 2xx (a API respondeu com sucesso); o Problem não repete o status, porque o erro é do corpo.
+- **Quando acontece:** a conexão caiu no meio do corpo, o corpo não é JSON válido, ou um campo tem um valor que o SDK não entende (uma data ou um número fora do formato). A mensagem do erro não repete o valor recebido, que pode ser dado da unidade consumidora.
+- **O que fazer:** numa leitura, o SDK já repetiu quando o corpo foi interrompido; se persiste, abra uma issue com o `requestId`. Numa **escrita**, a API pode ter aplicado a mudança: o erro vem como [resultado incerto](#resultado-incerto), com esta entrada na causa.
+- **Repetir:** GET, sim. POST e PUT, não: confira antes.
+- **Sentinela Go:** nenhuma.
+- **Confiança:** do SDK.
+
 <a id="cursor-repetido"></a>
 ## Cursor de paginação repetido
 
@@ -263,7 +275,7 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 
 - **Código da API:** nenhum.
 - **Status:** nenhum.
-- **Quando acontece:** `ProblemFrom` recebeu um erro que não vem do SDK (ou uma falha sem classe própria, como uma resposta 2xx de leitura com corpo ilegível). O Problem usa `type` igual a `about:blank`, como a RFC 9457 prevê para erro sem semântica própria, e **não** copia o texto do erro.
+- **Quando acontece:** `ProblemFrom` recebeu um erro que não vem do SDK, ou que o SDK não classificou. O Problem usa `type` igual a `about:blank`, como a RFC 9457 prevê para erro sem semântica própria, e **não** copia o texto do erro.
 - **O que fazer:** trate o erro original; ele continua em suas mãos.
 - **Repetir:** depende; o Problem diz `retryable` falso por prudência.
 - **Sentinela Go:** nenhuma.

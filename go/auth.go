@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 
@@ -182,6 +183,15 @@ func (c *cacheToken) buscar(ctx context.Context) (*oauth2.Token, error) {
 		// Pedir token não tem efeito colateral: repetir é seguro como numa leitura.
 		apiErr.metodo = http.MethodGet
 		return nil, apiErr
+	}
+	// Falha de rede ao pedir o token: pedir token não tem efeito colateral, então
+	// repetir é seguro como numa leitura.
+	var ue *url.Error
+	if errors.As(err, &ue) && !errors.Is(err, context.Canceled) {
+		return nil, fmt.Errorf("%s: %w", operacaoToken, &erroTransporte{
+			err: erroSemURL(err), metodo: http.MethodGet, escreveu: true,
+			timeout: errors.Is(err, context.DeadlineExceeded),
+		})
 	}
 	return nil, fmt.Errorf("%s: %w", operacaoToken, erroSemURL(err))
 }

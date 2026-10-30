@@ -100,10 +100,10 @@ func decodificarSaida(corpo []byte, out any) error {
 	var sintaxe *json.SyntaxError
 	if errors.As(err, &sintaxe) {
 		// A mensagem do encoding/json cita um trecho do corpo.
-		return fmt.Errorf("a resposta não é JSON válido (byte %d)", sintaxe.Offset)
+		return respostaIlegivel(fmt.Errorf("a resposta não é JSON válido (byte %d)", sintaxe.Offset))
 	}
 	if err != nil {
-		return fmt.Errorf("decodificar a resposta: %w", err)
+		return respostaIlegivel(fmt.Errorf("decodificar a resposta: %w", err))
 	}
 	return nil
 }

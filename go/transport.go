@@ -446,9 +446,11 @@ func (c *Client) causa(ctx context.Context, op operacao, d desfecho, t tentativa
 	case d.falha == falhaContexto:
 		return ctx.Err()
 	case t.err != nil:
-		return fmt.Errorf("%s: %w", op.id, erroSemURL(t.err))
+		return fmt.Errorf("%s: %w", op.id, &erroTransporte{
+			err: erroSemURL(t.err), metodo: op.metodo, escreveu: d.escreveu, timeout: d.falha == falhaTimeout,
+		})
 	case d.corpoIlegivel || apiErr == nil:
-		return fmt.Errorf("%s: corpo da resposta ilegível: %w", op.id, erroSemURL(t.errLeitura))
+		return fmt.Errorf("%s: corpo da resposta ilegível: %w", op.id, respostaIlegivel(erroSemURL(t.errLeitura)))
 	default:
 		return apiErr
 	}

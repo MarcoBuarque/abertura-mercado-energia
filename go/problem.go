@@ -185,6 +185,10 @@ var catalogo = map[string]entradaCatalogo{
 		titulo:  "Resultado incerto da escrita",
 		detalhe: "A escrita saiu, mas a resposta não permite saber se foi aplicada. O SDK não repete: confira o estado antes.",
 	},
+	"resposta-ilegivel": {
+		titulo:  "Resposta ilegível",
+		detalhe: "A API respondeu com sucesso, mas o corpo não pôde ser lido ou entendido. Numa escrita, o resultado é incerto; numa leitura, repetir é seguro.",
+	},
 	"cursor-repetido": {
 		titulo:  "Cursor de paginação repetido",
 		detalhe: "A API devolveu como próxima página um cursor já usado; o SDK parou para não girar para sempre.",
@@ -266,8 +270,14 @@ func ProblemFrom(err error) Problem {
 	if errors.As(err, &api) {
 		return api.Problem()
 	}
+	var et *erroTransporte
+	var er *erroResposta
 	var ne net.Error
 	switch {
+	case errors.As(err, &et):
+		return et.problem()
+	case errors.As(err, &er):
+		return er.problem()
 	case errors.Is(err, ErrNotFound):
 		return novoProblem("nao-encontrado", http.StatusNotFound, "")
 	case errors.Is(err, ErrCursorRepetido):
@@ -290,6 +300,39 @@ func ProblemFrom(err error) Problem {
 		return p
 	}
 	return novoProblem("fora-do-catalogo", 0, "")
+}
+
+// problem traduz a falha de transporte. O tipo diz se foi o prazo da tentativa
+// ou outra falha; Retryable e Uncertain vêm de decidir, com o método da
+// chamada e o que chegou a ser escrito.
+func (e *erroTransporte) problem() Problem {
+	slug, falha := "erro-de-transporte", falhaTransporte
+	if e.timeout {
+		slug, falha = "tempo-esgotado", falhaTimeout
+	}
+	p := novoProblem(slug, 0, "")
+	aplicarDecisao(&p, e.metodo, desfecho{falha: falha, escreveu: e.escreveu})
+	return p
+}
+
+// problem traduz a resposta ilegível, que fora de um UncertainResultError é
+// sempre de uma leitura.
+func (e *erroResposta) problem() Problem {
+	p := novoProblem("resposta-ilegivel", 0, "")
+	aplicarDecisao(&p, http.MethodGet, desfecho{status: http.StatusOK, corpoIlegivel: true})
+	return p
+}
+
+// aplicarDecisao preenche Retryable e Uncertain com a decisão de decidir. O
+// maxRetries de 1 só faz a decisão ser "repetir", não "esgotou".
+func aplicarDecisao(p *Problem, metodo string, d desfecho) {
+	d.maxRetries = 1
+	switch decidir(metodo, d) {
+	case acaoRepetir:
+		p.Retryable = true
+	case acaoIncerto:
+		p.Uncertain = true
+	}
 }
 
 // slug diz qual entrada do catálogo descreve o erro.
@@ -333,17 +376,11 @@ func (e *APIError) Problem() Problem {
 	p.Code = code
 	p.RequestID = limpar(e.RequestID, 100)
 	if e.metodo != "" {
-		switch decidir(e.metodo, desfecho{
+		aplicarDecisao(&p, e.metodo, desfecho{
 			status:             e.StatusCode,
 			gateway:            e.GatewayErrorType != "",
 			credencialInvalida: code == codigoCredencialInvalida,
-			maxRetries:         1, // só para a decisão ser "repetir", não "esgotou"
-		}) {
-		case acaoRepetir:
-			p.Retryable = true
-		case acaoIncerto:
-			p.Uncertain = true
-		}
+		})
 	}
 	return p
 }

@@ -19,6 +19,7 @@ Primeira versão. Segue a spec `openapi/v0.1.0`; as pré-versões `go/v0.1.0-rc.
 - Tipos `Migracao`, `Medicao`, `Mes` (três formatos de mês), `Documento` (mascarado em `fmt`, `slog` e JSON) e `Decimal` (exato, aceita número ou texto).
 - Log opcional com `slog`, sem query, corpo, token, credenciais nem dado pessoal.
 - `Problem`, `ProblemFrom`, `APIError.Problem`, `UncertainResultError.Problem`, `ProblemContentType` e `CatalogoErrosURL`: os erros do SDK no formato da RFC 9457, ligados ao catálogo `docs/erros.md`.
+- Falhas de transporte (TLS não confiável, conexão fechada sem resposta, prazo da tentativa) e respostas 2xx ilegíveis (corpo interrompido, JSON inválido, campo ilegível) entram no catálogo: `ProblemFrom` as classifica como `#erro-de-transporte`, `#tempo-esgotado` ou `#resposta-ilegivel` (entrada nova), em vez de `about:blank`. O texto dos erros e `errors.As`/`errors.Is` sobre a causa não mudam.
 - `ErrArgumentoInvalido`: casa com a validação local feita antes de enviar. O texto dos erros não muda.
 - Chaves e erros não vazam dado pessoal por `fmt` nem `slog`: `ChaveMigracao` e `ChaveEdicao` ganham `LogValue` e `GoString`, sem UC nem e-mail; `APIError` e `UncertainResultError` ganham `GoString`, sem corpo nem chave. A `Message` da API continua em `Error()`. O `json.Marshal` das chaves leva os dados em claro, para guardar a conferência.
 - O cliente HTTP padrão do pedido de token não segue redirecionamento (um 307 reenviaria o `client_secret`); `WithHTTPClient` mantém a política do chamador.

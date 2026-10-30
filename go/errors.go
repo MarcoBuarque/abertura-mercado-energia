@@ -229,3 +229,31 @@ func erroSemURL(err error) error {
 	}
 	return err
 }
+
+// erroTransporte é uma falha sem resposta utilizável (DNS, conexão, TLS,
+// conexão derrubada, prazo da tentativa). Error() e Unwrap seguem a causa, já
+// sem a URL; o tipo guarda o que decidir precisa para ProblemFrom dizer se
+// repetir é seguro.
+type erroTransporte struct {
+	err      error
+	metodo   string
+	escreveu bool // os cabeçalhos da requisição foram escritos
+	timeout  bool // o prazo da tentativa venceu
+}
+
+func (e *erroTransporte) Error() string { return e.err.Error() }
+
+func (e *erroTransporte) Unwrap() error { return e.err }
+
+// erroResposta é uma resposta 2xx que o SDK não conseguiu ler (corpo
+// interrompido) ou entender (JSON inválido, campo ilegível). Error() e Unwrap
+// seguem a causa. Fora de um *UncertainResultError, sempre vem de uma leitura:
+// toda escrita com resposta ilegível é incerta.
+type erroResposta struct{ err error }
+
+func (e *erroResposta) Error() string { return e.err.Error() }
+
+func (e *erroResposta) Unwrap() error { return e.err }
+
+// respostaIlegivel marca err como resposta 2xx ilegível.
+func respostaIlegivel(err error) error { return &erroResposta{err: err} }
