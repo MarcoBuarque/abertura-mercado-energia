@@ -1,6 +1,20 @@
 package abertura
 
-import "net/http"
+import (
+	"context"
+	"net/http"
+	"strconv"
+	"time"
+)
+
+// Tempos de espera entre tentativas (arquitetura §4.4).
+const (
+	baseBackoff    = 500 * time.Millisecond
+	tetoBackoff    = 8 * time.Second
+	baseBackoff429 = 2 * time.Second
+	tetoBackoff429 = 30 * time.Second
+	tetoRetryAfter = 30 * time.Second
+)
 
 // acao é o que o laço de envio faz depois de uma tentativa.
 type acao int
@@ -147,5 +161,66 @@ func decidir(metodo string, r desfecho) acao {
 		return acaoIncerto
 	default:
 		return acaoErro
+	}
+}
+
+// esperaRetry calcula quanto esperar antes do próximo retry. retry conta os
+// retries já feitos (0 no primeiro). Um Retry-After legível, em segundos ou
+// data HTTP, ganha do backoff, com teto de 30 s. Sem ele, o backoff é
+// exponencial com jitter cheio: rnd() em [0,1) multiplica a faixa
+// base*2^retry, limitada ao teto. Em 429 a base é 2 s e o teto 30 s; nos
+// demais casos, 500 ms e 8 s.
+func esperaRetry(status int, retryAfter string, retry int, agora time.Time, rnd func() float64) time.Duration {
+	if d, ok := lerRetryAfter(retryAfter, agora); ok {
+		return min(d, tetoRetryAfter)
+	}
+	faixa, teto := baseBackoff, tetoBackoff
+	if status == http.StatusTooManyRequests {
+		faixa, teto = baseBackoff429, tetoBackoff429
+	}
+	for range retry {
+		if faixa >= teto {
+			break
+		}
+		faixa *= 2
+	}
+	faixa = min(faixa, teto)
+	return time.Duration(rnd() * float64(faixa))
+}
+
+// lerRetryAfter entende o cabeçalho em segundos inteiros ou em data HTTP.
+func lerRetryAfter(valor string, agora time.Time) (time.Duration, bool) {
+	if valor == "" {
+		return 0, false
+	}
+	if s, err := strconv.Atoi(valor); err == nil {
+		if s < 0 {
+			return 0, false
+		}
+		// Limita antes de multiplicar, para não estourar time.Duration.
+		return time.Duration(min(s, int(tetoRetryAfter/time.Second))) * time.Second, true
+	}
+	t, err := http.ParseTime(valor)
+	if err != nil {
+		return 0, false
+	}
+	return max(t.Sub(agora), 0), true
+}
+
+// dormirCtx espera d ou até o ctx terminar; nesse caso devolve o erro do ctx.
+func dormirCtx(ctx context.Context, d time.Duration) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if d <= 0 {
+		return nil
+	}
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+	select {
+	case <-timer.C:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 }
