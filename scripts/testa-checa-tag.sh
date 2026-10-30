@@ -61,7 +61,7 @@ tests=(
   "go rc com Version rc e seção do núcleo passa|0|go|go/v0.1.0-rc.1|0.1.0|0.1.0-rc.1|RC_NUCLEO"
   "go rc com Version final falha|1|go|go/v0.1.0-rc.1|0.1.0|0.1.0|RC"
   "go com tag openapi falha|1|go|openapi/v0.1.0|0.1.0|0.1.0|OK"
-  "tipo desconhecido falha|1|npm|npm/v0.1.0|0.1.0|0.1.0|OK"
+  "tipo desconhecido é uso errado (sai 2)|2|npm|npm/v0.1.0|0.1.0|0.1.0|OK"
 )
 
 for linha in "${tests[@]}"; do
@@ -74,9 +74,7 @@ for linha in "${tests[@]}"; do
   monta "$info" "$ver" "$conteudo"
   codigo=0
   saida="$("$tmp/r/scripts/checa-tag.sh" "$tipo" "$tag" 2>&1)" || codigo=$?
-  if [ "$esperado" = 0 ] && [ "$codigo" -eq 0 ]; then
-    echo "ok: $nome"
-  elif [ "$esperado" = 1 ] && [ "$codigo" -eq 1 ]; then
+  if [ "$codigo" -eq "$esperado" ]; then
     echo "ok: $nome"
   else
     echo "FALHA: $nome (esperado $esperado, veio $codigo): $saida" >&2
