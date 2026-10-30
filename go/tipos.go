@@ -58,6 +58,12 @@ const (
 // Migracao é uma migração de unidade consumidora para o mercado livre, já
 // normalizada entre os formatos de lista e de detalhe da API. Campos que a API
 // não enviou ficam no valor zero (0, vazio ou ausente).
+//
+// fmt (%v, %+v, %#v, %s) e slog mostram só o id, o status e o mês; os campos
+// continuam exportados e intactos para quem grava no próprio banco. json.Marshal
+// leva os campos em claro, UC e e-mail inclusive: o JSON é para guardar, nunca
+// para log. Com o handler JSON do slog, logue o id e não a lista inteira, porque
+// uma lista passa por json.Marshal.
 type Migracao struct {
 	// ID é o identificador da migração.
 	ID string
@@ -99,7 +105,20 @@ func (m Migracao) LogValue() slog.Value {
 	)
 }
 
+// String descreve a migração sem dado pessoal: só o id, o status e o mês. Vale
+// para %v, %+v e %s, e portanto para um []Migracao impresso com fmt ou com o
+// handler de texto do slog.
+func (m Migracao) String() string {
+	return fmt.Sprintf("Migracao{id=%s status=%s mes=%s}", m.ID, m.Status, m.Mes)
+}
+
+// GoString faz o %#v seguir o String, sem UC, e-mail nem documento.
+func (m Migracao) GoString() string { return m.String() }
+
 // Medicao é uma medição de consumo de uma unidade consumidora.
+//
+// fmt e slog mostram só o id e a situação; os campos continuam exportados.
+// json.Marshal leva UC e consumo em claro (veja [Migracao]).
 type Medicao struct {
 	// ID é o identificador da medição (identificadorMedicaoConsumo).
 	ID string
@@ -127,6 +146,14 @@ func (m Medicao) LogValue() slog.Value {
 	)
 }
 
+// String descreve a medição sem dado pessoal: só o id e a situação.
+func (m Medicao) String() string {
+	return fmt.Sprintf("Medicao{id=%s situacao=%s}", m.ID, m.Situacao)
+}
+
+// GoString faz o %#v seguir o String, sem UC nem consumo.
+func (m Medicao) GoString() string { return m.String() }
+
 // FiltroMigracoes filtra a listagem de migrações. Zero em um campo = sem filtro.
 type FiltroMigracoes struct {
 	// De e Ate delimitam a faixa de meses de referência.
@@ -139,6 +166,24 @@ type FiltroMigracoes struct {
 	Perfil int
 }
 
+// String descreve o filtro sem a UC: só a faixa de meses, o status e o perfil.
+func (f FiltroMigracoes) String() string {
+	return fmt.Sprintf("FiltroMigracoes{de=%s ate=%s status=%s perfil=%d}", f.De, f.Ate, f.Status, f.Perfil)
+}
+
+// GoString faz o %#v seguir o String, sem a UC.
+func (f FiltroMigracoes) GoString() string { return f.String() }
+
+// LogValue implementa [slog.LogValuer] sem a UC.
+func (f FiltroMigracoes) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("de", f.De.String()),
+		slog.String("ate", f.Ate.String()),
+		slog.String("status", string(f.Status)),
+		slog.Int("perfil", f.Perfil),
+	)
+}
+
 // FiltroMedicoes filtra a listagem de medições.
 type FiltroMedicoes struct {
 	// UC e Concessionaria identificam a unidade consumidora.
@@ -148,6 +193,25 @@ type FiltroMedicoes struct {
 	Inicio, Fim time.Time
 	// Situacao filtra por situação da medição.
 	Situacao SituacaoMedicao
+}
+
+// String descreve o filtro sem a UC: só a concessionária, o período e a situação.
+func (f FiltroMedicoes) String() string {
+	return fmt.Sprintf("FiltroMedicoes{concessionaria=%d inicio=%s fim=%s situacao=%s}",
+		f.Concessionaria, f.Inicio.Format(layoutDia), f.Fim.Format(layoutDia), f.Situacao)
+}
+
+// GoString faz o %#v seguir o String, sem a UC.
+func (f FiltroMedicoes) GoString() string { return f.String() }
+
+// LogValue implementa [slog.LogValuer] sem a UC.
+func (f FiltroMedicoes) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Int("concessionaria", f.Concessionaria),
+		slog.String("inicio", f.Inicio.Format(layoutDia)),
+		slog.String("fim", f.Fim.Format(layoutDia)),
+		slog.String("situacao", string(f.Situacao)),
+	)
 }
 
 // NovaMigracao reúne os dados para criar uma migração. O código do varejista
@@ -162,6 +226,23 @@ type NovaMigracao struct {
 	Comentario     string
 }
 
+// String descreve a nova migração sem UC, documento, e-mail nem comentário:
+// só a concessionária e o mês.
+func (n NovaMigracao) String() string {
+	return fmt.Sprintf("NovaMigracao{concessionaria=%d mes=%s}", n.Concessionaria, n.Mes)
+}
+
+// GoString faz o %#v seguir o String, sem dado pessoal.
+func (n NovaMigracao) GoString() string { return n.String() }
+
+// LogValue implementa [slog.LogValuer] sem dado pessoal.
+func (n NovaMigracao) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Int("concessionaria", n.Concessionaria),
+		slog.String("mes", n.Mes.String()),
+	)
+}
+
 // EdicaoMigracao reúne os campos editáveis de uma migração. Só os campos que
 // a spec descreve para o PUT.
 type EdicaoMigracao struct {
@@ -170,6 +251,24 @@ type EdicaoMigracao struct {
 	Documento Documento
 	Email     string
 	Status    StatusMigracao
+}
+
+// String descreve a edição sem documento nem e-mail: só o mês, o perfil e o
+// status.
+func (e EdicaoMigracao) String() string {
+	return fmt.Sprintf("EdicaoMigracao{mes=%s perfil=%d status=%s}", e.Mes, e.Perfil, e.Status)
+}
+
+// GoString faz o %#v seguir o String, sem dado pessoal.
+func (e EdicaoMigracao) GoString() string { return e.String() }
+
+// LogValue implementa [slog.LogValuer] sem dado pessoal.
+func (e EdicaoMigracao) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("mes", e.Mes.String()),
+		slog.Int("perfil", e.Perfil),
+		slog.String("status", string(e.Status)),
+	)
 }
 
 // ChaveMigracao identifica uma migração criada pelos seus dados: unidade
