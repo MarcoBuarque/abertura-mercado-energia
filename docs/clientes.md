@@ -306,13 +306,19 @@ import urllib.request
 
 CATALOGO = "https://marcobuarque.github.io/abertura-mercado-energia/erros"
 
-# Título e slug (âncora de docs/erros.md) por código da API. Código fora da
-# tabela cai em "codigo-desconhecido".
+# Slug (âncora de docs/erros.md) e título por código da API. Código fora da
+# tabela cai em "codigo-desconhecido"; sem código, o status decide, como no SDK.
 CODIGOS = {
     "ERR_CREDENCIAL_INVALIDA": ("credencial-invalida-autorizador", "Credencial recusada pelo autorizador"),
     "ERR_VALIDACAO_CAMPOS": ("validacao-campos", "Campo inválido na requisição"),
     "ERR_PERFIL_VAREJISTA_OBRIGATORIO": ("perfil-varejista-obrigatorio", "Perfil de varejista obrigatório"),
     "ERR_MIGRACAO_SOLICITADA": ("migracao-solicitada", "Migração já solicitada"),
+}
+SEM_CODIGO = {
+    404: ("nao-encontrado", "Recurso não encontrado"),
+    429: ("limite-de-requisicoes", "Limite de requisições excedido"),
+    502: ("falha-do-gateway", "Falha no gateway da API"),
+    504: ("falha-do-gateway", "Falha no gateway da API"),
 }
 
 
@@ -327,9 +333,13 @@ def para_problema(status, corpo, cabecalhos, operacao):
     if codigo in CODIGOS:
         slug, titulo = CODIGOS[codigo]
         if codigo == "ERR_CREDENCIAL_INVALIDA" and not cabecalhos.get("x-amzn-ErrorType"):
-            slug = "credencial-invalida-backend"
+            slug, titulo = "credencial-invalida-backend", "Credencial recusada pelo backend"
     elif codigo:
-        slug, titulo = "codigo-desconhecido", "Código de erro desconhecido"
+        slug, titulo = "codigo-desconhecido", "Código de erro desconhecido do SDK"
+    elif status in SEM_CODIGO:
+        slug, titulo = SEM_CODIGO[status]
+    elif status >= 500:
+        slug, titulo = "erro-interno", "Erro interno da API"
     else:
         slug, titulo = "recusa-sem-codigo", "Recusa sem código da API"
     problema = {
