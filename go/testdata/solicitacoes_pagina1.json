@@ -1,0 +1,24 @@
+{
+  "solicitacao": [
+    {
+      "idSolicitacaoAlteracao": "00000000-0000-4000-8000-0000000000b1",
+      "codigoUnidadeConsumidora": "000000000000001",
+      "codigoAgenteConcessionaria": 900001,
+      "tipoSolicitacao": "SUSPENSAO_FORNECIMENTO_RESILICAO",
+      "mesReferencia": "2027-03",
+      "situacaoAlteracao": "CRIADA",
+      "idMigracaoAlterada": "00000000-0000-4000-8000-000000000001",
+      "indicadorAntecedencia": "NAO",
+      "codigoAgenteVarejistaNovo": null,
+      "codigoPerfilVarejistaNovo": null,
+      "codigoAgenteVarejistaAtual": 900002,
+      "codigoPerfilVarejistaAtual": 900003,
+      "descricaoJustificativa": "Inventado: exemplo de justificativa",
+      "dataAtraso": null,
+      "dataNotificacao": "2027-02-01",
+      "dataSolicitacao": "2027-02-02",
+      "idCelebracaoCER": null
+    }
+  ],
+  "indexProximaPagina": null
+}

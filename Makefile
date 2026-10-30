@@ -23,7 +23,7 @@ export GITLEAKS
 $(GITLEAKS): Makefile
 	GOBIN=$(CURDIR)/out/bin go install github.com/zricethezav/gitleaks/v8@$(GITLEAKS_VERSION)
 
-.PHONY: segredos spec-lint spec-exemplos testa-regras spec-diff docs mock mock-smoke go-gen go-test go-lint go-vuln hooks ci
+.PHONY: segredos spec-lint spec-exemplos testa-regras spec-diff docs mock mock-smoke go-gen go-test go-lint go-vuln checa-deps hooks ci
 
 segredos: $(GITLEAKS) ## prova a guarda de segredos e varre o repositório
 	scripts/testa-segredos.sh
@@ -69,9 +69,12 @@ go-lint:
 go-vuln:
 	cd go && go run golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION) ./...
 
+checa-deps: ## o runtime do pacote abertura só importa a stdlib, x/oauth2 e x/time
+	scripts/checa-deps.sh
+
 hooks: $(GITLEAKS) ## instala o gancho de pre-commit (funciona em worktree)
 	@dir="$$(git rev-parse --git-path hooks)" && mkdir -p "$$dir" && \
 		install -m 755 scripts/pre-commit "$$dir/pre-commit" && \
 		echo "gancho instalado em $$dir/pre-commit"
 
-ci: segredos testa-regras spec-lint spec-exemplos spec-diff docs mock mock-smoke go-gen go-test go-lint go-vuln
+ci: segredos testa-regras spec-lint spec-exemplos spec-diff docs mock mock-smoke go-gen go-test go-lint go-vuln checa-deps
