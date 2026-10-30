@@ -23,7 +23,7 @@ export GITLEAKS
 $(GITLEAKS): Makefile
 	GOBIN=$(CURDIR)/out/bin go install github.com/zricethezav/gitleaks/v8@$(GITLEAKS_VERSION)
 
-.PHONY: segredos spec-lint spec-exemplos testa-regras spec-diff docs mock mock-smoke mock-imagem go-tidy go-gen go-test go-race go-lint go-vuln go-deps checa-workflows testa-checa-tag checa-tag hooks ci
+.PHONY: segredos spec-lint spec-exemplos testa-regras spec-diff docs mock mock-smoke mock-imagem go-tidy go-gen go-test go-race go-lint go-vuln go-deps checa-workflows testa-checa-tag checa-tag testa-checa-marca checa-marca hooks ci
 
 segredos: $(GITLEAKS) ## prova a guarda de segredos e varre o repositório
 	scripts/testa-segredos.sh
@@ -103,9 +103,15 @@ MOCK_TAG    ?= local
 mock-imagem: ## constrói a imagem do mock (linux/amd64, como o Prism fixado) com o nome $(MOCK_IMAGEM):$(MOCK_TAG)
 	docker build --platform linux/amd64 -f mock/Dockerfile -t $(MOCK_IMAGEM):$(MOCK_TAG) .
 
+testa-checa-marca: ## prova a checagem da marca (tabela de casos em repositórios temporários)
+	scripts/testa-checa-marca.sh
+
+checa-marca: ## o nome do operador só no aviso de não afiliação (scripts/checa-marca.sh)
+	scripts/checa-marca.sh
+
 hooks: $(GITLEAKS) ## instala o gancho de pre-commit (funciona em worktree)
 	@dir="$$(git rev-parse --git-path hooks)" && mkdir -p "$$dir" && \
 		install -m 755 scripts/pre-commit "$$dir/pre-commit" && \
 		echo "gancho instalado em $$dir/pre-commit"
 
-ci: segredos checa-workflows testa-checa-tag testa-regras spec-lint spec-exemplos spec-diff docs mock mock-smoke go-tidy go-gen go-test go-race go-lint go-vuln go-deps
+ci: segredos testa-checa-marca checa-marca checa-workflows testa-checa-tag testa-regras spec-lint spec-exemplos spec-diff docs mock mock-smoke go-tidy go-gen go-test go-race go-lint go-vuln go-deps
