@@ -29,7 +29,16 @@ var (
 
 func lerFixture(t *testing.T, nome string) []byte {
 	t.Helper()
-	b, err := os.ReadFile(filepath.Join("..", "..", "testdata", nome))
+	raiz, err := os.OpenRoot(filepath.Join("..", "..", "testdata"))
+	if err != nil {
+		t.Fatalf("abrir testdata: %v", err)
+	}
+	defer func() {
+		if err := raiz.Close(); err != nil {
+			t.Errorf("fechar testdata: %v", err)
+		}
+	}()
+	b, err := raiz.ReadFile(nome)
 	if err != nil {
 		t.Fatalf("lendo fixture %s: %v", nome, err)
 	}

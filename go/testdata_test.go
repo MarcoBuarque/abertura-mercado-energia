@@ -105,6 +105,15 @@ func TestFixturesValidamContraSpec(t *testing.T) {
 // à frente, agentes na faixa 900000 e e-mail em example.org.
 func TestFixturesInventadas(t *testing.T) {
 	t.Parallel()
+	raiz, err := os.OpenRoot("testdata")
+	if err != nil {
+		t.Fatalf("abrir testdata: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := raiz.Close(); err != nil {
+			t.Errorf("fechar testdata: %v", err)
+		}
+	})
 	arquivos, err := filepath.Glob(filepath.Join("testdata", "*"))
 	if err != nil {
 		t.Fatalf("listar fixtures: %v", err)
@@ -115,7 +124,7 @@ func TestFixturesInventadas(t *testing.T) {
 	for _, a := range arquivos {
 		t.Run(filepath.Base(a), func(t *testing.T) {
 			t.Parallel()
-			b, err := os.ReadFile(a)
+			b, err := raiz.ReadFile(filepath.Base(a))
 			if err != nil {
 				t.Fatalf("ler: %v", err)
 			}
