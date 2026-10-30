@@ -100,11 +100,17 @@ func NewClient(env Environment, opts ...Option) (*Client, error) {
 	if c.http == nil {
 		c.http = &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	}
+	rl := env.RateLimits
+	if cfg.limites != nil {
+		rl = *cfg.limites
+	}
+	c.limites = novosLimitadores(rl)
 	if cfg.tokenSource != nil {
 		c.fonte = novaFonteExterna(cfg.tokenSource)
 	} else {
 		c.fonte = novoCacheToken(configToken{
-			tokenURL: env.TokenURL, clientID: cfg.clientID, clientSecret: cfg.clientSecret, httpClient: cfg.httpClient,
+			tokenURL: env.TokenURL, clientID: cfg.clientID, clientSecret: cfg.clientSecret,
+			httpClient: clienteDeToken(cfg.httpClient, c.limites),
 		})
 	}
 	return c, nil
