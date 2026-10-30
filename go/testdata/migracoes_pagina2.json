@@ -1,0 +1,30 @@
+{
+  "migracao": [
+    {
+      "idMigracao": "00000000-0000-4000-8000-000000000003",
+      "codigoUnidadeConsumidora": "000000000000003",
+      "codigoAgenteConcessionariaUnidadeConsumidora": "900001_000000000000003",
+      "codigoAgenteConcessionaria": 900001,
+      "codigoAgenteSupridora": null,
+      "tipoDocumento": "CPF",
+      "numeroDocumento": "33333333333",
+      "codigoAgenteVarejista": 900002,
+      "mesReferencia": "2027-03-01T00:00:00-03:00",
+      "dataDenuncia": "2027-01-15",
+      "codigoPerfilVarejista": 900003,
+      "dataSolicitacao": "2027-01-10",
+      "statusMigracao": "CANCELADA",
+      "submercado": "SUL",
+      "valorDHC": null,
+      "valorMusd": null,
+      "pagamentoMulta": "NAO",
+      "justificativa": null,
+      "dataValidacao": null,
+      "emailUnidadeConsumidora": "contato@example.org",
+      "comentario": "Inventado: exemplo de comentário",
+      "idCelebracaoCER": null,
+      "indicadorProcessoSiga": null
+    }
+  ],
+  "indexProximaPagina": null
+}

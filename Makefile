@@ -53,8 +53,9 @@ mock: ## pendente: task 03
 mock-smoke: ## pendente: task 03
 	@echo "pendente: task 03"
 
-go-gen: ## pendente: task 07
-	@echo "pendente: task 07"
+go-gen: ## regenera os modelos e a cópia da spec e falha se algo mudar (deriva)
+	cd go && go generate ./...
+	git diff --exit-code -- go
 
 go-test:
 	cd go && go build ./... && go vet ./... && go test ./...
