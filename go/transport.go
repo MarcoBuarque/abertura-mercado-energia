@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptrace"
 	"net/url"
@@ -314,7 +315,7 @@ func (c *Client) enviar(ctx context.Context, op operacao, cc callConfig) (int, [
 	p := c.parametros(cc)
 
 	retries, jaRenovou := 0, false
-	for {
+	for n := 1; ; n++ {
 		if err := c.limites.esperar(ctx, op.grupo); err != nil {
 			return 0, nil, err
 		}
@@ -325,6 +326,7 @@ func (c *Client) enviar(ctx context.Context, op operacao, cc callConfig) (int, [
 
 		t := c.tentar(ctx, proto, corpo, tok, p)
 		d, apiErr := c.avaliar(ctx, op, t, tok, retries, jaRenovou)
+		c.logTentativa(ctx, op, t, d, apiErr, n)
 
 		switch decidir(op.metodo, d) {
 		case acaoSucesso:
@@ -332,13 +334,16 @@ func (c *Client) enviar(ctx context.Context, op operacao, cc callConfig) (int, [
 		case acaoRepetir:
 			espera := esperaRetry(t.status, t.header.Get("Retry-After"), retries, c.agora(), c.rnd)
 			retries++
+			c.aviso(ctx, "retry agendado", op, t, d, slog.Int("tentativa", n+1), slog.Int64("espera_ms", espera.Milliseconds()))
 			if err := c.dormir(ctx, espera); err != nil {
 				return 0, nil, err
 			}
 		case acaoRenovarRepetir:
 			c.fonte.invalidar(tok)
 			jaRenovou = true
+			c.aviso(ctx, "token renovado", op, t, d, slog.Int("tentativa", n+1))
 		case acaoIncerto:
+			c.aviso(ctx, "resultado incerto", op, t, d, slog.Int("tentativa", n))
 			return 0, nil, &UncertainResultError{Operation: op.id, Key: op.chave, Err: c.causa(ctx, op, d, t, apiErr)}
 		default:
 			if d.falha == falhaContexto {
@@ -446,4 +451,65 @@ func (c *Client) causa(ctx context.Context, op operacao, d desfecho, t tentativa
 	default:
 		return apiErr
 	}
+}
+
+// atributosBase são os campos de toda linha de log do transporte. Nunca
+// entram query, corpo, cabeçalhos (salvo o request id), token nem credenciais.
+func atributosBase(op operacao, t tentativa) []slog.Attr {
+	return []slog.Attr{
+		slog.String("op", op.id),
+		slog.String("metodo", op.metodo),
+		slog.String("rota", op.modelo),
+		slog.Int("status", t.status),
+		slog.String("request_id", limpar(t.header.Get("x-amzn-RequestId"), 100)),
+	}
+}
+
+// nomeFalha descreve, sem detalhes, por que a tentativa não teve resposta
+// utilizável.
+func nomeFalha(d desfecho) string {
+	switch {
+	case d.falha == falhaTransporte:
+		return "transporte"
+	case d.falha == falhaTimeout:
+		return "timeout"
+	case d.falha == falhaContexto:
+		return "contexto"
+	case d.corpoIlegivel:
+		return "corpo"
+	default:
+		return ""
+	}
+}
+
+// logTentativa escreve o Debug de cada tentativa.
+func (c *Client) logTentativa(ctx context.Context, op operacao, t tentativa, d desfecho, apiErr *APIError, n int) {
+	if c.logger == nil || !c.logger.Enabled(ctx, slog.LevelDebug) {
+		return
+	}
+	codigo := ""
+	if apiErr != nil {
+		codigo = limpar(apiErr.Code, limiteCodigoErro)
+	}
+	attrs := append(atributosBase(op, t),
+		slog.Int64("duracao_ms", t.duracao.Milliseconds()),
+		slog.Int("tentativa", n),
+		slog.String("codigo", codigo),
+	)
+	if f := nomeFalha(d); f != "" {
+		attrs = append(attrs, slog.String("falha", f))
+	}
+	c.logger.LogAttrs(ctx, slog.LevelDebug, "tentativa", attrs...)
+}
+
+// aviso escreve um Warn do transporte (retry, renovação, incerto).
+func (c *Client) aviso(ctx context.Context, msg string, op operacao, t tentativa, d desfecho, extras ...slog.Attr) {
+	if c.logger == nil {
+		return
+	}
+	attrs := append(atributosBase(op, t), extras...)
+	if f := nomeFalha(d); f != "" {
+		attrs = append(attrs, slog.String("falha", f))
+	}
+	c.logger.LogAttrs(ctx, slog.LevelWarn, msg, attrs...)
 }
