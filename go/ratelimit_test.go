@@ -250,8 +250,9 @@ func TestLimitador_ClienteDeTokenPreservaOClienteDoUsuario(t *testing.T) {
 }
 
 // TestClienteDeToken_WhenRedirecionamento_NaoReenviaOFormulario prova que o
-// cliente padrão do token não segue um 307, que reenviaria o client_secret do
-// formulário a outro host. Um cliente do usuário mantém a política dele.
+// cliente do token nunca segue um 307, que reenviaria o client_secret do
+// formulário a outro host, nem com um cliente do usuário (WithHTTPClient) e
+// mesmo que ele tenha um CheckRedirect que seguiria.
 func TestClienteDeToken_WhenRedirecionamento_NaoReenviaOFormulario(t *testing.T) {
 	t.Parallel()
 
@@ -262,7 +263,8 @@ func TestClienteDeToken_WhenRedirecionamento_NaoReenviaOFormulario(t *testing.T)
 		wantStatus int
 	}{
 		{"cliente padrão do SDK não segue", nil, false, http.StatusTemporaryRedirect},
-		{"cliente do usuário mantém a política dele", &http.Client{}, true, http.StatusOK},
+		{"cliente do usuário sem CheckRedirect também não segue", &http.Client{}, false, http.StatusTemporaryRedirect},
+		{"cliente do usuário com CheckRedirect que seguiria também não segue", &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error { return nil }}, false, http.StatusTemporaryRedirect},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

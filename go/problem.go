@@ -14,11 +14,15 @@ import (
 // APIs). Use-o no cabeçalho Content-Type ao devolver um [Problem] como JSON.
 const ProblemContentType = "application/problem+json"
 
-// CatalogoErrosURL é a página do catálogo de erros (docs/erros.md). O campo
-// Type de um [Problem] é essa URL mais "#" e o slug da entrada.
+// CatalogoErrosURL é a página do catálogo de erros. O campo Type de um
+// [Problem] é essa URL mais "#" e o slug da entrada.
 //
-// A página vale a partir da publicação do repositório: até lá o endereço ainda
-// não responde, e o catálogo se lê em docs/erros.md.
+// A página é gerada de docs/erros.md por "make docs" (out/docs/erros/index.html,
+// com um id por slug) e publicada no GitHub Pages, ao lado da descrição Redoc,
+// pelo workflow release-openapi a cada tag final openapi/vX.Y.Z (pré-versões
+// -rc.N não publicam) e só com o repositório público. Até a primeira
+// publicação o endereço não responde, e o catálogo se lê em docs/erros.md. O
+// Pages redireciona /erros para /erros/ e o navegador mantém o #fragmento.
 const CatalogoErrosURL = "https://marcobuarque.github.io/abertura-mercado-energia/erros"
 
 // Problem é um erro do SDK no formato da RFC 9457 (Problem Details for HTTP
@@ -36,11 +40,15 @@ const CatalogoErrosURL = "https://marcobuarque.github.io/abertura-mercado-energi
 // responde com outro status, ajuste Status para o mesmo valor antes de
 // codificar, como a RFC pede.
 type Problem struct {
-	// Type é a URI da entrada do catálogo ("…/erros#migracao-solicitada"), ou
-	// "about:blank" para erro sem entrada (por exemplo, um erro que não é do
-	// SDK).
+	// Type é a URI da entrada do catálogo ("…/erros#migracao-solicitada"). O
+	// [ProblemFrom] sempre a preenche, com "#fora-do-catalogo" para o que não
+	// tem entrada própria. Vazio, ou "about:blank", é um Problem montado à mão
+	// para um erro sem semântica própria (RFC 9457, 4.2.1): o JSON omite o type
+	// vazio e usa como title a frase padrão do status HTTP.
 	Type string
-	// Title é o título curto da entrada, em português.
+	// Title é o título curto da entrada, em português. No JSON de um Problem
+	// com Type vazio ou "about:blank", o title é a frase padrão do status (e
+	// some se não há Status), como a RFC pede.
 	Title string
 	// Status é o status HTTP da resposta da API. Vale 0 quando não houve
 	// resposta (falha de rede, validação local); nesse caso sai omitido do JSON.
@@ -72,8 +80,8 @@ type Problem struct {
 
 // problemaJSON é a forma serializada de um [Problem].
 type problemaJSON struct {
-	Type      string `json:"type"`
-	Title     string `json:"title"`
+	Type      string `json:"type,omitempty"`
+	Title     string `json:"title,omitempty"`
 	Status    int    `json:"status,omitempty"`
 	Detail    string `json:"detail,omitempty"`
 	Instance  string `json:"instance,omitempty"`
@@ -88,7 +96,13 @@ type problemaJSON struct {
 // e instance, mais as extensões code, operation, requestId, retryable e
 // uncertain (camelCase). Campos de texto vazios e status 0 são omitidos;
 // retryable e uncertain saem sempre, porque "falso" também informa.
+//
+// Com Type vazio ou "about:blank", o title é a frase padrão do status HTTP
+// (RFC 9457, 4.2.1), e some quando Status é 0 ou desconhecido.
 func (p Problem) MarshalJSON() ([]byte, error) {
+	if p.Type == "" || p.Type == "about:blank" {
+		p.Title = http.StatusText(p.Status)
+	}
 	return json.Marshal(problemaJSON(p))
 }
 
@@ -99,9 +113,14 @@ var ErrArgumentoInvalido error = &sentinela{texto: "abertura: argumento inválid
 
 // erroArgumento é a validação local. Error() mantém o texto original; Is faz
 // o erro casar com [ErrArgumentoInvalido].
-type erroArgumento struct{ msg string }
+type erroArgumento struct {
+	msg string
+	err error // causa, se houver (por exemplo, o erro do encoding/json)
+}
 
 func (e *erroArgumento) Error() string { return e.msg }
+
+func (e *erroArgumento) Unwrap() error { return e.err }
 
 func (e *erroArgumento) Is(target error) bool { return target == ErrArgumentoInvalido }
 
@@ -110,12 +129,16 @@ func argumentoInvalido(formato string, a ...any) error {
 	return &erroArgumento{msg: fmt.Sprintf(formato, a...)}
 }
 
+// argumentoInvalidoPor é argumentoInvalido com uma causa, que continua
+// acessível por errors.As. O texto é o de msg, sem acrescentar a causa.
+func argumentoInvalidoPor(err error, formato string, a ...any) error {
+	return &erroArgumento{msg: fmt.Sprintf(formato, a...), err: err}
+}
+
 // entradaCatalogo é uma entrada da tabela; a âncora de docs/erros.md é o slug.
 type entradaCatalogo struct {
 	titulo  string
 	detalhe string
-	// puro: o Type é "about:blank" em vez da URL do catálogo.
-	puro bool
 }
 
 // catalogo é a única fonte, no código, de slugs e títulos. O teste de
@@ -181,6 +204,10 @@ var catalogo = map[string]entradaCatalogo{
 		titulo:  "Resultado incerto da escrita",
 		detalhe: "A escrita saiu, mas a resposta não permite saber se foi aplicada. O SDK não repete: confira o estado antes.",
 	},
+	"resposta-ilegivel": {
+		titulo:  "Resposta ilegível",
+		detalhe: "A API respondeu com sucesso, mas o corpo não pôde ser lido ou entendido. Numa escrita, o resultado é incerto; numa leitura, repetir é seguro.",
+	},
 	"cursor-repetido": {
 		titulo:  "Cursor de paginação repetido",
 		detalhe: "A API devolveu como próxima página um cursor já usado; o SDK parou para não girar para sempre.",
@@ -196,7 +223,6 @@ var catalogo = map[string]entradaCatalogo{
 	"fora-do-catalogo": {
 		titulo:  "Erro fora do catálogo",
 		detalhe: "O erro não vem do SDK, ou não tem entrada no catálogo.",
-		puro:    true,
 	},
 }
 
@@ -233,10 +259,7 @@ func soIdentificador(s string) string {
 // novoProblem monta o Problem de uma entrada do catálogo.
 func novoProblem(slug string, status int, op string) Problem {
 	e := catalogo[slug]
-	p := Problem{Type: "about:blank", Title: e.titulo, Status: status, Detail: e.detalhe}
-	if !e.puro {
-		p.Type = CatalogoErrosURL + "#" + slug
-	}
+	p := Problem{Type: CatalogoErrosURL + "#" + slug, Title: e.titulo, Status: status, Detail: e.detalhe}
 	if op = soIdentificador(op); op != "" {
 		p.Operation = op
 		p.Detail = "Operação " + op + ": " + e.detalhe
@@ -247,9 +270,9 @@ func novoProblem(slug string, status int, op string) Problem {
 // ProblemFrom traduz um erro do SDK em [Problem]. Aceita o erro direto,
 // embrulhado com %w ou dentro de errors.Join: a busca é a de errors.As e
 // errors.Is, e um [*UncertainResultError] na árvore ganha de um [*APIError].
-// Um erro que não é do SDK vira o Problem "about:blank"
-// (entrada "fora-do-catalogo"), sem o texto do erro. ProblemFrom(nil) devolve
-// o valor zero.
+// Um erro que o SDK não classifica (inclusive um que não é do SDK) vira a
+// entrada "fora-do-catalogo", sem o texto do erro; o type nunca é "about:blank".
+// ProblemFrom(nil) devolve o valor zero.
 func ProblemFrom(err error) Problem {
 	if err == nil {
 		return Problem{}
@@ -262,8 +285,15 @@ func ProblemFrom(err error) Problem {
 	if errors.As(err, &api) {
 		return api.Problem()
 	}
+	var et *erroTransporte
+	var er *erroResposta
+	var ft *erroFalhaToken
 	var ne net.Error
 	switch {
+	case errors.As(err, &et):
+		return et.problem()
+	case errors.As(err, &er):
+		return er.problem()
 	case errors.Is(err, ErrNotFound):
 		return novoProblem("nao-encontrado", http.StatusNotFound, "")
 	case errors.Is(err, ErrCursorRepetido):
@@ -276,6 +306,8 @@ func ProblemFrom(err error) Problem {
 		return p
 	case errors.Is(err, context.Canceled):
 		return novoProblem("chamada-cancelada", 0, "")
+	case errors.As(err, &ft):
+		return novoProblem("falha-ao-obter-token", 0, operacaoToken)
 	case errors.As(err, &ne) && ne.Timeout():
 		p := novoProblem("tempo-esgotado", 0, "")
 		p.Retryable = true
@@ -286,6 +318,39 @@ func ProblemFrom(err error) Problem {
 		return p
 	}
 	return novoProblem("fora-do-catalogo", 0, "")
+}
+
+// problem traduz a falha de transporte. O tipo diz se foi o prazo da tentativa
+// ou outra falha; Retryable e Uncertain vêm de decidir, com o método da
+// chamada e o que chegou a ser escrito.
+func (e *erroTransporte) problem() Problem {
+	slug, falha := "erro-de-transporte", falhaTransporte
+	if e.timeout {
+		slug, falha = "tempo-esgotado", falhaTimeout
+	}
+	p := novoProblem(slug, 0, "")
+	aplicarDecisao(&p, e.metodo, desfecho{falha: falha, escreveu: e.escreveu})
+	return p
+}
+
+// problem traduz a resposta ilegível, que fora de um UncertainResultError é
+// sempre de uma leitura.
+func (e *erroResposta) problem() Problem {
+	p := novoProblem("resposta-ilegivel", 0, "")
+	aplicarDecisao(&p, http.MethodGet, desfecho{status: http.StatusOK, corpoIlegivel: true})
+	return p
+}
+
+// aplicarDecisao preenche Retryable e Uncertain com a decisão de decidir. O
+// maxRetries de 1 só faz a decisão ser "repetir", não "esgotou".
+func aplicarDecisao(p *Problem, metodo string, d desfecho) {
+	d.maxRetries = 1
+	switch decidir(metodo, d) {
+	case acaoRepetir:
+		p.Retryable = true
+	case acaoIncerto:
+		p.Uncertain = true
+	}
 }
 
 // slug diz qual entrada do catálogo descreve o erro.
@@ -329,17 +394,11 @@ func (e *APIError) Problem() Problem {
 	p.Code = code
 	p.RequestID = limpar(e.RequestID, 100)
 	if e.metodo != "" {
-		switch decidir(e.metodo, desfecho{
+		aplicarDecisao(&p, e.metodo, desfecho{
 			status:             e.StatusCode,
 			gateway:            e.GatewayErrorType != "",
 			credencialInvalida: code == codigoCredencialInvalida,
-			maxRetries:         1, // só para a decisão ser "repetir", não "esgotou"
-		}) {
-		case acaoRepetir:
-			p.Retryable = true
-		case acaoIncerto:
-			p.Uncertain = true
-		}
+		})
 	}
 	return p
 }

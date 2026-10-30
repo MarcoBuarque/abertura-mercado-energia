@@ -106,7 +106,7 @@ func (m *Migracoes) Obter(ctx context.Context, id string, opts ...CallOption) (M
 		}
 		return mig, nil
 	default:
-		return Migracao{}, fmt.Errorf("%s: a API devolveu mais de uma migração para o id", op)
+		return Migracao{}, fmt.Errorf("%s: %w", op, respostaIlegivel(errors.New("a API devolveu mais de uma migração para o id")))
 	}
 }
 
@@ -242,7 +242,7 @@ func detalhesDe(corpo []byte) ([]gen.MigracaoDetalhe, error) {
 		return itens, nil
 	}
 	if len(t) == 0 || bytes.Equal(t, []byte("null")) {
-		return nil, errors.New("resposta vazia")
+		return nil, respostaIlegivel(errors.New("resposta vazia"))
 	}
 	var um gen.MigracaoDetalhe
 	if err := decodificarSaida(t, &um); err != nil {
@@ -258,7 +258,7 @@ func migracaoEscrita(corpo []byte) (Migracao, error) {
 		return Migracao{}, err
 	}
 	if len(itens) != 1 || itens[0].IdMigracao == "" {
-		return Migracao{}, errors.New("a resposta não traz uma migração identificável")
+		return Migracao{}, respostaIlegivel(errors.New("a resposta não traz uma migração identificável"))
 	}
 	return migracaoDeDetalhe(itens[0])
 }

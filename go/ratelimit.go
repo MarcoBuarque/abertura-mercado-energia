@@ -97,16 +97,16 @@ func (t transporteLimitado) RoundTrip(req *http.Request) (*http.Response, error)
 }
 
 // clienteDeToken devolve uma cópia do cliente HTTP cujo transporte espera o
-// limitador. Sem cliente do usuário, a cópia não segue redirecionamento: o
-// formulário do token leva o client_secret, e um 307 o reenviaria a outro
-// host. Um cliente passado em WithHTTPClient mantém a política dele.
+// limitador. A cópia nunca segue redirecionamento, também com um cliente de
+// WithHTTPClient: o formulário do token leva o client_secret, e um 307 o
+// reenviaria a outro host. O CheckRedirect do chamador vale só para as
+// chamadas à API, não para o pedido de token.
 func clienteDeToken(hc *http.Client, l limitadores) *http.Client {
-	cp := http.Client{
-		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
-	}
+	var cp http.Client
 	if hc != nil {
 		cp = *hc
 	}
+	cp.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
 	base := cp.Transport
 	if base == nil {
 		base = http.DefaultTransport

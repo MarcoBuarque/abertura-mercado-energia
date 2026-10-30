@@ -136,7 +136,7 @@ func TestPaginar_WhenCursorRepetido_DevolveErrCursorRepetido(t *testing.T) {
 		itens   []int // itens entregues: os da página que repete o cursor ficam de fora
 	}{
 		{
-			name: "mesmo cursor duas vezes seguidas",
+			name: "página que aponta para si mesma não entrega os itens",
 			paginas: map[string]Pagina[int]{
 				"":   {Itens: []int{1}, Proxima: "p2"},
 				"p2": {Itens: []int{2}, Proxima: "p2"},
@@ -145,14 +145,25 @@ func TestPaginar_WhenCursorRepetido_DevolveErrCursorRepetido(t *testing.T) {
 			itens: []int{1},
 		},
 		{
-			name: "ciclo A, B, A",
+			name: "ciclo A, B, A entrega os itens novos de B e não busca de novo",
 			paginas: map[string]Pagina[int]{
 				"":  {Itens: []int{1}, Proxima: "a"},
 				"a": {Itens: []int{2}, Proxima: "b"},
 				"b": {Itens: []int{3}, Proxima: "a"},
 			},
 			want:  3,
-			itens: []int{1, 2},
+			itens: []int{1, 2, 3},
+		},
+		{
+			name: "ciclo maior C, D, E, C entrega os itens de E",
+			paginas: map[string]Pagina[int]{
+				"":  {Itens: []int{1}, Proxima: "c"},
+				"c": {Itens: []int{2}, Proxima: "d"},
+				"d": {Itens: []int{3}, Proxima: "e"},
+				"e": {Itens: []int{4}, Proxima: "c"},
+			},
+			want:  4,
+			itens: []int{1, 2, 3, 4},
 		},
 	}
 	for _, tc := range tests {

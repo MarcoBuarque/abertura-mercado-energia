@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -192,7 +193,22 @@ func nomesDeCampos(corpo []byte) string {
 	return strings.Join(nomes, ",")
 }
 
-// codigoDoErro devolve o campo "error" de um corpo de erro, se houver.
+// reCodigoDaAPI é a forma de um código de erro da API.
+var reCodigoDaAPI = regexp.MustCompile(`^ERR_[A-Z0-9_]{1,80}$`)
+
+// codigoSeguro devolve o código se tiver a forma ERR_ seguida de maiúsculas,
+// dígitos e sublinhados; senão, "código fora do padrão". O campo vem do
+// servidor e pode levar texto livre (com dado pessoal) ao log. Vazio continua
+// vazio.
+func codigoSeguro(code string) string {
+	if code == "" || reCodigoDaAPI.MatchString(code) {
+		return code
+	}
+	return "código fora do padrão"
+}
+
+// codigoDoErro devolve o campo "error" de um corpo de erro, se houver e se
+// tiver a forma de um código da API.
 func codigoDoErro(corpo []byte) string {
 	var e struct {
 		Error string `json:"error"`
@@ -200,5 +216,5 @@ func codigoDoErro(corpo []byte) string {
 	if json.Unmarshal(bytes.TrimSpace(corpo), &e) != nil {
 		return ""
 	}
-	return e.Error
+	return codigoSeguro(e.Error)
 }

@@ -19,12 +19,15 @@ Primeira versão. Segue a spec `openapi/v0.1.0`; as pré-versões `go/v0.1.0-rc.
 - Tipos `Migracao`, `Medicao`, `Mes` (três formatos de mês), `Documento` (mascarado em `fmt`, `slog` e JSON) e `Decimal` (exato, aceita número ou texto).
 - Log opcional com `slog`, sem query, corpo, token, credenciais nem dado pessoal.
 - `Problem`, `ProblemFrom`, `APIError.Problem`, `UncertainResultError.Problem`, `ProblemContentType` e `CatalogoErrosURL`: os erros do SDK no formato da RFC 9457, ligados ao catálogo `docs/erros.md`.
-- `ErrArgumentoInvalido`: casa com a validação local feita antes de enviar. O texto dos erros não muda.
+- Falhas de transporte (TLS não confiável, conexão fechada sem resposta, prazo da tentativa) e respostas 2xx ilegíveis (corpo interrompido, JSON inválido, campo ilegível) entram no catálogo: `ProblemFrom` as classifica como `#erro-de-transporte`, `#tempo-esgotado` ou `#resposta-ilegivel` (entrada nova), em vez de `about:blank`. O texto dos erros e `errors.As`/`errors.Is` sobre a causa não mudam.
+- `ErrArgumentoInvalido`: casa com a validação local feita antes de enviar, o que inclui o corpo que não vira JSON, o caminho inválido e os erros de validação do `NewClient`. O texto dos erros não muda.
+- `ProblemFrom` não devolve mais `about:blank`: o que não tem entrada própria usa `#fora-do-catalogo`. Respostas do token sem `access_token` e erros da fonte de `WithTokenSource` usam `#falha-ao-obter-token`. O JSON de um `Problem` montado à mão omite o `type` vazio e, com `about:blank`, usa a frase padrão do status como `title` (RFC 9457, 4.2.1).
 - Chaves e erros não vazam dado pessoal por `fmt` nem `slog`: `ChaveMigracao` e `ChaveEdicao` ganham `LogValue` e `GoString`, sem UC nem e-mail; `APIError` e `UncertainResultError` ganham `GoString`, sem corpo nem chave. A `Message` da API continua em `Error()`. O `json.Marshal` das chaves leva os dados em claro, para guardar a conferência.
-- O cliente HTTP padrão do pedido de token não segue redirecionamento (um 307 reenviaria o `client_secret`); `WithHTTPClient` mantém a política do chamador.
+- `Migracao` e `Medicao` ganham `String` e `GoString`, e `NovaMigracao`, `EdicaoMigracao`, `FiltroMigracoes` e `FiltroMedicoes` ganham `String`, `GoString` e `LogValue`, todos sem UC, e-mail, documento, comentário nem consumo: `%v`, `%+v`, `%#v`, `%s` e `slog` (inclusive um `[]Migracao` no handler de texto) mostram só id, status, mês, concessionária e afins. Os campos continuam exportados e o `json.Marshal` não muda, então ele leva os dados em claro; com o handler JSON do `slog`, logue o id e não a lista inteira.
+- O pedido de token nunca segue redirecionamento (um 307 reenviaria o `client_secret`), também com `WithHTTPClient`: o SDK usa uma cópia do seu cliente com `CheckRedirect` próprio. O `CheckRedirect` do seu cliente vale só para as chamadas à API.
 - Qualquer 5xx, menos o 501, segue a linha do 500: leitura repete, escrita fica incerta (`*UncertainResultError`). O 501 é erro definitivo.
 - `SituacaoRejeitada` (`REJEITADA`) entra entre as situações de medição conhecidas.
-- Uma página que aponta para um cursor já visto encerra com `ErrCursorRepetido` sem entregar os itens dela; antes, contra o mock, a mesma página saía duas vezes.
+- Uma página que aponta para o cursor que acabou de usar (o que o mock faz) encerra com `ErrCursorRepetido` sem entregar os itens dela, que repetiriam a página anterior. Uma página que aponta para um cursor visto antes (ciclo A, B, A) entrega os itens dela e só então devolve `ErrCursorRepetido`, sem buscar de novo.
 
 ### Limites conhecidos
 

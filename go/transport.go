@@ -297,7 +297,7 @@ func (c *Client) enviar(ctx context.Context, op operacao, cc callConfig) (int, [
 	if op.corpo != nil {
 		var err error
 		if corpo, err = json.Marshal(op.corpo); err != nil {
-			return 0, nil, fmt.Errorf("%s: codificar o corpo: %w", op.id, err)
+			return 0, nil, argumentoInvalidoPor(err, "%s: codificar o corpo: %v", op.id, err)
 		}
 	}
 	alvo := c.apiURL + op.caminho
@@ -310,9 +310,9 @@ func (c *Client) enviar(ctx context.Context, op operacao, cc callConfig) (int, [
 	if err != nil {
 		var ue *url.Error
 		if errors.As(err, &ue) {
-			return 0, nil, fmt.Errorf("%s: caminho inválido", op.id)
+			return 0, nil, argumentoInvalido("%s: caminho inválido", op.id)
 		}
-		return 0, nil, fmt.Errorf("%s: requisição inválida: %w", op.id, err)
+		return 0, nil, argumentoInvalidoPor(err, "%s: requisição inválida: %v", op.id, err)
 	}
 	p := c.parametros(cc)
 
@@ -446,9 +446,11 @@ func (c *Client) causa(ctx context.Context, op operacao, d desfecho, t tentativa
 	case d.falha == falhaContexto:
 		return ctx.Err()
 	case t.err != nil:
-		return fmt.Errorf("%s: %w", op.id, erroSemURL(t.err))
+		return fmt.Errorf("%s: %w", op.id, &erroTransporte{
+			err: erroSemURL(t.err), metodo: op.metodo, escreveu: d.escreveu, timeout: d.falha == falhaTimeout,
+		})
 	case d.corpoIlegivel || apiErr == nil:
-		return fmt.Errorf("%s: corpo da resposta ilegível: %w", op.id, erroSemURL(t.errLeitura))
+		return fmt.Errorf("%s: corpo da resposta ilegível: %w", op.id, respostaIlegivel(erroSemURL(t.errLeitura)))
 	default:
 		return apiErr
 	}

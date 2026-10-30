@@ -978,6 +978,9 @@ func TestEnviar_ErrosDeMontagem(t *testing.T) {
 				t.Fatal("esperava erro")
 			}
 			assertSemVazamento(t, err.Error())
+			if !errors.Is(err, ErrArgumentoInvalido) {
+				t.Errorf("a montagem inválida devia casar com ErrArgumentoInvalido: %v", err)
+			}
 		})
 	}
 	if srv.reqs.Load() != 0 {

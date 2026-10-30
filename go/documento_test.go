@@ -77,11 +77,6 @@ func TestDocumento_WhenImpresso_NaoMostraONumero(t *testing.T) {
 		{name: "slog JSON do documento", got: jsonSlog(doc)},
 		{name: "json.Marshal do documento", got: jsonStd(doc)},
 		{name: "json.Marshal de mapa com documento", got: jsonStd(map[string]Documento{"d": doc})},
-		{name: "%v da migração", got: impr("%v", mig)},
-		{name: "%+v da migração", got: impr("%+v", mig)},
-		{name: "%#v da migração", got: impr("%#v", mig)},
-		{name: "%s da migração", got: impr("%s", mig)}, //nolint:gosimple // prova o verbo %s
-		{name: "%v do ponteiro da migração", got: impr("%v", &mig)},
 		{name: "slog JSON do documento da migração", got: jsonSlog(mig.Documento)},
 	}
 	for _, tc := range tests {
@@ -100,8 +95,20 @@ func TestDocumento_WhenImpresso_NaoMostraONumero(t *testing.T) {
 	}
 }
 
-// O LogValue de Migracao não inclui o documento: o slog da migração não traz
-// nem o número nem o tipo (decisão da arquitetura, seção 3.4).
+// Migracao não inclui o documento em nenhuma forma de impressão: nem o número
+// nem o tipo (decisão da arquitetura, seção 3.4).
+func TestDocumento_WhenMigracaoImpressa_NaoTrazDocumento(t *testing.T) {
+	mig := Migracao{ID: "00000000-0000-0000-0000-000000000001", Documento: DocumentoCNPJ(cnpjInventado), Email: "contato@example.org"}
+	for _, verbo := range []string{"%v", "%+v", "%#v", "%s"} {
+		for nome, v := range map[string]any{"valor": mig, "ponteiro": &mig} {
+			got := fmt.Sprintf(verbo, v)
+			if strings.Contains(got, "111") || strings.Contains(got, "CNPJ") || strings.Contains(got, "@") {
+				t.Errorf("%s do %s da migração trouxe dado pessoal: %s", verbo, nome, got)
+			}
+		}
+	}
+}
+
 func TestDocumento_WhenMigracaoNoSlog_NaoTrazDocumento(t *testing.T) {
 	mig := Migracao{ID: "00000000-0000-0000-0000-000000000001", Documento: DocumentoCNPJ(cnpjInventado)}
 	var buf bytes.Buffer

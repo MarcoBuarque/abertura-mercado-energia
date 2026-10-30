@@ -27,15 +27,23 @@ import (
 //	    do sandbox e só do ambiente, nunca do repositório. Faltando qualquer
 //	    um, os passos de escrita dão t.Skip.
 //
+// ATENÇÃO: a rodada de escrita pode deixar uma migração ativa numa UC fictícia
+// do sandbox compartilhado (o Criar e as edições seguintes não têm como ser
+// desfeitos por este teste). Rode a escrita com consciência disso.
+//
 // Só o sandbox é alvo. Imprime status, Code e nomes de campo; nunca valores.
 // Para na 91ª requisição e no primeiro 403.
 //
 // Leitura (sem efeito no servidor): token, lista de um mês, lista sem perfil,
 // lista sem faixa, Obter, medições e até 3 páginas. Escrita (cria e altera
 // registro no sandbox): Criar, ConferirCriacao, Editar, ConferirEdicao e o PUT
-// parcial pelo Do. Na escrita, ErrValidacaoCampos no Criar e um
-// ConferirCriacao vazio depois de ErrMigracaoSolicitada viram achado + t.Skip
-// (divergência a registrar, não falha do SDK); qualquer outro erro falha.
+// parcial pelo Do. Na escrita, ErrValidacaoCampos no Criar, uma conferência
+// que não acha migração (depois de procurar a UC numa faixa ampla de meses
+// quando o Criar deu ErrMigracaoSolicitada) e a falta de uma migração ativa
+// (não CANCELADA, ENCERRADA, EXPIRADA nem REPROVADA) viram achado + t.Skip
+// (divergência a registrar, não falha do SDK). Um resultado incerto no Criar
+// é conferido com ConferirCriacao e, se a migração existe, a rodada segue;
+// qualquer outro erro falha.
 
 type config struct {
 	id, segredo                string
@@ -95,13 +103,17 @@ func lerConfig(t *testing.T) config {
 	return c
 }
 
+// limiteBuscaAmpla limita os itens lidos na busca da UC por faixa ampla, para
+// não gastar o orçamento de requisições.
+const limiteBuscaAmpla = 200
+
 var brasilia = time.FixedZone("-03:00", -3*60*60)
 
 // descreve um erro sem URL nem corpo: só status e Code.
 func descreve(err error) string {
 	var api *abertura.APIError
 	if errors.As(err, &api) {
-		return fmt.Sprintf("APIError op=%s status=%d code=%q", api.Operation, api.StatusCode, api.Code)
+		return fmt.Sprintf("APIError op=%s status=%d code=%q", api.Operation, api.StatusCode, codigoSeguro(api.Code))
 	}
 	var inc *abertura.UncertainResultError
 	if errors.As(err, &inc) {
@@ -272,16 +284,22 @@ func TestContrato(t *testing.T) {
 				Documento: cfg.documento, Email: "contrato@example.org",
 				Mes: chave.Mes, DataDenuncia: hoje, Comentario: "contrato automatizado",
 			})
+			var incerto *abertura.UncertainResultError
+			solicitada := false
 			switch {
 			case err == nil:
 				achado(t, "Criar: 200")
 			case errors.Is(err, abertura.ErrMigracaoSolicitada):
+				solicitada = true
 				achado(t, "Criar: ErrMigracaoSolicitada (já havia migração ativa)")
 			case errors.Is(err, abertura.ErrValidacaoCampos):
 				// A API recusou um campo (UC, documento ou mês do ambiente): é
 				// achado sobre os dados de teste, não defeito do SDK.
 				achado(t, "Criar: ErrValidacaoCampos com a UC e o documento do ambiente; confira os valores e o mês. O passo de escrita foi pulado")
 				t.Skip("Criar recusado por validação de campos (achado registrado)")
+			case errors.As(err, &incerto):
+				// O resultado é incerto: confere abaixo, como o catálogo manda.
+				achado(t, "Criar: resultado incerto (%s); conferindo com ConferirCriacao", descreve(err))
 			default:
 				achado(t, "Criar: %s", descreve(err))
 				t.Fatalf("Criar: %s", descreve(err))
@@ -291,13 +309,34 @@ func TestContrato(t *testing.T) {
 				t.Fatalf("ConferirCriacao: %s", descreve(err))
 			}
 			achado(t, "ConferirCriacao: %d migração(ões) para a chave", len(achadas))
-			if len(achadas) == 0 {
+			if len(achadas) == 0 && solicitada {
 				// Com ErrMigracaoSolicitada a migração ativa pode estar em outro
-				// mês ou perfil, fora da faixa da chave: achado, não falha.
-				achado(t, "ConferirCriacao: vazio depois do Criar (migração ativa fora da faixa da chave?); os passos seguintes foram pulados")
-				t.Skip("ConferirCriacao devolveu vazio depois do Criar (achado registrado)")
+				// mês ou perfil: procura a UC numa faixa ampla de meses.
+				achado(t, "ConferirCriacao: vazio no mês da chave; procurando a UC numa faixa ampla de meses")
+				n := 0
+				for m, err := range c.Migracoes.Listar(ctx, abertura.FiltroMigracoes{De: faixaDe, Ate: faixaAte, UC: cfg.uc}) {
+					if err != nil {
+						t.Fatalf("lista ampla pela UC: %s", descreve(err))
+					}
+					if n++; n > limiteBuscaAmpla {
+						achado(t, "lista ampla pela UC: parei em %d itens", limiteBuscaAmpla)
+						break
+					}
+					achadas = append(achadas, m)
+				}
+				achadas = daUC(achadas, cfg.uc, cfg.concession)
+				achado(t, "faixa ampla: %d migração(ões) da UC e da concessionária", len(achadas))
 			}
-			id = achadas[0].ID
+			if len(achadas) == 0 {
+				achado(t, "Criar sem migração localizável depois da conferência; os passos seguintes foram pulados")
+				t.Skip("nenhuma migração localizada depois do Criar (achado registrado)")
+			}
+			ativa, ok := escolherAtiva(achadas)
+			if !ok {
+				achado(t, "nenhuma das %d migração(ões) da UC está ativa (todas canceladas, encerradas, expiradas ou reprovadas); os passos seguintes foram pulados", len(achadas))
+				t.Skip("nenhuma migração ativa para editar (achado registrado)")
+			}
+			id = ativa.ID
 		})
 		passo("escrita/Editar e ConferirEdicao", func(t *testing.T) {
 			if id == "" {

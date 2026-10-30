@@ -22,7 +22,7 @@ Como o SDK entrega, com `abertura.ProblemFrom(err)`:
 {"type":"https://marcobuarque.github.io/abertura-mercado-energia/erros#migracao-solicitada","title":"Migração já solicitada","status":400,"detail":"Operação criarMigracao: Já existe migração ativa para a mesma unidade consumidora e concessionária. Se a criação anterior ficou incerta, ela provavelmente valeu: confira.","code":"ERR_MIGRACAO_SOLICITADA","operation":"criarMigracao","requestId":"req-inventado-0001","retryable":false,"uncertain":false}
 ```
 
-O endereço de `type` vale a partir da publicação do repositório; até lá, leia este arquivo. Para quem não usa Go, a seção "Problem Details em um cliente Python" de [`clientes.md`](clientes.md) mostra a conversão.
+Esta página é publicada no GitHub Pages a cada tag final `openapi/vX.Y.Z`, só com o repositório público (`make docs` gera `out/docs/erros/index.html`); até a primeira publicação o endereço de `type` não responde, e este arquivo é a fonte. Para quem não usa Go, a seção "Problem Details em um cliente Python" de [`clientes.md`](clientes.md) mostra a conversão.
 
 ## Índice
 
@@ -43,6 +43,7 @@ O endereço de `type` vale a partir da publicação do repositório; até lá, l
 | [Tempo esgotado](#tempo-esgotado) | nenhum | sem resposta | sim | sim se nada saiu; senão incerto |
 | [Chamada cancelada](#chamada-cancelada) | nenhum | sem resposta | só você decide | incerto se já saiu |
 | [Resultado incerto da escrita](#resultado-incerto) | depende da causa | depende da causa | não se aplica | não: confira |
+| [Resposta ilegível](#resposta-ilegivel) | nenhum | 2xx | sim | incerto: confira |
 | [Cursor de paginação repetido](#cursor-repetido) | nenhum | sem erro HTTP | não | não se aplica |
 | [Falha ao obter o token](#falha-ao-obter-token) | pode vir do endpoint | do endpoint | você pode, em 429 e 5xx (o SDK não repete) | idem |
 | [Argumento inválido](#argumento-invalido) | nenhum | sem requisição | não | não |
@@ -180,10 +181,10 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 
 - **Código da API:** nenhum.
 - **Status:** nenhum (não houve resposta).
-- **Quando acontece:** DNS, conexão recusada, TLS ou conexão derrubada. O erro sai **sem a URL**, que traria a UC e o mês na consulta.
+- **Quando acontece:** DNS, conexão recusada, TLS (por exemplo, certificado não confiável) ou conexão fechada sem resposta (`EOF`). O erro sai **sem a URL**, que traria a UC e o mês na consulta.
 - **O que fazer:** confira a rede e o ambiente. O SDK já repetiu até 2 vezes quando era seguro.
 - **Repetir:** GET, sim. Escrita: sim se a falha foi antes de escrever (nada saiu); se a falha foi depois, o resultado é [incerto](#resultado-incerto).
-- **Sentinela Go:** nenhuma; o erro implementa `net.Error` por `errors.As`.
+- **Sentinela Go:** nenhuma; a causa (`x509.UnknownAuthorityError`, `io.EOF`, `net.Error`) continua acessível por `errors.As` e `errors.Is`.
 - **Confiança:** do SDK.
 
 <a id="tempo-esgotado"></a>
@@ -225,12 +226,23 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 - **Sentinela Go:** nenhuma; use `errors.As` com `*UncertainResultError`. A `Key` nunca vai ao Problem, porque pode conter a UC.
 - **Confiança:** do SDK; a duplicata foi vista no sandbox.
 
+<a id="resposta-ilegivel"></a>
+## Resposta ilegível
+
+- **Código da API:** nenhum.
+- **Status:** 2xx (a API respondeu com sucesso); o Problem não repete o status, porque o erro é do corpo.
+- **Quando acontece:** a conexão caiu no meio do corpo, o corpo não é JSON válido, ou um campo tem um valor que o SDK não entende (uma data ou um número fora do formato). A mensagem do erro não repete o valor recebido, que pode ser dado da unidade consumidora.
+- **O que fazer:** numa leitura, o SDK já repetiu quando o corpo foi interrompido; se persiste, abra uma issue com o `requestId`. Numa **escrita**, a API pode ter aplicado a mudança: o erro vem como [resultado incerto](#resultado-incerto), com esta entrada na causa.
+- **Repetir:** GET, sim. POST e PUT, não: confira antes.
+- **Sentinela Go:** nenhuma.
+- **Confiança:** do SDK.
+
 <a id="cursor-repetido"></a>
 ## Cursor de paginação repetido
 
 - **Código da API:** nenhum.
 - **Status:** nenhum erro HTTP; a API respondeu 200.
-- **Quando acontece:** a API devolveu como próxima página um cursor já usado. A paginação nunca foi vista funcionando no sandbox; sem a guarda, um cursor fixo giraria para sempre. O iterador `Listar` encerra com este erro.
+- **Quando acontece:** a API devolveu como próxima página um cursor já usado. A paginação nunca foi vista funcionando no sandbox; sem a guarda, um cursor fixo giraria para sempre. O iterador `Listar` encerra com este erro: se a página aponta para o cursor que acabou de usar, os itens dela não são entregues (repetiriam a anterior); se aponta para um cursor visto antes, os itens dela são entregues e o iterador para sem buscar de novo.
 - **O que fazer:** use `ListarPagina` para controlar o cursor e abra uma issue com o `request_id` da última página, que sai no log do SDK (`WithLogger`); o erro não o traz.
 - **Repetir:** não.
 - **Sentinela Go:** `ErrCursorRepetido`.
@@ -241,7 +253,7 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 
 - **Código da API:** o do endpoint de token, se vier um.
 - **Status:** o do endpoint de token (`operation` vale `obterToken`).
-- **Quando acontece:** o pedido de token foi recusado ou falhou: `client_id` ou `client_secret` errados, ambiente trocado, endpoint fora do ar. Erros de rede ao buscar o token aparecem como [falha de rede](#erro-de-transporte) ou [tempo esgotado](#tempo-esgotado). O erro nunca traz o formulário nem o corpo.
+- **Quando acontece:** o pedido de token foi recusado ou falhou: `client_id` ou `client_secret` errados, ambiente trocado, endpoint fora do ar. Erros de rede ao buscar o token aparecem como [falha de rede](#erro-de-transporte) ou [tempo esgotado](#tempo-esgotado). Isso inclui uma resposta do endpoint sem `access_token` e um erro da fonte de `WithTokenSource`. O erro nunca traz o formulário nem o corpo.
 - **O que fazer:** confira as credenciais e o ambiente (`Sandbox` ou `Production`).
 - **Repetir:** o SDK não repete o pedido de token sozinho. Buscar token não tem efeito colateral, então 429 e 5xx são seguros de repetir (`retryable` verdadeiro); 4xx, não.
 - **Sentinela Go:** nenhuma específica; `ErrCredencialInvalida` casa se o endpoint devolver esse código.
@@ -252,7 +264,7 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 
 - **Código da API:** nenhum.
 - **Status:** nenhum: o SDK recusou antes de enviar.
-- **Quando acontece:** falta algo que a API exige (o filtro de medições sem UC, concessionária, início ou fim), o id está vazio, a função de edição é nula, ou o caminho de `Do` não começa com `/`. A mensagem do erro não repete a UC nem o caminho.
+- **Quando acontece:** falta algo que a API exige (o filtro de medições sem UC, concessionária, início ou fim), o id está vazio, a função de edição é nula, o caminho de `Do` não começa com `/`, o corpo não vira JSON, ou a configuração do `NewClient` é inválida (credencial ou agente faltando, URL do ambiente, prazo, limites). A mensagem do erro não repete a UC nem o caminho.
 - **O que fazer:** corrija a chamada. Nada foi enviado nem gasto do limite de taxa.
 - **Repetir:** não, sem corrigir.
 - **Sentinela Go:** `ErrArgumentoInvalido`.
@@ -263,7 +275,7 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 
 - **Código da API:** nenhum.
 - **Status:** nenhum.
-- **Quando acontece:** `ProblemFrom` recebeu um erro que não vem do SDK (ou uma falha sem classe própria, como uma resposta 2xx de leitura com corpo ilegível). O Problem usa `type` igual a `about:blank`, como a RFC 9457 prevê para erro sem semântica própria, e **não** copia o texto do erro.
+- **Quando acontece:** `ProblemFrom` recebeu um erro que não vem do SDK, ou que o SDK não classificou. O Problem usa esta entrada (`type` termina em `#fora-do-catalogo`, nunca `about:blank`) e **não** copia o texto do erro. O `about:blank` da RFC 9457 fica para quem monta um Problem à mão: o JSON do SDK, nesse caso, usa como `title` a frase padrão do status.
 - **O que fazer:** trate o erro original; ele continua em suas mãos.
 - **Repetir:** depende; o Problem diz `retryable` falso por prudência.
 - **Sentinela Go:** nenhuma.

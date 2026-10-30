@@ -2,7 +2,6 @@ package abertura
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"math/rand/v2"
@@ -156,22 +155,22 @@ func (cfg config) validar(env Environment) error {
 	}
 	switch {
 	case cfg.tokenSource != nil && cfg.temCredenciais:
-		return errors.New("abertura: use WithCredentials ou WithTokenSource, não os dois")
+		return argumentoInvalido("abertura: use WithCredentials ou WithTokenSource, não os dois")
 	case cfg.tokenSource == nil && (!cfg.temCredenciais || cfg.clientID == "" || cfg.clientSecret == ""):
-		return errors.New("abertura: faltam as credenciais: informe WithCredentials (client_id e client_secret) ou WithTokenSource")
+		return argumentoInvalido("abertura: faltam as credenciais: informe WithCredentials (client_id e client_secret) ou WithTokenSource")
 	case cfg.tokenSource == nil:
 		if err := validarURL("TokenURL", env.TokenURL); err != nil {
 			return err
 		}
 	}
 	if !cfg.temAgente || cfg.agente <= 0 || cfg.perfil <= 0 {
-		return errors.New("abertura: falta o agente: informe WithAgent com o código do agente e o do perfil, ambos positivos")
+		return argumentoInvalido("abertura: falta o agente: informe WithAgent com o código do agente e o do perfil, ambos positivos")
 	}
 	if cfg.temTimeout && cfg.timeout <= 0 {
-		return errors.New("abertura: WithTimeout precisa de uma duração positiva")
+		return argumentoInvalido("abertura: WithTimeout precisa de uma duração positiva")
 	}
 	if cfg.temRetries && cfg.retries < 0 {
-		return errors.New("abertura: WithRetries não aceita número negativo")
+		return argumentoInvalido("abertura: WithRetries não aceita número negativo")
 	}
 	rl := env.RateLimits
 	if cfg.limites != nil {
@@ -182,7 +181,7 @@ func (cfg config) validar(env Environment) error {
 		l    RateLimit
 	}{{"Default", rl.Default}, {"Medicoes", rl.Medicoes}} {
 		if (g.l.Requests != 0 || g.l.Per != 0) && (g.l.Requests <= 0 || g.l.Per <= 0) {
-			return fmt.Errorf("abertura: limite %s inválido: Requests e Per precisam ser ambos positivos, ou ambos zero para desligar", g.nome)
+			return argumentoInvalido("abertura: limite %s inválido: Requests e Per precisam ser ambos positivos, ou ambos zero para desligar", g.nome)
 		}
 	}
 	return nil
@@ -193,7 +192,7 @@ func (cfg config) validar(env Environment) error {
 func validarURL(campo, valor string) error {
 	u, err := url.Parse(valor)
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || u.RawQuery != "" || u.Fragment != "" {
-		return fmt.Errorf("abertura: %s do ambiente precisa ser uma URL http(s) absoluta, sem query", campo)
+		return argumentoInvalido("abertura: %s do ambiente precisa ser uma URL http(s) absoluta, sem query", campo)
 	}
 	return nil
 }
