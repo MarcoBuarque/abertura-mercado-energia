@@ -57,6 +57,7 @@ func TestFixturesValidamContraSpec(t *testing.T) {
 		{name: "detalhe em array", fixture: "migracao_detalhe_array.json", method: http.MethodGet, path: "/v1.1/varejista/migracoes/" + id, status: 200},
 		{name: "detalhe com dois itens", fixture: "migracao_detalhe_dois.json", method: http.MethodGet, path: "/v1.1/varejista/migracoes/" + id, status: 200},
 		{name: "migrações de concessionárias e datas diferentes", fixture: "migracoes_conferencia.json", method: http.MethodGet, path: "/v1.1/varejista/migracoes", status: 200},
+		{name: "solicitações", fixture: "solicitacoes_pagina1.json", method: http.MethodGet, path: "/v1/solicitacoes", status: 200},
 		{name: "detalhe vazio", fixture: "migracao_detalhe_vazio.json", method: http.MethodGet, path: "/v1.1/varejista/migracoes/" + id, status: 200},
 		{name: "migração criada", fixture: "migracao_criada.json", method: http.MethodPost, path: "/v1.1/varejista/migracoes", status: 200},
 		{name: "migração editada devolve o detalhe", fixture: "migracao_detalhe_objeto.json", method: http.MethodPut, path: "/v1/varejista/migracoes/" + id, status: 200},
