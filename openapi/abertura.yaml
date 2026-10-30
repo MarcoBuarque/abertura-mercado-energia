@@ -847,20 +847,24 @@ components:
       name: dataSolicitacaoInicial
       in: query
       required: false
-      description: Primeiro dia do intervalo da data de solicitação.
+      description: Primeiro dia do intervalo da data de solicitação. O formato não foi testado e a coleção pública se contradiz (texto com `DD-MM-AAAA`, URL de exemplo com `AAAA-MM-DD`); a spec segue a URL.
       schema:
         type: string
         format: date
       example: "2027-02-01"
+      x-confianca: baixa
+      x-divergencias: [2]
     DataSolicitacaoFinal:
       name: dataSolicitacaoFinal
       in: query
       required: false
-      description: Último dia do intervalo da data de solicitação.
+      description: Último dia do intervalo da data de solicitação. O formato não foi testado e a coleção pública se contradiz (texto com `DD-MM-AAAA`, URL de exemplo com `AAAA-MM-DD`); a spec segue a URL.
       schema:
         type: string
         format: date
       example: "2027-02-28"
+      x-confianca: baixa
+      x-divergencias: [2]
     IndexProximaPagina:
       name: indexProximaPagina
       in: query
@@ -1138,15 +1142,6 @@ components:
         - CANCELADA
         - EXPIRADA
         - APROVADA_COM_PENDENCIA
-
-    TipoDocumento:
-      type: string
-      description: Tipo do documento do titular.
-      x-extensible-enum: [CPF, CNPJ]
-
-    SimNao:
-      type: string
-      x-extensible-enum: [SIM, NAO]
 
     MigracaoResumo:
       type: object

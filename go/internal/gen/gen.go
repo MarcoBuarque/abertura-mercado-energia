@@ -698,10 +698,10 @@ type ListarSolicitacoesParams struct {
 	// MesReferenciaFinal Último mês do intervalo, no formato AAAA-MM.
 	MesReferenciaFinal MesReferenciaFinal `form:"mesReferenciaFinal,omitempty" json:"mesReferenciaFinal,omitempty"`
 
-	// DataSolicitacaoInicial Primeiro dia do intervalo da data de solicitação.
+	// DataSolicitacaoInicial Primeiro dia do intervalo da data de solicitação. O formato não foi testado e a coleção pública se contradiz (texto com `DD-MM-AAAA`, URL de exemplo com `AAAA-MM-DD`); a spec segue a URL.
 	DataSolicitacaoInicial DataSolicitacaoInicial `form:"dataSolicitacaoInicial,omitempty" json:"dataSolicitacaoInicial,omitempty"`
 
-	// DataSolicitacaoFinal Último dia do intervalo da data de solicitação.
+	// DataSolicitacaoFinal Último dia do intervalo da data de solicitação. O formato não foi testado e a coleção pública se contradiz (texto com `DD-MM-AAAA`, URL de exemplo com `AAAA-MM-DD`); a spec segue a URL.
 	DataSolicitacaoFinal DataSolicitacaoFinal `form:"dataSolicitacaoFinal,omitempty" json:"dataSolicitacaoFinal,omitempty"`
 
 	// CodigoUnidadeConsumidora Código da unidade consumidora. Sem validação de formato no filtro.

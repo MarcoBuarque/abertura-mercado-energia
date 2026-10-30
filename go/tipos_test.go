@@ -36,8 +36,27 @@ func TestTipos_WhenStatusMigracao_ConhecidoSoParaOsPublicados(t *testing.T) {
 }
 
 func TestTipos_WhenSituacaoMedicao_Conhecido(t *testing.T) {
-	if !SituacaoConsistida.Conhecido() || SituacaoMedicao("NOVA").Conhecido() {
-		t.Error("Conhecido() de SituacaoMedicao errado")
+	t.Parallel()
+	tests := []struct {
+		name     string
+		situacao SituacaoMedicao
+		want     bool
+	}{
+		{"consistida é conhecida", SituacaoConsistida, true},
+		{"rejeitada é conhecida", SituacaoRejeitada, true},
+		{"valor novo não é conhecido", SituacaoMedicao("NOVA"), false},
+		{"vazio não é conhecido", "", false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if got := tc.situacao.Conhecido(); got != tc.want {
+				t.Errorf("Conhecido() = %v, queria %v", got, tc.want)
+			}
+		})
+	}
+	if SituacaoRejeitada != "REJEITADA" {
+		t.Errorf("SituacaoRejeitada = %q", SituacaoRejeitada)
 	}
 }
 

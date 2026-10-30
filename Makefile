@@ -15,6 +15,10 @@ PRISM_IMAGE             := docker.io/stoplight/prism@sha256:3f6d29e31bfe0b99587f
 REDOCLY_IMAGE           := docker.io/redocly/cli@sha256:d39a229ebd8250fea62f44c377ddb04797e8a155140eda49db17f1caaa9334ff # 2.72.1, amd64+arm64
 OPENAPI_GENERATOR_IMAGE := docker.io/openapitools/openapi-generator-cli@sha256:a304ddf1e2e5f24f68fa3153568d6174cea4959d09aa8e3db6d526fd0782326d # v7.26.0, amd64+arm64
 
+# info.version da spec: vira o rótulo da imagem do mock (ARG SPEC_VERSION).
+SPEC_VERSION := $(shell sed -n 's/^  version:[[:space:]]*\([0-9][^[:space:]]*\).*/\1/p' openapi/abertura.yaml | head -1)
+export SPEC_VERSION
+
 # O go run perde o código de saída do programa (devolve sempre 1), então o
 # gitleaks é instalado na versão fixada em out/bin e chamado direto.
 GITLEAKS := $(CURDIR)/out/bin/gitleaks
@@ -23,7 +27,7 @@ export GITLEAKS
 $(GITLEAKS): Makefile
 	GOBIN=$(CURDIR)/out/bin go install github.com/zricethezav/gitleaks/v8@$(GITLEAKS_VERSION)
 
-.PHONY: segredos spec-lint spec-exemplos testa-regras spec-diff docs mock mock-smoke mock-imagem go-tidy go-gen go-test go-race go-lint go-vuln go-deps checa-workflows testa-checa-tag checa-tag testa-checa-marca checa-marca hooks ci
+.PHONY: segredos spec-lint spec-exemplos testa-regras spec-diff docs mock mock-smoke mock-imagem go-tidy go-gen go-test go-race go-lint go-contrato go-vuln go-deps checa-workflows testa-checa-tag checa-tag testa-checa-marca checa-marca hooks ci
 
 segredos: $(GITLEAKS) ## prova a guarda de segredos e varre o repositório
 	scripts/testa-segredos.sh
@@ -81,6 +85,11 @@ go-race: ## testes com -race e cobertura (mínimo de 80% no pacote raiz); perfil
 go-lint:
 	cd go && go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION) run ./...
 
+go-contrato: ## contrato do sandbox: vet, lint e os testes sem rede, com -tags sandbox (nunca fala com a API)
+	cd go && go vet -tags sandbox ./contrato/...
+	cd go && go test -tags sandbox ./contrato/... -run 'TestOrcamento|TestNomesDeCampos|TestDocumentoDoAmbiente' -count=1
+	cd go && go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION) run --build-tags sandbox ./...
+
 go-vuln:
 	cd go && go run golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION) ./...
 
@@ -101,7 +110,7 @@ checa-tag: ## confere a tag de release contra info.version, version.Version e CH
 MOCK_IMAGEM ?= abertura-mercado-energia-mock
 MOCK_TAG    ?= local
 mock-imagem: ## constrói a imagem do mock (linux/amd64, como o Prism fixado) com o nome $(MOCK_IMAGEM):$(MOCK_TAG)
-	docker build --platform linux/amd64 -f mock/Dockerfile -t $(MOCK_IMAGEM):$(MOCK_TAG) .
+	docker build --platform linux/amd64 --build-arg SPEC_VERSION=$(SPEC_VERSION) -f mock/Dockerfile -t $(MOCK_IMAGEM):$(MOCK_TAG) .
 
 testa-checa-marca: ## prova a checagem da marca (tabela de casos em repositórios temporários)
 	scripts/testa-checa-marca.sh
@@ -114,4 +123,4 @@ hooks: $(GITLEAKS) ## instala o gancho de pre-commit (funciona em worktree)
 		install -m 755 scripts/pre-commit "$$dir/pre-commit" && \
 		echo "gancho instalado em $$dir/pre-commit"
 
-ci: segredos testa-checa-marca checa-marca checa-workflows testa-checa-tag testa-regras spec-lint spec-exemplos spec-diff docs mock mock-smoke go-tidy go-gen go-test go-race go-lint go-vuln go-deps
+ci: segredos testa-checa-marca checa-marca checa-workflows testa-checa-tag testa-regras spec-lint spec-exemplos spec-diff docs mock mock-smoke go-tidy go-gen go-test go-race go-lint go-contrato go-vuln go-deps

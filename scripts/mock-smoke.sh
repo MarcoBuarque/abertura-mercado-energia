@@ -16,7 +16,6 @@ falhas=0
 prism_make="$(sed -n 's/^PRISM_IMAGE[[:space:]]*:=[[:space:]]*\([^[:space:]]*\).*/\1/p' Makefile)"
 prism_docker="$(sed -n 's/^ARG PRISM_IMAGE=\(.*\)$/\1/p' mock/Dockerfile 2>/dev/null || true)"
 versao_spec="$(sed -n 's/^  version:[[:space:]]*\([0-9][^[:space:]]*\).*/\1/p' openapi/abertura.yaml | head -1)"
-versao_label="$(sed -n 's/.*spec-version="\([^"]*\)".*/\1/p' mock/Dockerfile 2>/dev/null || true)"
 
 ok()    { echo "ok:    $1"; }
 falha() { echo "FALHA: $1" >&2; falhas=$((falhas + 1)); }
@@ -30,7 +29,9 @@ if [ -n "$prism_make" ] && [ "$prism_make" = "$prism_docker" ]; then
 else
   falha "digest do Prism difere: Makefile='$prism_make' Dockerfile='$prism_docker'"
 fi
-confere "label spec-version igual a info.version" "$versao_spec" "$versao_label"
+[ -n "$versao_spec" ] || falha "info.version não encontrada em openapi/abertura.yaml"
+# O compose lê SPEC_VERSION do ambiente (o Makefile também a exporta).
+export SPEC_VERSION="$versao_spec"
 
 if [ "${MOCK_SMOKE_SEM_COMPOSE:-0}" != 1 ]; then
   "${compose[@]}" up -d --build --wait --wait-timeout 180 >/dev/null \
@@ -38,6 +39,14 @@ if [ "${MOCK_SMOKE_SEM_COMPOSE:-0}" != 1 ]; then
   if [ "${MOCK_SMOKE_MANTER:-0}" != 1 ]; then
     trap '"${compose[@]}" down >/dev/null 2>&1 || true' EXIT
   fi
+fi
+
+if [ "${MOCK_SMOKE_SEM_COMPOSE:-0}" != 1 ]; then
+  # O rótulo da imagem construída vem do ARG e tem de bater com info.version.
+  versao_label="$(docker image inspect --format '{{ index .Config.Labels "io.github.abertura.spec-version" }}' abertura-mercado-energia-mock:local 2>/dev/null || true)"
+  confere "label spec-version da imagem igual a info.version" "$versao_spec" "$versao_label"
+  fonte_label="$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.source" }}' abertura-mercado-energia-mock:local 2>/dev/null || true)"
+  confere "label image.source da imagem" "https://github.com/MarcoBuarque/abertura-mercado-energia" "$fonte_label"
 fi
 
 for _ in $(seq 1 60); do

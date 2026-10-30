@@ -20,6 +20,11 @@ Primeira versão. Segue a spec `openapi/v0.1.0`; as pré-versões `go/v0.1.0-rc.
 - Log opcional com `slog`, sem query, corpo, token, credenciais nem dado pessoal.
 - `Problem`, `ProblemFrom`, `APIError.Problem`, `UncertainResultError.Problem`, `ProblemContentType` e `CatalogoErrosURL`: os erros do SDK no formato da RFC 9457, ligados ao catálogo `docs/erros.md`.
 - `ErrArgumentoInvalido`: casa com a validação local feita antes de enviar. O texto dos erros não muda.
+- Chaves e erros não vazam dado pessoal: `ChaveMigracao` e `ChaveEdicao` ganham `LogValue` e `GoString`, e `APIError` e `UncertainResultError` ganham `GoString`, todos sem UC, e-mail nem corpo.
+- O cliente HTTP padrão do pedido de token não segue redirecionamento (um 307 reenviaria o `client_secret`); `WithHTTPClient` mantém a política do chamador.
+- Qualquer 5xx, menos o 501, segue a linha do 500: leitura repete, escrita fica incerta (`*UncertainResultError`). O 501 é erro definitivo.
+- `SituacaoRejeitada` (`REJEITADA`) entra entre as situações de medição conhecidas.
+- Uma página que aponta para um cursor já visto encerra com `ErrCursorRepetido` sem entregar os itens dela; antes, contra o mock, a mesma página saía duas vezes.
 
 ### Limites conhecidos
 

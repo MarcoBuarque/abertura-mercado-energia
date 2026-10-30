@@ -132,7 +132,8 @@ func TestPaginar_WhenCursorRepetido_DevolveErrCursorRepetido(t *testing.T) {
 	tests := []struct {
 		name    string
 		paginas map[string]Pagina[int]
-		want    int // chamadas
+		want    int   // chamadas
+		itens   []int // itens entregues: os da página que repete o cursor ficam de fora
 	}{
 		{
 			name: "mesmo cursor duas vezes seguidas",
@@ -140,7 +141,8 @@ func TestPaginar_WhenCursorRepetido_DevolveErrCursorRepetido(t *testing.T) {
 				"":   {Itens: []int{1}, Proxima: "p2"},
 				"p2": {Itens: []int{2}, Proxima: "p2"},
 			},
-			want: 2,
+			want:  2,
+			itens: []int{1},
 		},
 		{
 			name: "ciclo A, B, A",
@@ -149,7 +151,8 @@ func TestPaginar_WhenCursorRepetido_DevolveErrCursorRepetido(t *testing.T) {
 				"a": {Itens: []int{2}, Proxima: "b"},
 				"b": {Itens: []int{3}, Proxima: "a"},
 			},
-			want: 3,
+			want:  3,
+			itens: []int{1, 2},
 		},
 	}
 	for _, tc := range tests {
@@ -163,6 +166,15 @@ func TestPaginar_WhenCursorRepetido_DevolveErrCursorRepetido(t *testing.T) {
 			}
 			if b.chamadas != tc.want {
 				t.Errorf("chamadas = %d, queria %d", b.chamadas, tc.want)
+			}
+			var itens []int
+			for _, r := range got {
+				if r.err == nil {
+					itens = append(itens, r.item)
+				}
+			}
+			if !slices.Equal(itens, tc.itens) {
+				t.Errorf("itens entregues = %v, queria %v", itens, tc.itens)
 			}
 		})
 	}

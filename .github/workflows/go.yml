@@ -47,6 +47,8 @@ jobs:
         run: make go-race
       - name: golangci-lint v2
         run: make go-lint
+      - name: Contrato do sandbox (só o que não faz rede)
+        run: make go-contrato
       - name: govulncheck
         run: make go-vuln
       - name: Dependências

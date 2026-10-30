@@ -2,6 +2,7 @@ package abertura
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -84,15 +85,25 @@ type transporteLimitado struct {
 
 func (t transporteLimitado) RoundTrip(req *http.Request) (*http.Response, error) {
 	if err := t.limites.esperar(req.Context(), grupoGeral); err != nil {
+		// O contrato do http.RoundTripper manda fechar o corpo também no erro.
+		if req.Body != nil {
+			if cerr := req.Body.Close(); cerr != nil {
+				err = errors.Join(err, cerr)
+			}
+		}
 		return nil, err
 	}
 	return t.base.RoundTrip(req)
 }
 
 // clienteDeToken devolve uma cópia do cliente HTTP cujo transporte espera o
-// limitador.
+// limitador. Sem cliente do usuário, a cópia não segue redirecionamento: o
+// formulário do token leva o client_secret, e um 307 o reenviaria a outro
+// host. Um cliente passado em WithHTTPClient mantém a política dele.
 func clienteDeToken(hc *http.Client, l limitadores) *http.Client {
-	cp := http.Client{}
+	cp := http.Client{
+		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
+	}
 	if hc != nil {
 		cp = *hc
 	}

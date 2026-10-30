@@ -105,6 +105,10 @@ func (e *APIError) Error() string {
 	return b.String()
 }
 
+// GoString faz o %#v seguir o Error: sem isso, ele imprimiria o corpo cru em
+// hexadecimal.
+func (e *APIError) GoString() string { return e.Error() }
+
 // limpar troca caracteres de controle por espaço e corta em max caracteres,
 // para que um texto vindo do servidor não quebre nem forje linhas de log.
 func limpar(s string, max int) string {
@@ -208,6 +212,10 @@ func (e *UncertainResultError) Error() string {
 	}
 	return fmt.Sprintf("abertura: %s: resultado incerto: %v", e.Operation, e.Err)
 }
+
+// GoString faz o %#v seguir o Error: sem isso, ele imprimiria a Key e a causa
+// por inteiras.
+func (e *UncertainResultError) GoString() string { return e.Error() }
 
 // Unwrap devolve a causa, para errors.Is e errors.As.
 func (e *UncertainResultError) Unwrap() error { return e.Err }
