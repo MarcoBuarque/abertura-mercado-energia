@@ -1,88 +1,109 @@
 # abertura-mercado-energia
 
-Especificação OpenAPI e SDK em Go para as APIs de varejo da abertura do mercado de energia.
+[Versão em português](README.pt-BR.md)
 
-> Projeto independente e não oficial. Não é afiliado, patrocinado nem endossado pela Câmara de Comercialização de Energia Elétrica (CCEE). A descrição da API deriva da documentação pública e de testes no ambiente sandbox.
+OpenAPI specification and Go SDK for the retail APIs of Brazil's energy market opening ("Abertura de Mercado").
 
-Status: **0.x**. A spec e o SDK ainda podem mudar de forma incompatível entre versões menores. Cada afirmação da spec tem fonte e grau de confiança em [`openapi/FONTES.md`](openapi/FONTES.md).
+> This project is independent and is not affiliated with, sponsored or endorsed by the Câmara de Comercialização de Energia Elétrica (CCEE). The API description derives from public documentation and from tests in the sandbox environment.
+
+Status: **0.x**. The spec and the SDK may still change in incompatible ways between minor versions. Every claim in the spec has a source and a confidence level in [`openapi/SOURCES.md`](openapi/SOURCES.md).
 
 ## Spec
 
-[`openapi/abertura.yaml`](openapi/abertura.yaml) descreve 10 operações: token, migrações, medições e solicitações. Ela registra o que a API devolve de fato, inclusive onde isso difere da documentação pública (as divergências estão numeradas em `FONTES.md`).
+[`openapi/abertura.yaml`](openapi/abertura.yaml) describes 10 operations: token, migrations, measurements and change requests. It records what the API actually returns, including where that differs from the public documentation (the divergences are numbered in `SOURCES.md`).
 
-- **Ler no navegador:** `make docs` gera `out/docs/index.html`.
-- **Testar sem credenciais:** `make mock` sobe um mock em `http://localhost:4010` com os exemplos da spec, todos inventados. Para parar: `docker compose -f mock/compose.yaml down`.
-- **Gerar um cliente** em Python, TypeScript ou Java, e o que ele não faz sozinho (regras de repetição, resultado incerto): [`docs/clientes.md`](docs/clientes.md).
-- **Erros:** o catálogo didático, com o que fazer e quando repetir, está em [`docs/erros.md`](docs/erros.md). O SDK Go entrega cada erro também como Problem Details (RFC 9457).
+- **Read it in the browser:** the [Redoc page](https://marcobuarque.github.io/abertura-mercado-energia/) is published with every final `openapi/v*` tag; `make docs` builds it locally at `out/docs/index.html`.
+- **Try it without credentials:** `make mock` starts a mock at `http://localhost:4010` with the spec's examples, all invented. To stop it: `docker compose -f mock/compose.yaml down`.
+- **Generate a client** in Python, TypeScript or Java, and what it does not do on its own (retry rules, uncertain results): [`docs/clients.md`](docs/clients.md).
+- **Errors:** the teaching [error catalogue](https://marcobuarque.github.io/abertura-mercado-energia/errors/), with what to do and when to retry, lives in [`docs/errors.md`](docs/errors.md). The Go SDK also delivers every error as Problem Details (RFC 9457).
 
-## SDK Go
+## Go SDK
 
-Requer Go 1.26 ou mais novo.
+Requires Go 1.26 or newer.
 
 ```bash
-go get github.com/MarcoBuarque/abertura-mercado-energia/go
+go get github.com/MarcoBuarque/abertura-mercado-energia/abertura@v0.2.0
 ```
 
 ```go
-import abertura "github.com/MarcoBuarque/abertura-mercado-energia/go"
+import "github.com/MarcoBuarque/abertura-mercado-energia/abertura"
 
-c, err := abertura.NewClient(abertura.Sandbox,
+client, err := abertura.NewClient(abertura.Sandbox(),
 	abertura.WithCredentials(clientID, clientSecret),
-	abertura.WithAgent(agente, perfil))
+	abertura.WithAgent(agent, profile))
 if err != nil { log.Fatal(err) }
-for m, err := range c.Migracoes.Listar(ctx, abertura.FiltroMigracoes{
-	De: abertura.MesDe(2027, 1), Ate: abertura.MesDe(2027, 12)}) {
+for m, err := range client.Migrations.List(ctx, abertura.MigrationFilter{
+	From: abertura.NewYearMonth(2027, time.January),
+	To:   abertura.NewYearMonth(2027, time.December)}) {
 	if err != nil { log.Fatal(err) }
-	fmt.Println(m.ID, m.Status, m.Mes)
+	fmt.Println(m.ID, m.Status, m.Month)
 }
 ```
 
-O ambiente é sempre explícito: nada aponta para produção sem pedido. O SDK não lê variáveis de ambiente por conta própria.
+The environment is always explicit: nothing points to production unless you ask. The SDK does not read environment variables on its own.
 
-Contra o mock (`make mock`), o ambiente é um `Environment` próprio, e qualquer credencial serve:
+Against the mock (`make mock`), the environment is your own `Environment`, and any credential works:
 
 ```go
 mock := abertura.Environment{Name: "mock", APIURL: "http://localhost:4010",
 	TokenURL: "http://localhost:4010/sso/oauth/token"}
-c, err := abertura.NewClient(mock,
-	abertura.WithCredentials("id-inventado", "segredo-inventado"),
+client, err := abertura.NewClient(mock,
+	abertura.WithCredentials("invented-id", "invented-secret"),
 	abertura.WithAgent(900002, 900003))
 if err != nil { log.Fatal(err) }
-pag, err := c.Migracoes.ListarPagina(ctx, abertura.FiltroMigracoes{
-	De: abertura.MesDe(2027, 1), Ate: abertura.MesDe(2027, 3)}, "")
+page, err := client.Migrations.ListPage(ctx, abertura.MigrationFilter{
+	From: abertura.NewYearMonth(2027, time.January),
+	To:   abertura.NewYearMonth(2027, time.March)}, "")
 if err != nil { log.Fatal(err) }
-for _, m := range pag.Itens {
-	fmt.Println(m.ID, m.Status, m.Mes) // 00000000-0000-4000-8000-000000000001 CRIADA 2027-03
+for _, m := range page.Items {
+	fmt.Println(m.ID, m.Status, m.Month) // 00000000-0000-4000-8000-000000000001 CRIADA 2027-03
 }
 ```
 
-O mock devolve sempre a mesma página, com o mesmo cursor. Por isso, contra ele, use `ListarPagina`: `Listar` entrega a primeira página uma vez e para com `ErrCursorRepetido` quando a segunda aponta para o mesmo cursor, sem repetir os itens; é a guarda contra cursor que não avança.
+The mock always returns the same page, with the same cursor. That is why, against it, you should use `ListPage`: `List` delivers the first page once and stops with `ErrRepeatedCursor` when the second one points to the same cursor, without repeating the items; that is the guard against a cursor that does not advance.
 
-O que ele faz por você:
+What it does for you:
 
-- **Token e limites:** busca e renova o token, e limita as requisições por processo.
-- **Paginação:** `Listar` percorre as páginas; `ListarPagina` devolve o cursor para retomar depois.
-- **Formatos tolerados:** três formatos de mês, detalhe em lista ou objeto, consumo como texto ou número, campos e status novos.
-- **Escrita sem repetição:** `Criar` e `Editar` nunca repetem sozinhos. Se o resultado é incerto, o erro é um `*UncertainResultError` com a chave natural, e `ConferirCriacao` ou `ConferirEdicao` dizem o que aconteceu.
-- **Dado pessoal:** `Documento` aparece mascarado em `fmt`, `slog` e JSON; o log do SDK nunca traz UC, documento, e-mail nem token.
-- **Rotas ainda sem método:** `Client.Do` usa o mesmo laço de token, limites e erros.
+- **Token and limits:** fetches and renews the token, and rate limits requests per process.
+- **Pagination:** `List` walks the pages; `ListPage` returns the cursor so you can resume later.
+- **Tolerated formats:** three month formats, detail as a list or an object, consumption as text or number, new fields and statuses.
+- **Writes without retries:** `Create` and `Edit` never retry on their own. If the result is uncertain, the error is a `*UncertainResultError` carrying the natural key, and `CheckCreated` or `CheckEdited` tell you what happened.
+- **Personal data:** `Document` is masked in `fmt`, `slog` and JSON; the SDK log never carries a consumer unit, document, e-mail or token.
+- **Routes without a method yet:** `Client.Do` uses the same token, limits and error loop.
 
-Todos os exemplos rodam sem rede (`go test -run Example ./...`, em `go/`).
+All examples run without a network (`go test -run Example ./...`, inside `abertura/`).
 
-### Cobertura
+### Coverage
 
-A v0.1 cobre a v1.1 das APIs de varejo: migrações (listar, obter, criar, editar), medições (listar) e, pelo `Do`, solicitações. As unidades consumidoras dos grupos B1 a B4 dependem da v2 da API, que a spec ainda não descreve.
+v0.2 covers v1.1 of the retail APIs: migrations (list, get, create, edit), measurements (list) and, through `Do`, change requests. Consumer units of groups B1 to B4 depend on v2 of the API, which the spec does not describe yet.
 
-## Desenvolvimento
+## Documentation
 
-`make ci` roda os mesmos passos da integração contínua: guarda de segredos, lint da spec, mock, geração, testes, lint do Go, `govulncheck` e checagem das dependências.
+- [Redoc page](https://marcobuarque.github.io/abertura-mercado-energia/) and [error catalogue](https://marcobuarque.github.io/abertura-mercado-energia/errors/) (the old `/erros/` address redirects there).
+- [`docs/clients.md`](docs/clients.md): client generation and retry rules.
+- [`openapi/SOURCES.md`](openapi/SOURCES.md): sources, confidence and divergences.
+- Changelogs: [`openapi/CHANGELOG.md`](openapi/CHANGELOG.md) and [`abertura/CHANGELOG.md`](abertura/CHANGELOG.md).
+- [`SECURITY.md`](SECURITY.md): how to report a vulnerability. Never send credentials.
 
-O teste de contrato (`go test -tags sandbox ./contrato/...`, em `go/`) é manual: usa credenciais do sandbox, limita-se a 90 requisições e só escreve com `ABERTURA_CONTRATO_ESCRITA=1`, `ABERTURA_UC` e `ABERTURA_DOCUMENTO` (CPF ou CNPJ válido, só do ambiente). Os detalhes estão no cabeçalho de `go/contrato/contrato_test.go`.
+## Releases
 
-## Contato
+Two independent artifacts, each with its own tag prefix:
 
-Dúvidas e problemas de uso: abra uma issue neste repositório. Outros assuntos: contato@quantogasta.com.br.
+- `openapi/vX.Y.Z` (and `openapi/vX.Y.Z-rc.N`): the spec; publishes the GitHub release with the spec file, the Pages site and the mock image.
+- `abertura/vX.Y.Z` (and `abertura/vX.Y.Z-rc.N`): the Go module `github.com/MarcoBuarque/abertura-mercado-energia/abertura`.
 
-## Licença
+Bare `vX.Y.Z` tags are not used. The tag checks live in `scripts/check-tag.sh`.
 
-Apache-2.0. Veja [LICENSE](LICENSE) e [NOTICE](NOTICE).
+## Development
+
+`make ci` runs the same steps as continuous integration: secrets guard, spec lint, mock, generation, tests, Go lint, `govulncheck` and the dependency check.
+
+The contract test (`go test -tags sandbox ./contract/...`, inside `abertura/`) is manual: it uses sandbox credentials, limits itself to 90 requests and only writes with `ABERTURA_CONTRATO_ESCRITA=1`, `ABERTURA_UC` and `ABERTURA_DOCUMENTO` (a valid CPF or CNPJ, from the environment only). Details are in the header of `abertura/contract/contract_test.go`.
+
+## Contact
+
+Questions and usage problems: open an issue in this repository. Anything else: contato@quantogasta.com.br.
+
+## License
+
+Apache-2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
