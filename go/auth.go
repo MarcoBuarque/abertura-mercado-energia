@@ -2,15 +2,18 @@ package abertura
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/clientcredentials"
 )
 
 const (
@@ -61,7 +64,7 @@ type configToken struct {
 // (pelo relógio local) e permite descartá-lo por token. Uma só busca acontece de
 // cada vez; chamadas concorrentes esperam por ela.
 type cacheToken struct {
-	cfg        clientcredentials.Config
+	cfg        configToken
 	httpClient *http.Client
 
 	// agora e timeoutBusca são campos para que os testes injetem o relógio e
@@ -78,16 +81,12 @@ type cacheToken struct {
 }
 
 // novoCacheToken cria o cache. As credenciais ficam só aqui, em campos não
-// exportados, e String e GoString as escondem.
+// exportados, e String e GoString as escondem. O pedido de token leva no
+// formulário apenas client_id e client_secret, como na coleção da API: o
+// endpoint recusa com 400 o grant_type extra (observado em 2026-11-01).
 func novoCacheToken(cfg configToken) *cacheToken {
 	return &cacheToken{
-		cfg: clientcredentials.Config{
-			ClientID:     cfg.clientID,
-			ClientSecret: cfg.clientSecret,
-			TokenURL:     cfg.tokenURL,
-			// Credenciais no formulário, como na coleção da API.
-			AuthStyle: oauth2.AuthStyleInParams,
-		},
+		cfg:          cfg,
 		httpClient:   cfg.httpClient,
 		agora:        time.Now,
 		timeoutBusca: timeoutBuscaToken,
@@ -161,44 +160,84 @@ func (c *cacheToken) token(ctx context.Context) (*oauth2.Token, error) {
 	return novo, nil
 }
 
-// buscar pede um token novo ao endpoint, com o timeout da busca. Falhas viram
-// *APIError (resposta de erro do endpoint) ou um erro de transporte sem URL.
+// respostaToken é o corpo de sucesso do endpoint de token.
+type respostaToken struct {
+	AccessToken string `json:"access_token"`
+	TokenType   string `json:"token_type"`
+	ExpiresIn   int64  `json:"expires_in"`
+}
+
+// buscar pede um token novo ao endpoint, com o timeout da busca. O formulário
+// leva só client_id e client_secret (sem grant_type, que o endpoint recusa).
+// Falhas viram *APIError (resposta de erro do endpoint) ou um erro de
+// transporte sem URL. Nenhum erro cita o corpo, o formulário ou o segredo.
 func (c *cacheToken) buscar(ctx context.Context) (*oauth2.Token, error) {
 	ctx, cancel := context.WithTimeout(ctx, c.timeoutBusca)
 	defer cancel()
-	if c.httpClient != nil {
-		ctx = context.WithValue(ctx, oauth2.HTTPClient, c.httpClient)
-	}
 
-	t, err := c.cfg.Token(ctx)
-	if err == nil {
-		return t, nil
+	form := url.Values{"client_id": {c.cfg.clientID}, "client_secret": {c.cfg.clientSecret}}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.cfg.tokenURL, strings.NewReader(form.Encode()))
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", operacaoToken, &erroFalhaToken{err: erroSemURL(err)})
 	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept", "application/json")
 
-	// O RetrieveError do oauth2 traz o corpo na mensagem; usamos só status,
-	// cabeçalhos e os campos do corpo.
-	var re *oauth2.RetrieveError
-	if errors.As(err, &re) && re.Response != nil {
-		apiErr := decodificarErro(operacaoToken, re.Response, re.Body)
+	hc := c.httpClient
+	if hc == nil {
+		hc = http.DefaultClient
+	}
+	resp, err := hc.Do(req)
+	if err != nil {
+		// Falha de rede ao pedir o token: pedir token não tem efeito colateral,
+		// então repetir é seguro como numa leitura.
+		var ue *url.Error
+		switch {
+		case errors.Is(err, context.Canceled):
+			return nil, fmt.Errorf("%s: %w", operacaoToken, erroSemURL(err))
+		case errors.As(err, &ue):
+			return nil, fmt.Errorf("%s: %w", operacaoToken, &erroTransporte{
+				err: erroSemURL(err), metodo: http.MethodGet, escreveu: true,
+				timeout: errors.Is(err, context.DeadlineExceeded),
+			})
+		default:
+			return nil, fmt.Errorf("%s: %w", operacaoToken, &erroFalhaToken{err: erroSemURL(err)})
+		}
+	}
+	defer func() {
+		if cerr := resp.Body.Close(); cerr != nil {
+			slog.Debug("fechando a resposta do token", "err", erroSemURL(cerr))
+		}
+	}()
+
+	corpo, err := io.ReadAll(io.LimitReader(resp.Body, limiteResposta))
+	if err != nil {
+		return nil, fmt.Errorf("%s: ler a resposta: %w", operacaoToken, &erroFalhaToken{err: erroSemURL(err)})
+	}
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		apiErr := decodificarErro(operacaoToken, resp, corpo)
 		// Pedir token não tem efeito colateral: repetir é seguro como numa leitura.
 		apiErr.metodo = http.MethodGet
 		return nil, apiErr
 	}
-	// Falha de rede ao pedir o token: pedir token não tem efeito colateral, então
-	// repetir é seguro como numa leitura.
-	var ue *url.Error
-	switch {
-	case errors.Is(err, context.Canceled):
-		return nil, fmt.Errorf("%s: %w", operacaoToken, erroSemURL(err))
-	case errors.As(err, &ue):
-		return nil, fmt.Errorf("%s: %w", operacaoToken, &erroTransporte{
-			err: erroSemURL(err), metodo: http.MethodGet, escreveu: true,
-			timeout: errors.Is(err, context.DeadlineExceeded),
-		})
-	default:
-		// Por exemplo "server response missing access_token".
-		return nil, fmt.Errorf("%s: %w", operacaoToken, &erroFalhaToken{err: err})
+
+	var r respostaToken
+	if err := json.Unmarshal(corpo, &r); err != nil {
+		return nil, fmt.Errorf("%s: %w", operacaoToken, &erroFalhaToken{err: errors.New("resposta do token não é um JSON válido")})
 	}
+	if r.AccessToken == "" {
+		return nil, fmt.Errorf("%s: %w", operacaoToken, &erroFalhaToken{err: errors.New("resposta do token sem access_token")})
+	}
+	if r.TokenType == "" {
+		r.TokenType = "Bearer"
+	}
+	t := &oauth2.Token{AccessToken: r.AccessToken, TokenType: r.TokenType, ExpiresIn: r.ExpiresIn}
+	validade := validadePadraoToken
+	if r.ExpiresIn > 0 {
+		validade = time.Duration(r.ExpiresIn) * time.Second
+	}
+	t.Expiry = c.agora().Add(validade)
+	return t, nil
 }
 
 func (c *cacheToken) invalidar(t *oauth2.Token) {

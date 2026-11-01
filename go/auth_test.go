@@ -66,11 +66,12 @@ type servidorToken struct {
 	*httptest.Server
 	buscas atomic.Int64
 
-	mu         sync.Mutex
-	formulario map[string][]string
-	basic      bool
-	metodo     string
-	tipoMidia  string
+	mu               sync.Mutex
+	formulario       map[string][]string
+	basic            bool
+	temAuthorization bool
+	metodo           string
+	tipoMidia        string
 }
 
 // novoServidorToken devolve tokens numerados (token-inventado-1, 2, ...) com
@@ -88,6 +89,7 @@ func novoServidorToken(t *testing.T, atraso time.Duration, falha func(w http.Res
 		s.mu.Lock()
 		s.formulario = r.PostForm
 		s.basic = temBasic
+		s.temAuthorization = r.Header.Get("Authorization") != ""
 		s.metodo = r.Method
 		s.tipoMidia = r.Header.Get("Content-Type")
 		s.mu.Unlock()
@@ -149,8 +151,16 @@ func TestCacheToken_WhenPedido_UsaFormularioSemBasic(t *testing.T) {
 	if s.basic {
 		t.Error("o pedido usou cabeçalho Basic; deveria usar o formulário")
 	}
+	if s.temAuthorization {
+		t.Error("o pedido trouxe cabeçalho Authorization")
+	}
+	if len(s.formulario) != 2 {
+		t.Errorf("formulário tem %d campos (%v), quer só client_id e client_secret", len(s.formulario), s.formulario)
+	}
+	if _, ok := s.formulario["grant_type"]; ok {
+		t.Error("o formulário traz grant_type; o endpoint o rejeita")
+	}
 	want := map[string]string{
-		"grant_type":    "client_credentials",
 		"client_id":     idInventado,
 		"client_secret": segredoInventado,
 	}
@@ -158,6 +168,66 @@ func TestCacheToken_WhenPedido_UsaFormularioSemBasic(t *testing.T) {
 		if got := s.formulario[k]; len(got) != 1 || got[0] != v {
 			t.Errorf("campo %s = %v, quer %q", k, got, v)
 		}
+	}
+}
+
+func TestCacheToken_WhenRespostaOK_InterpretaCorpo(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		corpo     string
+		wantToken string
+		wantTipo  string
+		wantErro  bool
+		wantVence time.Duration // validade esperada, quando não há erro
+	}{
+		{name: "when expires_in presente honra o valor", corpo: `{"access_token":"t1","token_type":"Bearer","expires_in":120}`, wantToken: "t1", wantTipo: "Bearer", wantVence: 120 * time.Second},
+		{name: "when sem expires_in assume 300 s", corpo: `{"access_token":"t2","token_type":"Bearer"}`, wantToken: "t2", wantTipo: "Bearer", wantVence: 300 * time.Second},
+		{name: "when sem token_type assume Bearer", corpo: `{"access_token":"t3"}`, wantToken: "t3", wantTipo: "Bearer", wantVence: 300 * time.Second},
+		{name: "when sem access_token falha", corpo: `{"token_type":"Bearer","expires_in":300}`, wantErro: true},
+		{name: "when access_token vazio falha", corpo: `{"access_token":"","expires_in":300}`, wantErro: true},
+		{name: "when JSON invalido falha", corpo: `não é json`, wantErro: true},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				escrever(t, w, tc.corpo)
+			}))
+			t.Cleanup(srv.Close)
+			rel := novoRelogio()
+			c := novoCacheToken(configToken{tokenURL: srv.URL, clientID: idInventado, clientSecret: segredoInventado, httpClient: srv.Client()})
+			c.agora = rel.agora
+
+			tok, err := c.token(context.Background())
+			if tc.wantErro {
+				var ft *erroFalhaToken
+				if !errors.As(err, &ft) {
+					t.Fatalf("err = %v, quer *erroFalhaToken", err)
+				}
+				if strings.Contains(err.Error(), tc.corpo) || strings.Contains(err.Error(), segredoInventado) {
+					t.Errorf("erro vaza corpo ou segredo: %q", err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("token: %v", err)
+			}
+			if tok.AccessToken != tc.wantToken || tok.TokenType != tc.wantTipo {
+				t.Errorf("token = %q/%q, quer %q/%q", tok.AccessToken, tok.TokenType, tc.wantToken, tc.wantTipo)
+			}
+			if want := rel.agora().Add(tc.wantVence); !tok.Expiry.Equal(want) {
+				t.Errorf("Expiry = %v, quer %v", tok.Expiry, want)
+			}
+			c.mu.Lock()
+			defer c.mu.Unlock()
+			if want := rel.agora().Add(tc.wantVence - folgaToken); !c.venceEm.Equal(want) {
+				t.Errorf("venceEm = %v, quer %v", c.venceEm, want)
+			}
+		})
 	}
 }
 
