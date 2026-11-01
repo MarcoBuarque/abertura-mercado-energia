@@ -83,8 +83,8 @@ verify "listMigrations: status" 200 "$status"
 verify "listMigrations: key migracao" true "$(jqc 'has("migracao")')"
 verify "listMigrations: cursor of page 1" cursor-inventado-2 "$(jqc '.indexProximaPagina')"
 
-req "${agent[@]}" -H "Prefer: example=pagina-2" "$list"
-verify "listMigrations pagina-2: indexProximaPagina null" null "$(jqc '.indexProximaPagina')"
+req "${agent[@]}" -H "Prefer: example=page-2" "$list"
+verify "listMigrations page-2: indexProximaPagina null" null "$(jqc '.indexProximaPagina')"
 
 req "${agent[@]}" -H "Prefer: code=403" "$list"
 verify "listMigrations 403: status" 403 "$status"
@@ -94,7 +94,7 @@ verify "listMigrations 403: error" ERR_CREDENCIAL_INVALIDA "$(jqc '.error')"
 new_migration='{"codigoAgenteConcessionaria":900001,"codigoAgenteVarejista":900002,"codigoPerfilVarejista":900003,"codigoUnidadeConsumidora":"000000000000001","dataDenuncia":"2027-01-15","emailUnidadeConsumidora":"contato@example.org","mesReferencia":"2027-03","tipoDocumento":"CNPJ","numeroDocumento":"11111111111111"}'
 req "${agent[@]}" -H "Content-Type: application/json" -X POST -d "$new_migration" "$base/v1.1/varejista/migracoes"
 verify "createMigration: status" 200 "$status"
-req "${agent[@]}" -H "Content-Type: application/json" -H "Prefer: code=400, example=migracao-solicitada" \
+req "${agent[@]}" -H "Content-Type: application/json" -H "Prefer: code=400, example=migration-already-requested" \
   -X POST -d "$new_migration" "$base/v1.1/varejista/migracoes"
 verify "createMigration 400: status" 400 "$status"
 verify "createMigration 400: error" ERR_MIGRACAO_SOLICITADA "$(jqc '.error')"

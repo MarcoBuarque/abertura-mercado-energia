@@ -1,12 +1,12 @@
 # Spec lint rules. Extends the vacuum `recommended` ruleset and adds the
 # project's own rules, all with severity `error`. Each one is proven by a
-# minimal spec in openapi/testes/regras/ (scripts/test-rules.sh). The rule ids
+# minimal spec in openapi/tests/rules/ (scripts/test-rules.sh). The rule ids
 # keep their original names because the test script looks them up by id.
 extends:
   - [vacuum:oas, recommended]
 
 rules:
-  abertura-confianca:
+  abertura-confidence:
     description: Every operation declares x-confidence as high, medium or low.
     message: "{{error}}"
     severity: error
@@ -21,7 +21,7 @@ rules:
             type: string
             enum: [high, medium, low]
 
-  abertura-verificado-em:
+  abertura-verified-at:
     description: An operation with high confidence carries x-verified-at in YYYY-MM-DD format.
     message: "{{error}}"
     severity: error
@@ -47,7 +47,7 @@ rules:
         functionOptions:
           match: ^[a-z][a-zA-Z0-9]+$
 
-  abertura-cabecalhos-agente:
+  abertura-agent-headers:
     description: Every operation, except getToken, references the codigoAgente and codigoPerfil headers.
     message: "{{error}}"
     severity: error
@@ -72,7 +72,7 @@ rules:
                   name: {const: codigoPerfil}
                   in: {const: header}
 
-  abertura-nao-oficial:
+  abertura-unofficial:
     description: The title says "unofficial" and the project metadata does not use the CCEE name.
     message: "{{error}}"
     severity: error
@@ -111,7 +111,7 @@ rules:
         functionOptions:
           notMatch: (?i)ccee
 
-  abertura-email-exemplo:
+  abertura-example-email:
     description: Every example emailUnidadeConsumidora ends in @example.org.
     message: "{{error}}"
     severity: error

@@ -43,9 +43,9 @@ another response or another example, send the `Prefer` header:
 
 | You want | Header |
 |---|---|
-| the second page of migrations (no cursor) | `Prefer: example=pagina-2` |
+| the second page of migrations (no cursor) | `Prefer: example=page-2` |
 | a 403 `ERR_CREDENCIAL_INVALIDA` | `Prefer: code=403` |
-| a 400 `ERR_MIGRACAO_SOLICITADA` when creating a migration | `Prefer: code=400, example=migracao-solicitada` |
+| a 400 `ERR_MIGRACAO_SOLICITADA` when creating a migration | `Prefer: code=400, example=migration-already-requested` |
 
 Every example is invented: consumer unit `000000000000001`, codes in the
 `900000` range, e-mails at `example.org`. The name of each example starts with
@@ -192,7 +192,7 @@ api = MigrationsApi(client)
 last = api.list_migrations(
     codigo_agente=900002, codigo_perfil=900003, codigo_perfil_varejista=900003,
     mes_referencia_inicial="2027-01", mes_referencia_final="2027-03",
-    _headers={"Prefer": "example=pagina-2"},
+    _headers={"Prefer": "example=page-2"},
 )
 print(last.index_proxima_pagina)  # None
 
@@ -386,7 +386,7 @@ request = urllib.request.Request(
         "Content-Type": "application/json",
         "codigoAgente": "900002",
         "codigoPerfil": "900003",
-        "Prefer": "code=400, example=migracao-solicitada",
+        "Prefer": "code=400, example=migration-already-requested",
     },
 )
 try:

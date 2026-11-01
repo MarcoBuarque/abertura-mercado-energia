@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Proves the project's own vacuum rules (openapi/vacuum.yaml): the minimal
-# valid spec must pass, and each spec in openapi/testes/regras/<rule>.yaml must
+# valid spec must pass, and each spec in openapi/tests/rules/<rule>.yaml must
 # fail citing the rule id. A rule that never fires is a dead rule.
 set -euo pipefail
 
@@ -11,14 +11,14 @@ cd "$root"
 vacuum_image="${VACUUM_IMAGE:-$(sed -n 's/^VACUUM_IMAGE[[:space:]]*:=[[:space:]]*\([^[:space:]]*\).*/\1/p' Makefile)}"
 [ -n "$vacuum_image" ] || { echo "fail: VACUUM_IMAGE not found in the Makefile" >&2; exit 1; }
 
-dir=openapi/testes/regras
+dir=openapi/tests/rules
 rules=(
-  abertura-confianca
-  abertura-verificado-em
+  abertura-confidence
+  abertura-verified-at
   abertura-operation-id
-  abertura-cabecalhos-agente
-  abertura-nao-oficial
-  abertura-email-exemplo
+  abertura-agent-headers
+  abertura-unofficial
+  abertura-example-email
 )
 
 lint() {
@@ -29,11 +29,11 @@ lint() {
 failed=0
 
 code=0
-output="$(lint "$dir/valida.yaml")" || code=$?
+output="$(lint "$dir/valid.yaml")" || code=$?
 if [ "$code" -eq 0 ]; then
-  echo "ok: valida.yaml passes"
+  echo "ok: valid.yaml passes"
 else
-  echo "FAIL: valida.yaml should pass (code $code)" >&2
+  echo "FAIL: valid.yaml should pass (code $code)" >&2
   echo "$output" >&2
   failed=1
 fi
