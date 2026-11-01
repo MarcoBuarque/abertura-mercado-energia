@@ -609,3 +609,36 @@ func TestDataDe_WhenFormato_LeEmBrasilia(t *testing.T) {
 		})
 	}
 }
+
+func TestDiaDe_WhenDataComoEscrita_MantemODia(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		in   time.Time
+		want string
+	}{
+		{name: "meia-noite UTC mantém o dia", in: time.Date(2027, 1, 15, 0, 0, 0, 0, time.UTC), want: "2027-01-15"},
+		{name: "meia-noite em -03:00 mantém o dia", in: time.Date(2027, 1, 15, 0, 0, 0, 0, fusoBrasilia), want: "2027-01-15"},
+		{name: "23:30 em +09:00 mantém o dia escrito", in: time.Date(2027, 1, 15, 23, 30, 0, 0, time.FixedZone("+09:00", 9*60*60)), want: "2027-01-15"},
+		{name: "tempo zero fica omitido", in: time.Time{}, want: ""},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if got := diaDe(tc.in); got != tc.want {
+				t.Errorf("diaDe = %q, quero %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestDataDe_WhenRFC3339EmUTC_MantemOInstante(t *testing.T) {
+	t.Parallel()
+	got, err := dataDe("dataDenuncia", "2027-01-15T00:00:00Z")
+	if err != nil {
+		t.Fatalf("dataDe: %v", err)
+	}
+	if want := time.Date(2027, 1, 15, 0, 0, 0, 0, time.UTC); !got.Equal(want) {
+		t.Errorf("got %v, quero o instante %v", got, want)
+	}
+}

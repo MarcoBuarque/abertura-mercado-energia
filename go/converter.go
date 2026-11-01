@@ -191,12 +191,13 @@ func medicaoDe(m gen.Medicao) (Medicao, error) {
 	return out, nil
 }
 
-// diaDe escreve uma data só de dia, em -03:00. O tempo zero vira texto vazio.
+// diaDe escreve o dia do calendário como o chamador o escreveu, na localização
+// dele, sem converter de fuso. O tempo zero vira texto vazio.
 func diaDe(t time.Time) string {
 	if t.IsZero() {
 		return ""
 	}
-	return t.In(fusoBrasilia).Format(layoutDia)
+	return t.Format(layoutDia)
 }
 
 // instanteDe escreve um instante com deslocamento -03:00.
