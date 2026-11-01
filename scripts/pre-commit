@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# Gancho de pre-commit: gitleaks nos arquivos em stage.
-# O binário na versão fixada é instalado em out/bin pelo `make hooks`.
+# Pre-commit hook: gitleaks on the staged files.
+# `make hooks` installs the pinned binary in out/bin.
 set -euo pipefail
 
-raiz="$(git rev-parse --show-toplevel)"
-cd "$raiz"
+root="$(git rev-parse --show-toplevel)"
+cd "$root"
 
-gl="${GITLEAKS:-$raiz/out/bin/gitleaks}"
+gl="${GITLEAKS:-$root/out/bin/gitleaks}"
 if [ ! -x "$gl" ]; then
-  echo "pre-commit: gitleaks não encontrado em $gl. Rode 'make hooks'." >&2
+  echo "pre-commit: gitleaks not found at $gl. Run 'make hooks'." >&2
   exit 1
 fi
 
-if ! "$gl" git --staged --config "$raiz/.gitleaks.toml" --no-banner --redact --exit-code 42; then
-  echo "pre-commit: possível segredo em stage. Commit bloqueado." >&2
+if ! "$gl" git --staged --config "$root/.gitleaks.toml" --no-banner --redact --exit-code 42; then
+  echo "pre-commit: possible secret in the staged files. Commit blocked." >&2
   exit 1
 fi

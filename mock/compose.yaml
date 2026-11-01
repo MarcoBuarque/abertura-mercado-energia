@@ -1,4 +1,4 @@
-# Sobe o mock em http://localhost:4010:
+# Starts the mock at http://localhost:4010:
 #   docker compose -f mock/compose.yaml up --build
 services:
   mock:
@@ -6,11 +6,11 @@ services:
       context: ..
       dockerfile: mock/Dockerfile
       args:
-        # O Makefile e o smoke exportam SPEC_VERSION a partir de info.version.
-        SPEC_VERSION: ${SPEC_VERSION:-desconhecida}
+        # The Makefile and the smoke test export SPEC_VERSION from info.version.
+        SPEC_VERSION: ${SPEC_VERSION:-unknown}
     image: abertura-mercado-energia-mock:local
-    # O Prism fixado só existe para amd64. No Mac com Apple Silicon roda por
-    # emulação (a subida leva alguns segundos a mais); em CI amd64 é nativo.
+    # The pinned Prism only exists for amd64. On a Mac with Apple Silicon it runs
+    # under emulation (startup takes a few seconds longer); on amd64 CI it is native.
     platform: linux/amd64
     ports:
       - "127.0.0.1:4010:4010"

@@ -1,15 +1,15 @@
-# Política de segurança
+# Security policy
 
-## Como reportar uma falha
+## How to report a vulnerability
 
-Use o relato privado de vulnerabilidade do repositório (aba *Security*, botão *Report a vulnerability*). Se não puder usá-lo, escreva para contato@quantogasta.com.br com o assunto "segurança". Não abra issue pública para falha de segurança.
+Use the repository's private vulnerability reporting (the *Security* tab, *Report a vulnerability* button). If you cannot use it, write to contato@quantogasta.com.br with the subject "security". Do not open a public issue for a security flaw.
 
-Descreva o que acontece, como reproduzir e qual o efeito. Respondo em até 7 dias.
+Describe what happens, how to reproduce it and what the effect is. I reply within 7 days.
 
-## Nunca envie credenciais
+## Never send credentials
 
-Não mande senha, `client_secret`, token ou qualquer credencial real, nem em relato, nem em issue, nem em anexo. Se uma credencial vazou, troque-a no provedor antes de falar comigo. Exportações de coleções do Postman também não: elas costumam carregar credenciais.
+Do not send a password, `client_secret`, token or any real credential, whether in a report, an issue or an attachment. If a credential leaked, rotate it with the provider before contacting me. Postman collection exports are not welcome either: they often carry credentials.
 
-## Escopo
+## Scope
 
-Vale para o conteúdo deste repositório: a spec, o mock, o SDK Go e os scripts. Falhas na API de terceiros que a spec descreve devem ser reportadas ao responsável por ela.
+This covers the content of this repository: the spec, the mock, the Go SDK and the scripts. Flaws in the third-party API that the spec describes should be reported to whoever is responsible for it.

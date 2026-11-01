@@ -1,4 +1,4 @@
-# Versões fixadas. Confirmadas nas páginas de releases em 30/10/2026.
+# Pinned versions. Confirmed on the releases pages on 30/10/2026.
 GO_MIN                := 1.26
 OAPI_CODEGEN_VERSION  := v2.8.1
 KIN_OPENAPI_VERSION   := v0.152.0
@@ -8,129 +8,130 @@ GITLEAKS_VERSION      := v8.30.1
 ACTIONLINT_VERSION    := v1.7.12
 YQ_VERSION            := v4.54.1
 
-# Imagens por digest (a tag fica só como lembrete da versão).
+# Images by digest (the tag is only a reminder of the version).
 VACUUM_IMAGE            := ghcr.io/daveshanley/vacuum@sha256:5d600e8df2a9c1b110fb5683c61c9e80e0c0574a37c118d3b1ff1868710050a5 # v0.36.0, amd64+arm64
 OASDIFF_IMAGE           := docker.io/tufin/oasdiff@sha256:82b1840a77335562bb11ce95f77ad31745a0c6f3a770929333ed1c5ef466e400 # v1.35.0, amd64+arm64
-PRISM_IMAGE             := docker.io/stoplight/prism@sha256:3f6d29e31bfe0b99587f0f6f79c423858dd6a2ea7e1e4658273ed930a78a9acf # `prism --version` 5.15.10 (a tag 5.16.0 não existe), só amd64
+PRISM_IMAGE             := docker.io/stoplight/prism@sha256:3f6d29e31bfe0b99587f0f6f79c423858dd6a2ea7e1e4658273ed930a78a9acf # `prism --version` 5.15.10 (tag 5.16.0 does not exist), amd64 only
 REDOCLY_IMAGE           := docker.io/redocly/cli@sha256:d39a229ebd8250fea62f44c377ddb04797e8a155140eda49db17f1caaa9334ff # 2.72.1, amd64+arm64
 PANDOC_IMAGE            := docker.io/pandoc/core@sha256:c7127705b9d84c1b4acbbe411a86e3a6d67ac57870654dc378b6fe636ab747df # 3.8 (pandoc 3.8.3), amd64+arm64
 OPENAPI_GENERATOR_IMAGE := docker.io/openapitools/openapi-generator-cli@sha256:a304ddf1e2e5f24f68fa3153568d6174cea4959d09aa8e3db6d526fd0782326d # v7.26.0, amd64+arm64
 
-# info.version da spec: vira o rótulo da imagem do mock (ARG SPEC_VERSION).
+# The spec's info.version: becomes the mock image label (ARG SPEC_VERSION).
 SPEC_VERSION := $(shell sed -n 's/^  version:[[:space:]]*\([0-9][^[:space:]]*\).*/\1/p' openapi/abertura.yaml | head -1)
 export SPEC_VERSION
 
-# O go run perde o código de saída do programa (devolve sempre 1), então o
-# gitleaks é instalado na versão fixada em out/bin e chamado direto.
+# `go run` loses the program's exit code (always returns 1), so gitleaks is
+# installed at the pinned version in out/bin and called directly.
 GITLEAKS := $(CURDIR)/out/bin/gitleaks
 export GITLEAKS
 
 $(GITLEAKS): Makefile
 	GOBIN=$(CURDIR)/out/bin go install github.com/zricethezav/gitleaks/v8@$(GITLEAKS_VERSION)
 
-.PHONY: segredos spec-lint spec-exemplos testa-regras spec-diff docs mock mock-smoke mock-imagem go-tidy go-gen go-test go-race go-lint go-contrato go-vuln go-deps checa-workflows testa-quebra-spec quebra-spec testa-checa-tag checa-tag testa-checa-marca checa-marca hooks ci
+.PHONY: secrets spec-lint spec-examples test-rules spec-diff docs mock mock-smoke mock-image go-tidy go-gen go-test go-race go-lint go-contract go-vuln go-deps check-workflows test-breaking-spec breaking-spec test-check-tag check-tag test-check-trademark check-trademark hooks ci
 
-segredos: $(GITLEAKS) ## prova a guarda de segredos e varre o repositório
-	scripts/testa-segredos.sh
+secrets: $(GITLEAKS) ## prove the secrets guard and scan the repository
+	scripts/test-secrets.sh
 	$(GITLEAKS) dir --config .gitleaks.toml --no-banner --exit-code 42 .
 	@if git rev-parse --verify -q HEAD >/dev/null; then \
 		$(GITLEAKS) git --config .gitleaks.toml --no-banner --exit-code 42 .; \
-	else echo "sem commits ainda: varredura do histórico pulada"; fi
+	else echo "no commits yet: history scan skipped"; fi
 
-spec-lint: ## lint da spec com as regras próprias (openapi/vacuum.yaml)
+spec-lint: ## lint the spec with the project's own rules (openapi/vacuum.yaml)
 	docker run --rm -v "$(CURDIR)":/work -w /work $(VACUUM_IMAGE) lint -r openapi/vacuum.yaml -d -b -q --no-clip openapi/abertura.yaml
 
-spec-exemplos: ## confere as regras de exemplo inventado que o vacuum não expressa
-	YQ_VERSION=$(YQ_VERSION) scripts/confere-exemplos.sh
+spec-examples: ## check the invented-example rules that vacuum cannot express
+	YQ_VERSION=$(YQ_VERSION) scripts/verify-examples.sh
 
-testa-regras: ## prova que cada regra própria do lint reprova a sua spec mínima
-	VACUUM_IMAGE=$(VACUUM_IMAGE) scripts/testa-regras.sh
+test-rules: ## prove that each own lint rule rejects its minimal spec
+	VACUUM_IMAGE=$(VACUUM_IMAGE) scripts/test-rules.sh
 
-spec-diff: ## compara a spec com a última tag openapi/v* (oasdiff); sem tag, pula
+spec-diff: ## compare the spec with the latest openapi/v* tag (oasdiff); skips if there is no tag
 	OASDIFF_IMAGE=$(OASDIFF_IMAGE) scripts/oasdiff.sh
-	OASDIFF_IMAGE=$(OASDIFF_IMAGE) scripts/testa-oasdiff.sh
+	OASDIFF_IMAGE=$(OASDIFF_IMAGE) scripts/test-oasdiff.sh
 
-docs: ## gera a página Redoc (out/docs/index.html) e o catálogo de erros (out/docs/erros/index.html), não versionados
+docs: ## build the Redoc page (out/docs/index.html) and the error catalogue (out/docs/errors/index.html, plus the /erros/ redirect), not versioned
 	mkdir -p out/docs
 	docker run --rm -v "$(CURDIR)":/work -w /work $(REDOCLY_IMAGE) build-docs openapi/abertura.yaml -o out/docs/index.html --inlineBundle --template docs/template.hbs --config docs/redocly.yaml
-	@grep -q "descrição não oficial" out/docs/index.html && echo "faixa 'descrição não oficial' presente em out/docs/index.html"
-	PANDOC_IMAGE=$(PANDOC_IMAGE) scripts/gera-erros.sh
-	scripts/testa-confere-erros.sh
-	scripts/confere-erros.sh
+	@grep -q "unofficial description" out/docs/index.html && echo "'unofficial description' banner present in out/docs/index.html"
+	PANDOC_IMAGE=$(PANDOC_IMAGE) scripts/build-errors.sh
+	@grep -q 'url=../errors/' out/docs/erros/index.html && echo "redirect stub out/docs/erros/index.html points to ../errors/"
+	scripts/test-verify-errors.sh
+	scripts/verify-errors.sh
 
-mock: ## constrói e sobe o mock Prism em http://localhost:4010 (docker compose -f mock/compose.yaml down para parar)
+mock: ## build and start the Prism mock at http://localhost:4010 (docker compose -f mock/compose.yaml down to stop)
 	docker compose -f mock/compose.yaml up -d --build --wait --wait-timeout 180
 
-mock-smoke: ## sobe o mock, chama as 10 operações e derruba o mock
+mock-smoke: ## start the mock, call the 10 operations and stop the mock
 	scripts/mock-smoke.sh
 
-# Arquivos gerados por `go generate`. A deriva é medida só neles: mudança em
-# qualquer outro arquivo de go/ (código à mão, testes, go.mod) não reprova.
-GERADOS := go/internal/gen/gen.go go/internal/spec/abertura.yaml
+# Files generated by `go generate`. Drift is measured only on them: a change
+# in any other file of abertura/ (hand-written code, tests, go.mod) does not fail.
+GENERATED := abertura/internal/gen/gen.go abertura/internal/spec/abertura.yaml
 
-go-tidy: ## falha se go.mod ou go.sum mudariam com `go mod tidy`
-	cd go && go mod tidy -diff
+go-tidy: ## fail if go.mod or go.sum would change with `go mod tidy`
+	cd abertura && go mod tidy -diff
 
-go-gen: ## regenera os modelos e a cópia da spec e falha se os arquivos gerados mudarem (deriva)
-	@set -e; mkdir -p out; for f in $(GERADOS); do echo "$$f $$(git hash-object $$f)"; done > out/.go-gen-antes; \
-	(cd go && go generate ./...); \
-	deriva=0; while read -r f h; do \
-		if [ "$$(git hash-object $$f)" != "$$h" ]; then echo "go-gen: deriva em $$f (diferia do que o gerador produz)" >&2; deriva=1; fi; \
-	done < out/.go-gen-antes; \
-	[ "$$deriva" = 0 ] || exit 1; \
-	git diff --exit-code -- $(GERADOS) || { echo "go-gen: arquivos gerados diferem do índice; faça git add" >&2; exit 1; }
+go-gen: ## regenerate the models and the spec copy and fail if the generated files change (drift)
+	@set -e; mkdir -p out; for f in $(GENERATED); do echo "$$f $$(git hash-object $$f)"; done > out/.go-gen-before; \
+	(cd abertura && go generate ./...); \
+	drift=0; while read -r f h; do \
+		if [ "$$(git hash-object $$f)" != "$$h" ]; then echo "go-gen: drift in $$f (differed from what the generator produces)" >&2; drift=1; fi; \
+	done < out/.go-gen-before; \
+	[ "$$drift" = 0 ] || exit 1; \
+	git diff --exit-code -- $(GENERATED) || { echo "go-gen: generated files differ from the index; run git add" >&2; exit 1; }
 
 go-test:
-	cd go && go build ./... && go vet ./... && go test ./...
+	cd abertura && go build ./... && go vet ./... && go test ./...
 
-go-race: ## testes com -race e cobertura (mínimo de 80% no pacote raiz); perfil em out/go-cobertura.out
-	scripts/go-cobertura.sh 80
+go-race: ## tests with -race and coverage (minimum 80% on the root package); profile in out/go-coverage.out
+	scripts/go-coverage.sh 80
 
 go-lint:
-	cd go && go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION) run ./...
+	cd abertura && go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION) run ./...
 
-go-contrato: ## contrato do sandbox: vet, lint e os testes sem rede, com -tags sandbox (nunca fala com a API)
-	cd go && go vet -tags sandbox ./contrato/...
-	cd go && go test -tags sandbox ./contrato/... -run 'TestOrcamento|TestNomesDeCampos|TestDocumentoDoAmbiente|TestEscolha' -count=1
-	cd go && go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION) run --build-tags sandbox ./...
+go-contract: ## sandbox contract: vet, lint and the network-free tests, with -tags sandbox (never talks to the API: the live test skips without credentials and is excluded here)
+	cd abertura && go vet -tags sandbox ./contract/...
+	cd abertura && go test -tags sandbox ./contract/... -skip '^TestContract$$' -count=1
+	cd abertura && go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION) run --build-tags sandbox ./...
 
 go-vuln:
-	cd go && go run golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION) ./...
+	cd abertura && go run golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION) ./...
 
-CHECA_DEPS ?= scripts/checa-deps.sh
-go-deps: ## confere as dependências do módulo Go (scripts/checa-deps.sh)
-	$(CHECA_DEPS)
+CHECK_DEPS ?= scripts/check-deps.sh
+go-deps: ## check the Go module dependencies (scripts/check-deps.sh)
+	$(CHECK_DEPS)
 
-checa-workflows: ## actionlint, actions por SHA, imagens por digest, permissions e alvos do Makefile
-	ACTIONLINT_VERSION=$(ACTIONLINT_VERSION) scripts/checa-workflows.sh
+check-workflows: ## actionlint, actions pinned by SHA, images by digest, permissions and Makefile targets
+	ACTIONLINT_VERSION=$(ACTIONLINT_VERSION) scripts/check-workflows.sh
 
-testa-quebra-spec: ## prova a leitura da seção Quebras do CHANGELOG (tabela de casos sintéticos)
-	scripts/testa-quebra-spec.sh
+test-breaking-spec: ## prove the reading of the CHANGELOG Breaking section (table of synthetic cases)
+	scripts/test-breaking-spec.sh
 
-quebra-spec: ## imprime 1 se a seção Quebras de [Não lançado] está preenchida, 0 se não
-	@scripts/quebra-spec.sh
+breaking-spec: ## print 1 if the Breaking section under [Unreleased] is filled, 0 if not
+	@scripts/breaking-spec.sh
 
-testa-checa-tag: ## prova as checagens de tag (tabela de casos, sem criar tag)
-	scripts/testa-checa-tag.sh
+test-check-tag: ## prove the tag checks (table of cases, no tag is created)
+	scripts/test-check-tag.sh
 
-# make checa-tag TIPO=openapi TAG=openapi/v0.1.0-rc.1
-checa-tag: ## confere a tag de release contra info.version, version.Version e CHANGELOG
-	scripts/checa-tag.sh "$(TIPO)" "$(TAG)"
+# make check-tag KIND=openapi TAG=openapi/v0.2.0-rc.1
+check-tag: ## check the release tag against info.version, version.Version and the CHANGELOG
+	scripts/check-tag.sh "$(KIND)" "$(TAG)"
 
-MOCK_IMAGEM ?= abertura-mercado-energia-mock
-MOCK_TAG    ?= local
-mock-imagem: ## constrói a imagem do mock (linux/amd64, como o Prism fixado) com o nome $(MOCK_IMAGEM):$(MOCK_TAG)
-	docker build --platform linux/amd64 --build-arg SPEC_VERSION=$(SPEC_VERSION) -f mock/Dockerfile -t $(MOCK_IMAGEM):$(MOCK_TAG) .
+MOCK_IMAGE ?= abertura-mercado-energia-mock
+MOCK_TAG   ?= local
+mock-image: ## build the mock image (linux/amd64, like the pinned Prism) named $(MOCK_IMAGE):$(MOCK_TAG)
+	docker build --platform linux/amd64 --build-arg SPEC_VERSION=$(SPEC_VERSION) -f mock/Dockerfile -t $(MOCK_IMAGE):$(MOCK_TAG) .
 
-testa-checa-marca: ## prova a checagem da marca (tabela de casos em repositórios temporários)
-	scripts/testa-checa-marca.sh
+test-check-trademark: ## prove the trademark check (table of cases in temporary repositories)
+	scripts/test-check-trademark.sh
 
-checa-marca: ## o nome do operador só no aviso de não afiliação (scripts/checa-marca.sh)
-	scripts/checa-marca.sh
+check-trademark: ## the operator's name only in the non-affiliation notice (scripts/check-trademark.sh)
+	scripts/check-trademark.sh
 
-hooks: $(GITLEAKS) ## instala o gancho de pre-commit (funciona em worktree)
+hooks: $(GITLEAKS) ## install the pre-commit hook (works in a worktree)
 	@dir="$$(git rev-parse --git-path hooks)" && mkdir -p "$$dir" && \
 		install -m 755 scripts/pre-commit "$$dir/pre-commit" && \
-		echo "gancho instalado em $$dir/pre-commit"
+		echo "hook installed at $$dir/pre-commit"
 
-ci: segredos testa-checa-marca checa-marca checa-workflows testa-checa-tag testa-quebra-spec testa-regras spec-lint spec-exemplos spec-diff docs mock mock-smoke go-tidy go-gen go-test go-race go-lint go-contrato go-vuln go-deps
+ci: secrets test-check-trademark check-trademark check-workflows test-check-tag test-breaking-spec test-rules spec-lint spec-examples spec-diff docs mock mock-smoke go-tidy go-gen go-test go-race go-lint go-contract go-vuln go-deps
