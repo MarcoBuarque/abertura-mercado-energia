@@ -26,7 +26,7 @@ var (
 func TestNewClient_WhenInvalidConfiguration_ReturnsError(t *testing.T) {
 	t.Parallel()
 
-	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: "token-inventado-1"})
+	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: "fake-token-1"})
 	agent := WithAgent(fakeAgent, fakeProfile)
 	cred := WithCredentials(fakeClientID, fakeSecret)
 	env := Environment{Name: "x", APIURL: "https://api.example.invalid", TokenURL: "https://api.example.invalid/sso/oauth/token"} //nolint:gosec // G101: invented test URL, not a credential

@@ -10,9 +10,9 @@ import (
 	"testing"
 )
 
-// TestProblemFrom_WhenUnclassifiedError_UsesNotInCatalog prova que o
-// ProblemFrom nunca devolve about:blank: o que não tem entrada própria cai em
-// #not-in-catalog, com o título da entrada.
+// TestProblemFrom_WhenUnclassifiedError_UsesNotInCatalog proves that
+// ProblemFrom never returns about:blank: whatever has no entry of its own
+// falls under #not-in-catalog, with that entry's title.
 func TestProblemFrom_WhenUnclassifiedError_UsesNotInCatalog(t *testing.T) {
 	t.Parallel()
 

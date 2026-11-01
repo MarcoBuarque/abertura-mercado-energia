@@ -15,6 +15,6 @@ while IFS= read -r f; do
     grep -n -i -w -E "$WORDS" "$f" | head -5 || true
     status=1
   fi
-done < <(git ls-files '*.md' '*.yaml' '*.yml' '*.hbs' 'scripts/*' 'Makefile' | grep -v -E '^README\.pt-BR\.md$|^out/')
+done < <(git ls-files '*.md' '*.yaml' '*.yml' '*.hbs' 'scripts/*' 'Makefile' | grep -v -E '^README\.pt-BR\.md$|^out/|^scripts/check-english\.sh$')
 [ "$status" -eq 0 ] && echo "OK: documents read as English"
 exit "$status"

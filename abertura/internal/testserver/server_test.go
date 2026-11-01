@@ -93,7 +93,7 @@ func TestServer_WhenSequence502502200_RespondsInOrderAndRepeatsLast(t *testing.T
 		if status == 502 && !strings.HasPrefix(resp.Header.Get("Content-Type"), "text/plain") {
 			t.Errorf("call %d: Content-Type = %q, want plain text", i+1, resp.Header.Get("Content-Type"))
 		}
-		if status == 200 && !strings.Contains(body, "cursor-inventado-2") {
+		if status == 200 && !strings.Contains(body, "fake-cursor-2") {
 			t.Errorf("call %d: body without the fixture: %s", i+1, body)
 		}
 	}
@@ -169,7 +169,7 @@ func TestServer_WhenRequestOutsideSpec_FailsWithClearMessage(t *testing.T) {
 	}{
 		{name: "without the codigoAgente header", path: listTemplate + validQuery, headers: map[string]string{"codigoPerfil": "900003"}, wantMsg: "codigoAgente"},
 		{name: "without the required codigoPerfilVarejista parameter", path: listTemplate + "?mesReferenciaInicial=2027-01&mesReferenciaFinal=2027-03", headers: validHeaders, wantMsg: "codigoPerfilVarejista"},
-		{name: "unknown query parameter", path: listTemplate + validQuery + "&parametroInventado=1", headers: validHeaders, wantMsg: "parametroInventado"},
+		{name: "unknown query parameter", path: listTemplate + validQuery + "&unknownParameter=1", headers: validHeaders, wantMsg: "unknownParameter"},
 		{name: "path the spec does not have", path: "/v1.1/varejista/inexistente", headers: validHeaders, wantMsg: "inexistente"},
 	}
 	for _, tc := range tests {

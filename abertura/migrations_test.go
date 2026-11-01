@@ -119,7 +119,7 @@ func TestMigrationsList_WhenTwoPages_WalksEverything(t *testing.T) {
 	if reqs[0].URL.Query().Has("indexProximaPagina") {
 		t.Errorf("the first page carries no cursor: %s", reqs[0].URL.RawQuery)
 	}
-	if got := reqs[1].URL.Query().Get("indexProximaPagina"); got != "cursor-inventado-2" {
+	if got := reqs[1].URL.Query().Get("indexProximaPagina"); got != "fake-cursor-2" {
 		t.Errorf("cursor of the second page = %q", got)
 	}
 }
@@ -227,8 +227,8 @@ func TestMigrationsListPage_WhenCursor_ReturnsTheNext(t *testing.T) {
 		wantItems int
 		wantNext  string
 	}{
-		{name: "first page brings the cursor", fixture: "migrations_page1.json", wantItems: 2, wantNext: "cursor-inventado-2"},
-		{name: "resuming with a cursor and being the last", fixture: "migrations_page2.json", cursor: "cursor-inventado-2", wantItems: 1},
+		{name: "first page brings the cursor", fixture: "migrations_page1.json", wantItems: 2, wantNext: "fake-cursor-2"},
+		{name: "resuming with a cursor and being the last", fixture: "migrations_page2.json", cursor: "fake-cursor-2", wantItems: 1},
 		{name: "empty", fixture: "migrations_empty.json", wantItems: 0},
 	}
 	for _, tc := range tests {

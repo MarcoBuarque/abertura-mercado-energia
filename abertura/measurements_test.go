@@ -52,7 +52,7 @@ func TestMeasurementsList_WhenTwoPages_ConsumptionAsStringAndNumber(t *testing.T
 	if got := reqs[0].URL.Query(); !equalValues(got, want) {
 		t.Errorf("query of the first page = %v, want %v", got, want)
 	}
-	want.Set("indexProximaPagina", "cursor-inventado-2")
+	want.Set("indexProximaPagina", "fake-cursor-2")
 	if got := reqs[1].URL.Query(); !equalValues(got, want) {
 		t.Errorf("query of the second page = %v, want %v", got, want)
 	}
@@ -82,7 +82,7 @@ func TestMeasurementsListPage_WhenCursor_ReturnsTheNext(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ListPage: %v", err)
 	}
-	if len(page.Items) != 1 || page.Next != "cursor-inventado-2" {
+	if len(page.Items) != 1 || page.Next != "fake-cursor-2" {
 		t.Errorf("page = %d items, next %q", len(page.Items), page.Next)
 	}
 }

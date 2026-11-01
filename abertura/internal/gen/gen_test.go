@@ -78,7 +78,7 @@ func TestMedicao_WhenConsumoIsStringOrNumber_DecodesBoth(t *testing.T) {
 		wantDistributor string
 		wantNextCursor  string
 	}{
-		{name: "consumption and distributor as string", fixture: "measurements_page1.json", wantConsumption: "12.345", wantDistributor: "900001", wantNextCursor: "cursor-inventado-2"},
+		{name: "consumption and distributor as string", fixture: "measurements_page1.json", wantConsumption: "12.345", wantDistributor: "900001", wantNextCursor: "fake-cursor-2"},
 		{name: "consumption and distributor as number", fixture: "measurements_page2.json", wantConsumption: "0.5", wantDistributor: "900001"},
 	}
 	for _, tc := range tests {

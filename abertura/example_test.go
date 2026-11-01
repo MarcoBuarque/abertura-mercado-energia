@@ -165,7 +165,7 @@ func ExampleMeasurements_ListPage() {
 	fmt.Println("next page:", page.Next)
 	// Output:
 	// 2027-02-01 12.345 CONSISTIDA
-	// next page: cursor-inventado-2
+	// next page: fake-cursor-2
 }
 
 // A Document is never printed in the clear: fmt, slog and JSON show only the
