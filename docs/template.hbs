@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <title>{{title}}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Descrição não oficial, escrita à mão, de parte das APIs de varejo da abertura do mercado de energia. Projeto independente." />
+  <meta name="description" content="Unofficial, hand-written description of part of the retail APIs of the Brazilian energy market opening. Independent project." />
   <style>
     body { margin: 0; padding: 0; }
-    .faixa-nao-oficial {
+    .unofficial-banner {
       box-sizing: border-box;
       width: 100%;
       margin: 0;
@@ -21,50 +21,50 @@
       top: 0;
       z-index: 1000;
     }
-    .faixa-nao-oficial .longa { display: none; }
-    .faixa-nao-oficial strong { font-weight: 700; }
-    .faixa-nao-oficial a { color: inherit; text-decoration: underline; }
+    .unofficial-banner .long { display: none; }
+    .unofficial-banner strong { font-weight: 700; }
+    .unofficial-banner a { color: inherit; text-decoration: underline; }
     @media (min-width: 640px) {
-      .faixa-nao-oficial { text-align: center; }
-      .faixa-nao-oficial .longa { display: inline; }
+      .unofficial-banner { text-align: center; }
+      .unofficial-banner .long { display: inline; }
     }
     @media (max-width: 639px) {
-      .faixa-nao-oficial { font-size: 14px; padding-top: 8px; padding-bottom: 8px; }
+      .unofficial-banner { font-size: 14px; padding-top: 8px; padding-bottom: 8px; }
     }
   </style>
   {{{redocHead}}}
 </head>
 <body>
-  <aside class="faixa-nao-oficial" role="note" aria-label="Aviso de não afiliação">
-    <strong>Atenção: descrição não oficial.</strong>
-    Projeto independente, sem afiliação, patrocínio ou endosso da CCEE.
-    <span class="longa">A spec descreve o que a API devolveu em testes no
-    sandbox e não substitui a documentação do operador. Onde as duas divergem,
-    o arquivo <code>openapi/FONTES.md</code> explica o motivo.</span>
+  <aside class="unofficial-banner" role="note" aria-label="Non-affiliation notice">
+    <strong>Notice: unofficial description.</strong>
+    Independent project, not affiliated with, sponsored or endorsed by the CCEE.
+    <span class="long">The spec describes what the API returned in sandbox
+    tests and does not replace the operator's documentation. Where the two
+    differ, the file <code>openapi/SOURCES.md</code> explains why.</span>
   </aside>
   {{{redocHTML}}}
   <script>
-    // A faixa é fixa no topo; o Redoc 3 aceita a altura dela em --navbar-height
-    // para posicionar o menu lateral logo abaixo.
+    // The banner is pinned to the top; Redoc 3 accepts its height in --navbar-height
+    // to position the side menu right below it.
     (function () {
-      var faixa = document.querySelector(".faixa-nao-oficial");
-      function aplica() {
-        var raiz = document.querySelector("#redoc > div[style*='navbar-height']");
-        if (!raiz) { return false; }
-        var h = faixa.getBoundingClientRect().height + "px";
-        raiz.style.setProperty("--navbar-height", h);
-        raiz.style.setProperty("--navbar-stack-height", h);
+      var banner = document.querySelector(".unofficial-banner");
+      function apply() {
+        var root = document.querySelector("#redoc > div[style*='navbar-height']");
+        if (!root) { return false; }
+        var h = banner.getBoundingClientRect().height + "px";
+        root.style.setProperty("--navbar-height", h);
+        root.style.setProperty("--navbar-stack-height", h);
         return true;
       }
-      // A hidratação do React pode reescrever o atributo style: reaplica
-      // enquanto a página carrega e a cada mudança de tamanho.
-      var tentativas = 0;
-      var espera = setInterval(function () {
-        aplica();
-        if (++tentativas > 60) { clearInterval(espera); }
+      // React hydration may rewrite the style attribute: reapply
+      // while the page loads and on every size change.
+      var attempts = 0;
+      var wait = setInterval(function () {
+        apply();
+        if (++attempts > 60) { clearInterval(wait); }
       }, 100);
-      window.addEventListener("resize", aplica);
-      if (window.ResizeObserver) { new ResizeObserver(aplica).observe(faixa); }
+      window.addEventListener("resize", apply);
+      if (window.ResizeObserver) { new ResizeObserver(apply).observe(banner); }
     })();
   </script>
 </body>
