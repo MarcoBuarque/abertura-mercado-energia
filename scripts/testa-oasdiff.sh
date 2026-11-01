@@ -26,7 +26,7 @@ git -C "$repo" -c user.name=teste -c user.email=teste@example.org -c core.hooksP
 
 roda() { # nome; saída em $saida, status em $codigo
   codigo=0
-  saida="$(cd "$repo" && scripts/oasdiff.sh 2>&1)" || codigo=$?
+  saida="$(cd "$repo" && env -u QUEBRA_SPEC scripts/oasdiff.sh 2>&1)" || codigo=$?
 }
 
 # 1. sem tag
