@@ -395,7 +395,6 @@ type MigracaoDetalhe struct {
 	// DataReferencia Mês de referência como data e hora RFC 3339 com deslocamento e sem
 	// fração de segundo (por exemplo, o dia 1 do mês à meia-noite em
 	// -03:00). Observado em 01/11/2026 (D21); o SDK o lê sem problema.
-	// A falha de `Obter` no sandbox tem outra causa (D23).
 	//
 	//
 	// Example: 2027-03-01T00:00:00-03:00
@@ -708,13 +707,13 @@ type ListarMigracoesParams struct {
 	// MesReferenciaInicial Primeiro mês do intervalo, no formato AAAA-MM. Obrigatório na listagem de
 	// migrações: sem ele o sandbox responde 400
 	// `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`. Um intervalo largo demais volta
-	// 400 `ERR_MES_REFERENCIA_INICIAL_DIFERENCA` (um mês passou; 96 meses não).
+	// 400 `ERR_MES_REFERENCIA_INICIAL_DIFERENCA` (12 meses passaram; 24, 48 e 96 não; o teto fica entre 12 e 24, D22).
 	MesReferenciaInicial MesReferenciaInicialObrigatorio `form:"mesReferenciaInicial" json:"mesReferenciaInicial"`
 
 	// MesReferenciaFinal Último mês do intervalo, no formato AAAA-MM. Obrigatório na listagem de
-	// migrações, junto com o mês inicial. A distância máxima entre os dois não
-	// foi medida: 1 mês foi aceito e 96 foram recusados
-	// (`ERR_MES_REFERENCIA_INICIAL_DIFERENCA`).
+	// migrações, junto com o mês inicial. A distância máxima entre os dois fica
+	// entre 12 e 24 meses: 12 foram aceitos e 24, 48 e 96 recusados
+	// (`ERR_MES_REFERENCIA_INICIAL_DIFERENCA`, D22).
 	MesReferenciaFinal MesReferenciaFinalObrigatorio `form:"mesReferenciaFinal" json:"mesReferenciaFinal"`
 
 	// CodigoUnidadeConsumidora Código da unidade consumidora. Sem validação de formato no filtro.
