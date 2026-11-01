@@ -272,10 +272,16 @@ func TestMigracoesObter(t *testing.T) {
 			name: "array vazio é ErrNotFound", resposta: resp(200, "migracao_detalhe_vazio.json"),
 			wantErr: func(err error) bool { return errors.Is(err, ErrNotFound) },
 		},
+		{name: "três itens com o id no meio devolve o certo", resposta: resp(200, "migracao_detalhe_tres_com_id.json"), wantID: idMigracaoTst},
 		{
-			name: "dois itens é erro", resposta: resp(200, "migracao_detalhe_dois.json"),
+			name: "três itens sem o id é ErrNotFound", resposta: resp(200, "migracao_detalhe_tres_sem_id.json"),
+			wantErr: func(err error) bool { return errors.Is(err, ErrNotFound) },
+		},
+		{
+			name: "id repetido é resposta ilegível", resposta: resp(200, "migracao_detalhe_id_repetido.json"),
 			wantErr: func(err error) bool {
-				return err != nil && !errors.Is(err, ErrNotFound) && strings.Contains(err.Error(), "mais de uma")
+				var er *erroResposta
+				return errors.As(err, &er) && !errors.Is(err, ErrNotFound) && strings.Contains(err.Error(), "mais de uma")
 			},
 		},
 		{

@@ -85,8 +85,13 @@ func (m *Migracoes) ListarPagina(ctx context.Context, f FiltroMigracoes, cursor 
 }
 
 // Obter devolve uma migração pelo id. A API responde com uma lista de um item
-// ou com um objeto; o SDK aceita os dois. Lista vazia dá [ErrNotFound]; mais
-// de um item, erro.
+// ou com um objeto; o SDK aceita os dois. Lista vazia dá [ErrNotFound].
+//
+// Se a lista trouxer mais de um item, vale o item cujo IdMigracao é o id
+// pedido (comparado depois de tirar os espaços): um só casa e é devolvido;
+// nenhum casa e dá [ErrNotFound]; mais de um casa e dá erro de resposta
+// ilegível. O sandbox devolveu, em 01/11/2026, uma lista com mais de um item
+// para um id; é hipótese, ainda sem confirmação (ver FONTES D23).
 func (m *Migracoes) Obter(ctx context.Context, id string, opts ...CallOption) (Migracao, error) {
 	const op = "obterMigracao"
 	id, err := validarID(op, id)
@@ -104,18 +109,22 @@ func (m *Migracoes) Obter(ctx context.Context, id string, opts ...CallOption) (M
 	if err != nil {
 		return Migracao{}, fmt.Errorf("%s: %w", op, err)
 	}
-	switch len(itens) {
-	case 0:
-		return Migracao{}, fmt.Errorf("%s: %w", op, ErrNotFound)
-	case 1:
-		mig, err := migracaoDeDetalhe(itens[0])
-		if err != nil {
-			return Migracao{}, fmt.Errorf("%s: %w", op, err)
+	if len(itens) > 1 {
+		itens = slices.DeleteFunc(itens, func(d gen.MigracaoDetalhe) bool {
+			return strings.TrimSpace(d.IdMigracao) != id
+		})
+		if len(itens) > 1 {
+			return Migracao{}, fmt.Errorf("%s: %w", op, respostaIlegivel(errors.New("a API devolveu mais de uma migração para o id")))
 		}
-		return mig, nil
-	default:
-		return Migracao{}, fmt.Errorf("%s: %w", op, respostaIlegivel(errors.New("a API devolveu mais de uma migração para o id")))
 	}
+	if len(itens) == 0 {
+		return Migracao{}, fmt.Errorf("%s: %w", op, ErrNotFound)
+	}
+	mig, err := migracaoDeDetalhe(itens[0])
+	if err != nil {
+		return Migracao{}, fmt.Errorf("%s: %w", op, err)
+	}
+	return mig, nil
 }
 
 // Criar registra uma nova migração. O código do varejista e o perfil vêm do
