@@ -9,6 +9,7 @@ cd "$(git rev-parse --show-toplevel)"
 # bloco de aviso (ver abaixo).
 avisos=(
   NOTICE                          # aviso de não afiliação
+  go/NOTICE                       # cópia do NOTICE para o zip do módulo Go
   README.md                       # aviso no topo
   go/README.md                    # aviso no topo
   go/doc.go                       # aviso na documentação do pacote
