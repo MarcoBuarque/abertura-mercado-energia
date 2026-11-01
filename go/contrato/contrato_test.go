@@ -126,18 +126,15 @@ func descreve(err error) string {
 	if errors.As(err, &inc) {
 		return "resultado incerto em " + inc.Operation
 	}
-	var tipo *json.UnmarshalTypeError
-	if errors.As(err, &tipo) {
-		// Field é o caminho JSON, Value o tipo JSON ("string", "number") e
-		// Type o tipo Go; nenhum é um valor da resposta.
-		return fmt.Sprintf("campo com tipo inesperado na resposta: %s (%s → %s)", tipo.Field, tipo.Value, tipo.Type)
-	}
 	var sintaxe *json.SyntaxError
 	if errors.As(err, &sintaxe) {
 		return fmt.Sprintf("resposta não é JSON válido (offset %d)", sintaxe.Offset)
 	}
 	if m := reCampoIlegivel.FindStringSubmatch(err.Error()); m != nil {
 		return "campo ilegível na resposta: " + m[1]
+	}
+	if m := reTipoInesperado.FindStringSubmatch(err.Error()); m != nil {
+		return "campo com tipo inesperado na resposta: " + m[1]
 	}
 	if errors.Is(err, abertura.ErrNotFound) {
 		return "ErrNotFound"
@@ -152,6 +149,11 @@ func descreve(err error) string {
 // (erroCampo, go/converter.go). O nome do campo não é um valor.
 var reCampoIlegivel = regexp.MustCompile(`o campo "([A-Za-z0-9_.]+)" da resposta tem um valor ilegível`)
 
+// reTipoInesperado casa o texto fixo que o SDK escreve quando um campo chega
+// com tipo diferente do esperado (go/do.go): só o nome do campo é impresso,
+// nunca o valor nem o erro do encoding/json.
+var reTipoInesperado = regexp.MustCompile(`campo "([A-Za-z0-9_.\[\]]+)" com tipo inesperado`)
+
 // textosFixosDoSDK são os textos de resposta ilegível que o próprio SDK
 // escreve (go/migracoes.go, go/do.go). O tipo que os carrega não é exportado,
 // então se casa o texto; só o texto fixo casado é impresso, nada além dele.
@@ -159,6 +161,7 @@ var textosFixosDoSDK = []string{
 	"a API devolveu mais de uma migração para o id",
 	"resposta vazia",
 	"a resposta não traz uma migração identificável",
+	"decodificar a resposta: JSON inesperado",
 	"decodificar a resposta: ",
 }
 
