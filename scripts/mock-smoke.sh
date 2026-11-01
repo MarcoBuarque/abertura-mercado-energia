@@ -76,7 +76,7 @@ cabecalho_auth="Authorization: Bearer ${token}"
 agente=(-H "codigoAgente: 900002" -H "codigoPerfil: 900003" -H "$cabecalho_auth")
 
 # 2. listarMigracoes
-lista="$base/v1.1/varejista/migracoes?codigoPerfilVarejista=900003"
+lista="$base/v1.1/varejista/migracoes?codigoPerfilVarejista=900003&mesReferenciaInicial=2027-01&mesReferenciaFinal=2027-03"
 req "${agente[@]}" "$lista"
 confere "listarMigracoes: status" 200 "$status"
 confere "listarMigracoes: chave migracao" true "$(jqc 'has("migracao")')"
