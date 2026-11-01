@@ -4,9 +4,9 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 
 ## [Não lançado]
 
-## [0.1.0]
+## [0.1.0] - 2026-11-01
 
-Primeira versão. Segue a spec `openapi/v0.1.0`; a pré-versão `go/v0.1.0-rc.1` segue a `openapi/v0.1.0-rc.2`; a `go/v0.1.0-rc.2` e a `go/v0.1.0-rc.3` seguem a `openapi/v0.1.0-rc.3` (a spec foi remarcada por causa dos achados do sandbox de 01/11/2026), e não a `openapi/v0.1.0-rc.1`. A `go/v0.1.0-rc.2` não teve release publicado: a CI da tag reprovou no `govulncheck` antigo (corrigido na rc.3, que também traz os achados da quarta rodada). Requer Go 1.26 ou mais novo.
+Primeira versão. Segue a spec `openapi/v0.1.0`. Pré-versões: `go/v0.1.0-rc.1` seguiu a `openapi/v0.1.0-rc.2`; `go/v0.1.0-rc.2` (sem release publicado: CI da tag reprovou no govulncheck antigo) e `go/v0.1.0-rc.3` seguiram a `openapi/v0.1.0-rc.3`. Requer Go 1.26 ou mais novo.
 
 ### Adicionado
 
@@ -29,7 +29,7 @@ Primeira versão. Segue a spec `openapi/v0.1.0`; a pré-versão `go/v0.1.0-rc.1`
 - A faixa de meses de `Migracoes.Listar` e `ListarPagina` é obrigatória: a API responde 400 `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO` sem `mesReferenciaInicial` e `mesReferenciaFinal`. O SDK valida `FiltroMigracoes.De` e `Ate` antes de enviar: ausente ou `Ate` antes de `De` dá `ErrArgumentoInvalido`, sem requisição. `FiltroMedicoes` já exigia `Inicio` e `Fim`.
 - `ErrFaixaDeMesesObrigatoria` (`ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`, só alcançável por `Client.Do`) e `ErrFaixaDeMesesLargaDemais` (`ERR_MES_REFERENCIA_INICIAL_DIFERENCA`), com as entradas `#faixa-de-meses-obrigatoria` e `#faixa-de-meses-larga-demais` no catálogo. Os dois são 400 definitivos: nem leitura nem escrita repetem.
 - `ParseMes` aceita também a data `2026-12-01` e a data e hora sem deslocamento `2026-12-01T00:00:00` (com ou sem fração de segundo). Os dois formatos são tolerância: o sandbox devolveu a `dataReferencia` como RFC 3339 com deslocamento (D21), e a falha do `Obter` tem outra causa (D23); ficam por serem inofensivos. Pelo mesmo motivo, os campos de dia ou de data e hora (`dataSolicitacao`, `dataValidacao`, `dataDenuncia`) também aceitam a data e hora sem deslocamento (`2026-12-01T00:00:00`, com ou sem fração de segundo), lida em -03:00 como a data só de dia.
-- `Migracoes.Obter` escolhe o item pelo `IdMigracao` quando a API devolve mais de um (um casa: devolve; nenhum: `ErrNotFound`). Se vários casam, devolve a entrada quando todas são iguais depois de decodificadas e falha com resposta ilegível (`#resposta-ilegivel`) quando diferem. O sandbox devolveu duas entradas com o mesmo id em 01/11/2026 (D23).
+- `Migracoes.Obter` escolhe o item pelo `IdMigracao` quando a API devolve mais de um (um casa: devolve; nenhum: `ErrNotFound`). Se vários casam e são todos iguais depois de decodificados, devolve a primeira. Se diferem só em `dataReferencia` (uma entrada por mês de referência, observado em 01/11/2026, D23), devolve a de mês mais recente; se diferem em qualquer outro campo, ou um mês não se lê, falha com resposta ilegível (`#resposta-ilegivel`). Para ler todas as linhas, use `Client.Do`.
 - O teste de contrato (`go/contrato`) começa a busca da faixa em 12 meses e imprime a contagem de itens da raiz (`itens na raiz: N`) e, para o detalhe, se as entradas são iguais e os nomes dos campos que diferem e o texto fixo dos erros do próprio SDK, sem valores.
 - Qualquer 5xx, menos o 501, segue a linha do 500: leitura repete, escrita fica incerta (`*UncertainResultError`). O 501 é erro definitivo.
 - `SituacaoRejeitada` (`REJEITADA`) entra entre as situações de medição conhecidas.
@@ -37,11 +37,13 @@ Primeira versão. Segue a spec `openapi/v0.1.0`; a pré-versão `go/v0.1.0-rc.1`
 
 ### Limites conhecidos
 
-- A distância máxima entre `De` e `Ate` fica entre 12 e 24 meses (provavelmente 12): 12 foram aceitos e 24, 48 e 96 recusados (`ERR_MES_REFERENCIA_INICIAL_DIFERENCA`) em 01/11/2026. Quem lista uma faixa ampla deve estar pronto para `ErrFaixaDeMesesLargaDemais` e dividir a consulta.
-- O GET por id devolveu duas entradas com o mesmo `idMigracao` no sandbox (01/11/2026, D23). Entradas repetidas com conteúdo diferente fazem o `Obter` falhar com `#resposta-ilegivel` até se entender o comportamento da API (não se sabe qual é a vigente).
-- A paginação por `indexProximaPagina` nunca foi vista funcionando: uma faixa de 12 meses trouxe 71 e depois 92 itens numa só página (tamanho de página de pelo menos 92) e nenhum cursor; um cursor repetido encerra a iteração com `ErrCursorRepetido`.
+- A distância máxima entre `De` e `Ate` fica entre 12 e 24 meses (provavelmente 12; o teto exato não foi medido): 12 foram aceitos e 24, 48 e 96 recusados (`ERR_MES_REFERENCIA_INICIAL_DIFERENCA`) em 01/11/2026. Quem lista uma faixa ampla deve estar pronto para `ErrFaixaDeMesesLargaDemais` e dividir a consulta.
+- O GET por id traz uma entrada por mês de referência da migração (01/11/2026: duas, diferentes só em `dataReferencia`, D23). A API não diz qual mês é o vigente; o SDK devolve o mais recente, e `Migracao` tem um só `Mes`. Entradas que diferem em outro campo fazem o `Obter` falhar com `#resposta-ilegivel`.
+- A paginação por `indexProximaPagina` nunca foi vista funcionando: uma faixa de 12 meses trouxe 71 e depois 92 itens numa só página (tamanho de página de pelo menos 92) e nenhum cursor; o cursor nunca foi observado. Um cursor repetido encerra a iteração com `ErrCursorRepetido`.
+- As escritas (`Criar`, `Editar`) só foram verificadas em 30/10/2026; as rodadas de 01/11/2026 foram só de leitura.
 - Não se sabe se o PUT de edição é parcial ou total: `Editar` lê a migração e envia o objeto inteiro, sem proteção contra outra escrita no meio.
 - A unidade de `Consumo` não é declarada pela API.
 - O limitador vale por processo; vários processos no mesmo IP ou agente somam requisições sem que ele saiba.
 
-[Não lançado]: go/v0.1.0...HEAD
+[0.1.0]: https://github.com/MarcoBuarque/abertura-mercado-energia/releases/tag/go/v0.1.0
+[Não lançado]: https://github.com/MarcoBuarque/abertura-mercado-energia/compare/go/v0.1.0...HEAD
