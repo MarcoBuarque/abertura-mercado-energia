@@ -21,7 +21,7 @@ Os dados do sandbox são fictícios e compartilhados. Nenhum valor observado (UC
 | `obterToken` | `POST /sso/oauth/token` | alta | 2026-11-01 | D15, D17 |
 | `listarMigracoes` | `GET /v1.1/varejista/migracoes` | alta | 2026-11-01 | D2, D8, D10, D14, D18, D19, D21, D22 |
 | `criarMigracao` | `POST /v1.1/varejista/migracoes` | alta | 2026-10-30 | D2, D10, D12, D14 |
-| `obterMigracao` | `GET /v1.1/varejista/migracoes/{idMigracao}` | media | 2026-11-01 | D2, D10, D14, D20, D21, D23 |
+| `obterMigracao` | `GET /v1.1/varejista/migracoes/{idMigracao}` | alta | 2026-11-01 | D2, D10, D14, D20, D21, D23 |
 | `editarMigracao` | `PUT /v1/varejista/migracoes/{idMigracao}` | media | n/a | D10, D14 |
 | `listarMedicoes` | `GET /v1/varejista/consumo/medicoes` | media | 2026-11-01 | D12, D14, D16 |
 | `listarSolicitacoes` | `GET /v1/solicitacoes` | alta | 2026-10-30 | D3, D5, D11, D14 |
@@ -79,19 +79,20 @@ Cada item diz o que a coleção afirma, o que se observou e o que a spec adota.
 
 **D22. Teto da faixa e tamanho da página.** Faixas de 96, 48 e 24 meses voltaram 400 `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`; 12 meses foram aceitos. O teto está entre 12 e 24 meses, provavelmente 12. A faixa de 12 meses devolveu 71 itens numa só página, com `indexProximaPagina` presente e sem cursor: a página tem ao menos 71 itens e o cursor continua nunca visto (atualiza D19). Na quarta rodada, a mesma faixa de 12 meses voltou 92 itens numa página, sem cursor: o sandbox compartilhado cresce, e a página tem ao menos 92 itens. Fonte: testes no sandbox em 01/11/2026.
 
-**D23. Falha do `Obter` no sandbox.** O GET por id devolveu 200, válido contra a spec, e o `Migracoes.Obter` ainda falhou com um erro embrulhado (`*fmt.wrapError`) que não é conversão de campo (`erroCampo`) nem tipo JSON. Confirmado em 01/11/2026 (quarta rodada): a resposta tinha 2 itens na raiz, ambos com o id pedido (em 30/10/2026 era um); igualdade entre eles ainda não observada. O SDK escolhe o item pelo `idMigracao` e devolve a entrada se as repetidas forem iguais, senão falha com `#resposta-ilegivel`; a próxima rodada diz em que campos elas diferem (o teste de contrato imprime os nomes). Por isso `obterMigracao` fica com `x-confianca: media`. Fonte: teste no sandbox em 01/11/2026.
+**D23. Entradas repetidas no detalhe.** O GET por id devolveu 200, válido contra a spec, e o `Migracoes.Obter` falhou até se entender a resposta. Confirmado na quinta rodada (01/11/2026): a resposta tinha 2 itens na raiz, ambos com o id pedido, diferentes apenas em `dataReferencia` (em 30/10/2026 era um item). Aparentemente o detalhe traz uma linha por mês de referência da mesma migração, como a listagem, que também se filtra por mês. Qual mês é o vigente não está documentado; o SDK devolve o de mês mais recente (regra do SDK, não fato da API) e, se as entradas diferirem em outro campo, falha com `#resposta-ilegivel`. Para ler todas as linhas, use `Client.Do`. Fonte: testes no sandbox em 01/11/2026.
 
 ## Rodada do contrato de 2026-11-01
 
-Quatro rodadas contra o sandbox, com as credenciais fictícias compartilhadas e o perfil fictício da coleção. Nenhum valor de credencial, token, UC, documento ou e-mail é guardado aqui.
+Cinco rodadas contra o sandbox, com as credenciais fictícias compartilhadas e o perfil fictício da coleção. Nenhum valor de credencial, token, UC, documento ou e-mail é guardado aqui.
 
 - **Rodada 1, com escrita permitida (6 de 90 requisições).** Todo `POST /sso/oauth/token` com `client_id`, `client_secret` e `grant_type` voltou 400 com corpo OAuth2. Nada mais rodou.
 - **Rodada 2, só leitura (7 de 90).** O SDK passou a enviar só os dois campos. Resultados: token 200 (D17); listagem de migrações com um mês `AAAA-MM` em 200, com 7 itens dentro do filtro e sem próximo cursor (D2); sem perfil, 400 `ERR_PERFIL_VAREJISTA_OBRIGATORIO` (D8); com perfil e sem intervalo, 400 `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO` (D18); detalhe de migração em 200, conforme o schema, mas ilegível para o SDK (D20); medições do mês anterior em 200 com lista vazia, como em 30/10; intervalo de 96 meses em 400 `ERR_MES_REFERENCIA_INICIAL_DIFERENCA` (D19).
 - **Rodada 3, só leitura (10 de 90).** Token 200 só com `client_id` e `client_secret` (`expires_in` de três dígitos); listagem de um mês com 7 itens e as máscaras de data de D21; sem perfil, 400 `ERR_PERFIL_VAREJISTA_OBRIGATORIO`; sem faixa, 400 `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`; detalhe por id em 200 e válido, mas o SDK ainda falhou (D23); medições em 200 com lista vazia; faixas de 96, 48 e 24 meses em 400 `ERR_MES_REFERENCIA_INICIAL_DIFERENCA` e a de 12 meses em 200 com 71 itens numa página, sem cursor (D22).
 - **Rodada 4, só leitura (7 de 90).** Token, listagem de um mês (7 itens), validações de perfil e de faixa como na rodada 3; faixa de 12 meses aceita de novo, com 92 itens (71 uma hora antes) e sem cursor (D22); detalhe por id em 200 com 2 itens na raiz, ambos com o id pedido, e o `Obter` falhou com "mais de uma migração para o id" (D23); medições vazias.
+- **Rodada 5, só leitura (7 de 90).** Token, listagem de um mês (7 itens), validações de perfil e de faixa e medições vazias como antes; faixa de 12 meses com 92 itens e sem cursor (D22); detalhe por id em 200 com 2 itens na raiz que diferem só em `dataReferencia`, aparentemente uma linha por mês de referência (D23).
 - **Confirmado:** D2 (filtro `AAAA-MM`), D8, o envelope `indexProximaPagina` e `migracao`, o detalhe como lista de um item.
 - **Mudou na spec:** formulário do token sem `grant_type`; 400 do token com `ErroOAuth2`; intervalo de meses obrigatório na listagem de migrações; dois novos códigos em `Erro.error`.
-- **Segue sem verificação:** `editarMigracao` e a semântica do PUT (parcial ou total), a unidade de `consumo`, o cursor de paginação, a relação entre as entradas repetidas do `Obter` (D23) e o teto exato da faixa (D22). Nenhuma escrita ocorreu nas rodadas 2 a 4.
+- **Segue sem verificação:** `editarMigracao` e a semântica do PUT (parcial ou total), a unidade de `consumo`, o cursor de paginação, qual mês do detalhe é o vigente (D23) e o teto exato da faixa (D22). Nenhuma escrita ocorreu nas rodadas 2 a 5.
 
 ## Notas sobre os enums
 
