@@ -243,16 +243,24 @@ func TestDecodificarSaida_WhenValorNaoCombina_NaoVazaOValor(t *testing.T) {
 		Consumo json.Number `json:"consumo"`
 		Nome    string      `json:"nome"`
 	}
+	// A forma do erro do encoding/json muda entre versões do Go (no 1.27 o
+	// Field pode vir vazio e o número inválido vira UnmarshalTypeError), por
+	// isso cada caso aceita qualquer um dos textos fixos e proíbe o valor.
 	tests := []struct {
 		name      string
 		corpo     string
-		want      string
+		wantUm    []string
 		wantNunca []string
 	}{
-		{name: "número com vírgula decimal", corpo: `{"consumo":"1.234,56"}`, want: "decodificar a resposta: JSON inesperado", wantNunca: []string{"1.234", "56"}},
-		{name: "texto onde se espera número", corpo: `{"consumo":true}`, want: `campo "consumo" com tipo inesperado (esperado json.Number)`},
-		{name: "número onde se espera texto", corpo: `{"nome":1.5}`, want: `campo "nome" com tipo inesperado (esperado string)`, wantNunca: []string{"1.5"}},
-		{name: "JSON truncado cita só o byte", corpo: `{"consumo":`, want: "a resposta não é JSON válido (byte "},
+		{name: "número com vírgula decimal", corpo: `{"consumo":"1.234,56"}`,
+			wantUm:    []string{"decodificar a resposta: JSON inesperado", "tipo inesperado (esperado json.Number)"},
+			wantNunca: []string{"1.234", "56"}},
+		{name: "texto onde se espera número", corpo: `{"consumo":true}`,
+			wantUm: []string{`campo "consumo" com tipo inesperado (esperado json.Number)`, "valor com tipo inesperado (esperado json.Number)"}},
+		{name: "número onde se espera texto", corpo: `{"nome":1.5}`,
+			wantUm:    []string{`campo "nome" com tipo inesperado (esperado string)`, "valor com tipo inesperado (esperado string)"},
+			wantNunca: []string{"1.5"}},
+		{name: "JSON truncado cita só o byte", corpo: `{"consumo":`, wantUm: []string{"a resposta não é JSON válido (byte "}},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -262,8 +270,14 @@ func TestDecodificarSaida_WhenValorNaoCombina_NaoVazaOValor(t *testing.T) {
 			if err == nil {
 				t.Fatal("quero erro")
 			}
-			if !strings.Contains(err.Error(), tc.want) {
-				t.Errorf("erro %q não contém %q", err, tc.want)
+			achou := false
+			for _, w := range tc.wantUm {
+				if strings.Contains(err.Error(), w) {
+					achou = true
+				}
+			}
+			if !achou {
+				t.Errorf("erro %q não contém nenhum de %q", err, tc.wantUm)
 			}
 			for _, n := range tc.wantNunca {
 				if strings.Contains(err.Error(), n) {

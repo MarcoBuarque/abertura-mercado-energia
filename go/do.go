@@ -106,6 +106,11 @@ func decodificarSaida(corpo []byte, out any) error {
 	if errors.As(err, &tipo) {
 		// Error() e Value do encoding/json podem trazer o valor da resposta;
 		// o erro não é encadeado e o texto leva só o campo e o tipo esperado.
+		// A partir do Go 1.27 o Field pode vir vazio (e o número inválido vira
+		// UnmarshalTypeError); o texto se adapta e nunca cita o valor.
+		if tipo.Field == "" {
+			return respostaIlegivel(fmt.Errorf("decodificar a resposta: valor com tipo inesperado (esperado %s)", tipo.Type))
+		}
 		return respostaIlegivel(fmt.Errorf("decodificar a resposta: campo %q com tipo inesperado (esperado %s)", tipo.Field, tipo.Type))
 	}
 	if err != nil {
