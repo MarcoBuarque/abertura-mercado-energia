@@ -311,6 +311,8 @@ type EdicaoMigracaoTipoDocumento string
 // - `ERR_VALIDACAO_CAMPOS`: 400. Um campo foi recusado; a validação para no primeiro.
 // - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. A consulta não trouxe o perfil.
 // - `ERR_MIGRACAO_SOLICITADA`: 400. Já existe migração ativa para a UC e a concessionária.
+// - `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`: 400. A listagem de migrações não trouxe o intervalo de meses ([catálogo](docs/erros.md#faixa-de-meses-obrigatoria)).
+// - `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`: 400. O intervalo de meses é largo demais ([catálogo](docs/erros.md#faixa-de-meses-larga-demais)).
 type Erro struct {
 	// Error Código textual estável do erro.
 	Error string `json:"error"`
@@ -321,6 +323,16 @@ type Erro struct {
 
 	// Timestamp Instante do erro. O backend inclui milissegundos; o autorizador, não.
 	Timestamp string `json:"timestamp,omitempty"`
+}
+
+// ErroOAuth2 Corpo do 400 de `POST /sso/oauth/token`, no formato de erro OAuth2 (RFC
+// 6749, seção 5.2). Não tem `status` nem `timestamp`; não é o `Erro`.
+type ErroOAuth2 struct {
+	// Error Código OAuth2. Não se viu qual deles o servidor devolve.
+	Error string `json:"error"`
+
+	// ErrorDescription Texto para humanos.
+	ErrorDescription string `json:"error_description,omitempty"`
 }
 
 // ListaMedicoes defines model for ListaMedicoes.
@@ -373,7 +385,9 @@ type MigracaoDetalhe struct {
 	Comentario                                   string `json:"comentario,omitempty"`
 	DataDenuncia                                 string `json:"dataDenuncia,omitempty"`
 
-	// DataReferencia Mês de referência. O formato não foi guardado no teste (D2).
+	// DataReferencia Mês de referência. Formato ainda não registrado (D2, D20): em
+	// 01/11/2026 a resposta chegou, mas o SDK não a converteu; provável que
+	// não seja AAAA-MM, MM-AAAA nem RFC 3339. Sem `format`.
 	DataReferencia          string      `json:"dataReferencia,omitempty"`
 	DataSolicitacao         string      `json:"dataSolicitacao,omitempty"`
 	DataValidacao           string      `json:"dataValidacao,omitempty"`
@@ -513,18 +527,14 @@ type Token struct {
 	TokenType        string `json:"token_type,omitempty"`
 }
 
-// TokenRequisicao defines model for TokenRequisicao.
+// TokenRequisicao Só `client_id` e `client_secret`. Um formulário com `grant_type` foi
+// recusado com 400 (corpo de erro OAuth2) em 01/11/2026.
 type TokenRequisicao struct {
 	// ClientId Identificador do cliente.
 	ClientId string `json:"client_id"`
 
 	// ClientSecret Segredo do cliente. Nunca registre em log.
 	ClientSecret string `json:"client_secret"`
-
-	// GrantType Tipo de concessão. Opcional e não conferido; o fluxo é `client_credentials`.
-	//
-	// Example: client_credentials
-	GrantType string `json:"grant_type,omitempty"`
 }
 
 // CodigoAgente defines model for CodigoAgente.
@@ -569,8 +579,14 @@ type IndexProximaPagina = string
 // MesReferenciaFinal defines model for MesReferenciaFinal.
 type MesReferenciaFinal = string
 
+// MesReferenciaFinalObrigatorio defines model for MesReferenciaFinalObrigatorio.
+type MesReferenciaFinalObrigatorio = string
+
 // MesReferenciaInicial defines model for MesReferenciaInicial.
 type MesReferenciaInicial = string
+
+// MesReferenciaInicialObrigatorio defines model for MesReferenciaInicialObrigatorio.
+type MesReferenciaInicialObrigatorio = string
 
 // SituacaoAlteracaoQuery defines model for SituacaoAlteracaoQuery.
 type SituacaoAlteracaoQuery string
@@ -595,6 +611,8 @@ type TipoSolicitacaoQuery string
 // - `ERR_VALIDACAO_CAMPOS`: 400. Um campo foi recusado; a validação para no primeiro.
 // - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. A consulta não trouxe o perfil.
 // - `ERR_MIGRACAO_SOLICITADA`: 400. Já existe migração ativa para a UC e a concessionária.
+// - `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`: 400. A listagem de migrações não trouxe o intervalo de meses ([catálogo](docs/erros.md#faixa-de-meses-obrigatoria)).
+// - `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`: 400. O intervalo de meses é largo demais ([catálogo](docs/erros.md#faixa-de-meses-larga-demais)).
 type Acesso403 = Erro
 
 // Interno500 Corpo de erro do backend e do autorizador, com os mesmos quatro campos,
@@ -608,6 +626,8 @@ type Acesso403 = Erro
 // - `ERR_VALIDACAO_CAMPOS`: 400. Um campo foi recusado; a validação para no primeiro.
 // - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. A consulta não trouxe o perfil.
 // - `ERR_MIGRACAO_SOLICITADA`: 400. Já existe migração ativa para a UC e a concessionária.
+// - `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`: 400. A listagem de migrações não trouxe o intervalo de meses ([catálogo](docs/erros.md#faixa-de-meses-obrigatoria)).
+// - `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`: 400. O intervalo de meses é largo demais ([catálogo](docs/erros.md#faixa-de-meses-larga-demais)).
 type Interno500 = Erro
 
 // Limite429 Corpo de erro do backend e do autorizador, com os mesmos quatro campos,
@@ -621,6 +641,8 @@ type Interno500 = Erro
 // - `ERR_VALIDACAO_CAMPOS`: 400. Um campo foi recusado; a validação para no primeiro.
 // - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. A consulta não trouxe o perfil.
 // - `ERR_MIGRACAO_SOLICITADA`: 400. Já existe migração ativa para a UC e a concessionária.
+// - `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`: 400. A listagem de migrações não trouxe o intervalo de meses ([catálogo](docs/erros.md#faixa-de-meses-obrigatoria)).
+// - `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`: 400. O intervalo de meses é largo demais ([catálogo](docs/erros.md#faixa-de-meses-larga-demais)).
 type Limite429 = Erro
 
 // Requisicao400 Corpo de erro do backend e do autorizador, com os mesmos quatro campos,
@@ -634,6 +656,8 @@ type Limite429 = Erro
 // - `ERR_VALIDACAO_CAMPOS`: 400. Um campo foi recusado; a validação para no primeiro.
 // - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. A consulta não trouxe o perfil.
 // - `ERR_MIGRACAO_SOLICITADA`: 400. Já existe migração ativa para a UC e a concessionária.
+// - `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`: 400. A listagem de migrações não trouxe o intervalo de meses ([catálogo](docs/erros.md#faixa-de-meses-obrigatoria)).
+// - `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`: 400. O intervalo de meses é largo demais ([catálogo](docs/erros.md#faixa-de-meses-larga-demais)).
 type Requisicao400 = Erro
 
 // SolicitacaoCriada200 defines model for SolicitacaoCriada200.
@@ -644,11 +668,17 @@ type ListarMigracoesParams struct {
 	// CodigoPerfilVarejista Perfil do varejista. Obrigatório na consulta, além do cabeçalho `codigoPerfil`.
 	CodigoPerfilVarejista CodigoPerfilVarejistaQuery `form:"codigoPerfilVarejista" json:"codigoPerfilVarejista"`
 
-	// MesReferenciaInicial Primeiro mês do intervalo, no formato AAAA-MM.
-	MesReferenciaInicial MesReferenciaInicial `form:"mesReferenciaInicial,omitempty" json:"mesReferenciaInicial,omitempty"`
+	// MesReferenciaInicial Primeiro mês do intervalo, no formato AAAA-MM. Obrigatório na listagem de
+	// migrações: sem ele o sandbox responde 400
+	// `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`. Um intervalo largo demais volta
+	// 400 `ERR_MES_REFERENCIA_INICIAL_DIFERENCA` (um mês passou; 96 meses não).
+	MesReferenciaInicial MesReferenciaInicialObrigatorio `form:"mesReferenciaInicial" json:"mesReferenciaInicial"`
 
-	// MesReferenciaFinal Último mês do intervalo, no formato AAAA-MM.
-	MesReferenciaFinal MesReferenciaFinal `form:"mesReferenciaFinal,omitempty" json:"mesReferenciaFinal,omitempty"`
+	// MesReferenciaFinal Último mês do intervalo, no formato AAAA-MM. Obrigatório na listagem de
+	// migrações, junto com o mês inicial. A distância máxima entre os dois não
+	// foi medida: 1 mês foi aceito e 96 foram recusados
+	// (`ERR_MES_REFERENCIA_INICIAL_DIFERENCA`).
+	MesReferenciaFinal MesReferenciaFinalObrigatorio `form:"mesReferenciaFinal" json:"mesReferenciaFinal"`
 
 	// CodigoUnidadeConsumidora Código da unidade consumidora. Sem validação de formato no filtro.
 	CodigoUnidadeConsumidora CodigoUnidadeConsumidoraQuery `form:"codigoUnidadeConsumidora,omitempty" json:"codigoUnidadeConsumidora,omitempty"`
