@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strings"
 	"sync"
 	"testing"
 )
@@ -231,6 +232,43 @@ func TestDo_GrupoDeLimiteDaRota(t *testing.T) {
 
 			if got := grupoDaRota(tc.path); got != tc.want {
 				t.Errorf("grupoDaRota(%q) = %v, quer %v", tc.path, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestDecodificarSaida_WhenValorNaoCombina_NaoVazaOValor(t *testing.T) {
+	t.Parallel()
+	type saida struct {
+		Consumo json.Number `json:"consumo"`
+		Nome    string      `json:"nome"`
+	}
+	tests := []struct {
+		name      string
+		corpo     string
+		want      string
+		wantNunca []string
+	}{
+		{name: "número com vírgula decimal", corpo: `{"consumo":"1.234,56"}`, want: "decodificar a resposta: JSON inesperado", wantNunca: []string{"1.234", "56"}},
+		{name: "texto onde se espera número", corpo: `{"consumo":true}`, want: `campo "consumo" com tipo inesperado (esperado json.Number)`},
+		{name: "número onde se espera texto", corpo: `{"nome":1.5}`, want: `campo "nome" com tipo inesperado (esperado string)`, wantNunca: []string{"1.5"}},
+		{name: "JSON truncado cita só o byte", corpo: `{"consumo":`, want: "a resposta não é JSON válido (byte "},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			var out saida
+			err := decodificarSaida([]byte(tc.corpo), &out)
+			if err == nil {
+				t.Fatal("quero erro")
+			}
+			if !strings.Contains(err.Error(), tc.want) {
+				t.Errorf("erro %q não contém %q", err, tc.want)
+			}
+			for _, n := range tc.wantNunca {
+				if strings.Contains(err.Error(), n) {
+					t.Errorf("erro %q vazou %q", err, n)
+				}
 			}
 		})
 	}

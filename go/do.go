@@ -102,8 +102,16 @@ func decodificarSaida(corpo []byte, out any) error {
 		// A mensagem do encoding/json cita um trecho do corpo.
 		return respostaIlegivel(fmt.Errorf("a resposta não é JSON válido (byte %d)", sintaxe.Offset))
 	}
+	var tipo *json.UnmarshalTypeError
+	if errors.As(err, &tipo) {
+		// Error() e Value do encoding/json podem trazer o valor da resposta;
+		// o erro não é encadeado e o texto leva só o campo e o tipo esperado.
+		return respostaIlegivel(fmt.Errorf("decodificar a resposta: campo %q com tipo inesperado (esperado %s)", tipo.Field, tipo.Type))
+	}
 	if err != nil {
-		return respostaIlegivel(fmt.Errorf("decodificar a resposta: %w", err))
+		// Outros erros do encoding/json (número inválido, por exemplo) também
+		// citam o valor; não são encadeados.
+		return respostaIlegivel(errors.New("decodificar a resposta: JSON inesperado"))
 	}
 	return nil
 }
