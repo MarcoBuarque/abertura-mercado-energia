@@ -43,7 +43,7 @@ func exemploAmbiente() (abertura.Environment, func()) {
 	mux.HandleFunc("GET /v1.1/varejista/migracoes", func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
 		switch {
-		case q.Get("mesReferenciaInicial") != "":
+		case q.Get("codigoUnidadeConsumidora") != "":
 			servir(w, 200, "migracoes_conferencia.json")
 		case q.Get("indexProximaPagina") != "":
 			servir(w, 200, "migracoes_pagina2.json")
@@ -86,14 +86,15 @@ func clienteExemplo(env abertura.Environment) *abertura.Client {
 	return c
 }
 
-// Percorre todas as migrações do perfil, página a página. O documento sai
-// mascarado em qualquer impressão.
+// Percorre as migrações do perfil na faixa de meses, página a página. A faixa
+// é obrigatória. O documento sai mascarado em qualquer impressão.
 func Example_listarMigracoes() {
 	env, fim := exemploAmbiente()
 	defer fim()
 	c := clienteExemplo(env)
 
-	for m, err := range c.Migracoes.Listar(context.Background(), abertura.FiltroMigracoes{}) {
+	for m, err := range c.Migracoes.Listar(context.Background(), abertura.FiltroMigracoes{
+		De: abertura.MesDe(2027, time.January), Ate: abertura.MesDe(2027, time.March)}) {
 		if err != nil {
 			log.Fatalf("Listar: %v", err)
 		}

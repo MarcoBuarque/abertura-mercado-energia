@@ -33,7 +33,7 @@ func TestProblemFrom_WhenFalhaDeTransporte_ClassificaPeloTipo(t *testing.T) {
 			tls:  true,
 			api:  func(t *testing.T) http.HandlerFunc { return sequencia(t, resposta{status: 200, corpo: corpoOK}) },
 			chamar: func(c *Client) error {
-				_, err := c.Migracoes.ListarPagina(context.Background(), FiltroMigracoes{UC: ucInventada}, "")
+				_, err := c.Migracoes.ListarPagina(context.Background(), FiltroMigracoes{De: deTst, Ate: ateTst, UC: ucInventada}, "")
 				return err
 			},
 			wantType: "erro-de-transporte", wantRetryable: true, wantTLS: true,
@@ -52,7 +52,7 @@ func TestProblemFrom_WhenFalhaDeTransporte_ClassificaPeloTipo(t *testing.T) {
 			name: "GET com a conexão fechada sem resposta",
 			api:  derruba,
 			chamar: func(c *Client) error {
-				_, err := c.Migracoes.ListarPagina(context.Background(), FiltroMigracoes{UC: ucInventada}, "")
+				_, err := c.Migracoes.ListarPagina(context.Background(), FiltroMigracoes{De: deTst, Ate: ateTst, UC: ucInventada}, "")
 				return err
 			},
 			wantType: "erro-de-transporte", wantRetryable: true,
@@ -72,7 +72,7 @@ func TestProblemFrom_WhenFalhaDeTransporte_ClassificaPeloTipo(t *testing.T) {
 				return sequencia(t, resposta{status: 200, header: map[string]string{"Content-Type": "application/json"}, corpo: `{"migracao": [`})
 			},
 			chamar: func(c *Client) error {
-				_, err := c.Migracoes.ListarPagina(context.Background(), FiltroMigracoes{UC: ucInventada}, "")
+				_, err := c.Migracoes.ListarPagina(context.Background(), FiltroMigracoes{De: deTst, Ate: ateTst, UC: ucInventada}, "")
 				return err
 			},
 			wantType: "resposta-ilegivel", wantRetryable: true,
@@ -88,7 +88,7 @@ func TestProblemFrom_WhenFalhaDeTransporte_ClassificaPeloTipo(t *testing.T) {
 				}
 			},
 			chamar: func(c *Client) error {
-				_, err := c.Migracoes.ListarPagina(context.Background(), FiltroMigracoes{UC: ucInventada}, "", WithTimeout(50*time.Millisecond))
+				_, err := c.Migracoes.ListarPagina(context.Background(), FiltroMigracoes{De: deTst, Ate: ateTst, UC: ucInventada}, "", WithTimeout(50*time.Millisecond))
 				return err
 			},
 			wantType: "tempo-esgotado", wantRetryable: true,
@@ -171,7 +171,7 @@ func TestProblemFrom_WhenTokenFalha_ClassificaPeloTipo(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			_, err := tc.cliente(t).Migracoes.ListarPagina(context.Background(), FiltroMigracoes{UC: ucInventada}, "")
+			_, err := tc.cliente(t).Migracoes.ListarPagina(context.Background(), FiltroMigracoes{De: deTst, Ate: ateTst, UC: ucInventada}, "")
 			if err == nil {
 				t.Fatal("quero erro")
 			}

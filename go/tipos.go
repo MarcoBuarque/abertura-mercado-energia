@@ -154,9 +154,11 @@ func (m Medicao) String() string {
 // GoString faz o %#v seguir o String, sem UC nem consumo.
 func (m Medicao) GoString() string { return m.String() }
 
-// FiltroMigracoes filtra a listagem de migrações. Zero em um campo = sem filtro.
+// FiltroMigracoes filtra a listagem de migrações. De e Ate são obrigatórios;
+// zero nos demais campos = sem filtro.
 type FiltroMigracoes struct {
-	// De e Ate delimitam a faixa de meses de referência.
+	// De e Ate delimitam a faixa de meses de referência, e a API exige os dois.
+	// Ate não pode ser anterior a De.
 	De, Ate Mes
 	// UC filtra por unidade consumidora.
 	UC string

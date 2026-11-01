@@ -15,6 +15,9 @@ import (
 	"github.com/MarcoBuarque/abertura-mercado-energia/go/internal/testserver"
 )
 
+// deTst e ateTst são a faixa de meses que a listagem exige.
+var deTst, ateTst = MesDe(2027, time.January), MesDe(2027, time.March)
+
 const (
 	modeloLista   = "/v1.1/varejista/migracoes"
 	modeloDetalhe = "/v1.1/varejista/migracoes/{idMigracao}"
@@ -95,7 +98,7 @@ func TestMigracoesListar_WhenDuasPaginas_PercorreTudo(t *testing.T) {
 	c, srv := clienteSpec(t, []testserver.Rota{
 		rota(http.MethodGet, modeloLista, resp(200, "migracoes_pagina1.json"), resp(200, "migracoes_pagina2.json")),
 	})
-	itens, err := coletarSeq(t, c.Migracoes.Listar(context.Background(), FiltroMigracoes{}))
+	itens, err := coletarSeq(t, c.Migracoes.Listar(context.Background(), FiltroMigracoes{De: deTst, Ate: ateTst}))
 	if err != nil {
 		t.Fatalf("Listar: %v", err)
 	}
@@ -126,20 +129,20 @@ func TestMigracoesListar_WhenFiltros_VaoNaQuery(t *testing.T) {
 		want   url.Values
 	}{
 		{
-			name:   "sem filtro leva só o perfil do cliente",
-			filtro: FiltroMigracoes{},
-			want:   url.Values{"codigoPerfilVarejista": {"900002"}},
+			name:   "só a faixa leva o perfil do cliente e os meses",
+			filtro: FiltroMigracoes{De: deTst, Ate: ateTst},
+			want:   url.Values{"codigoPerfilVarejista": {"900002"}, "mesReferenciaInicial": {"2027-01"}, "mesReferenciaFinal": {"2027-03"}},
 		},
 		{
 			name:   "Perfil do filtro troca o do cliente",
-			filtro: FiltroMigracoes{Perfil: 900077},
-			want:   url.Values{"codigoPerfilVarejista": {"900077"}},
+			filtro: FiltroMigracoes{De: deTst, Ate: ateTst, Perfil: 900077},
+			want:   url.Values{"codigoPerfilVarejista": {"900077"}, "mesReferenciaInicial": {"2027-01"}, "mesReferenciaFinal": {"2027-03"}},
 		},
 		{
 			name:   "WithAgent na chamada troca o perfil da query",
-			filtro: FiltroMigracoes{},
+			filtro: FiltroMigracoes{De: deTst, Ate: ateTst},
 			opts:   []CallOption{WithAgent(900005, 900006)},
-			want:   url.Values{"codigoPerfilVarejista": {"900006"}},
+			want:   url.Values{"codigoPerfilVarejista": {"900006"}, "mesReferenciaInicial": {"2027-01"}, "mesReferenciaFinal": {"2027-03"}},
 		},
 		{
 			name: "meses, UC e status",
@@ -188,7 +191,7 @@ func TestMigracoesListar_WhenBreak_NaoBuscaAMais(t *testing.T) {
 	c, srv := clienteSpec(t, []testserver.Rota{
 		rota(http.MethodGet, modeloLista, resp(200, "migracoes_pagina1.json"), resp(200, "migracoes_pagina2.json")),
 	})
-	for _, err := range c.Migracoes.Listar(context.Background(), FiltroMigracoes{}) {
+	for _, err := range c.Migracoes.Listar(context.Background(), FiltroMigracoes{De: deTst, Ate: ateTst}) {
 		if err != nil {
 			t.Fatalf("Listar: %v", err)
 		}
@@ -202,7 +205,7 @@ func TestMigracoesListar_WhenBreak_NaoBuscaAMais(t *testing.T) {
 func TestMigracoesListar_WhenErro_SaiUmaVez(t *testing.T) {
 	t.Parallel()
 	c, _ := clienteSpec(t, []testserver.Rota{rota(http.MethodGet, modeloLista, resp(400, "erro_400_perfil.json"))})
-	itens, err := coletarSeq(t, c.Migracoes.Listar(context.Background(), FiltroMigracoes{}))
+	itens, err := coletarSeq(t, c.Migracoes.Listar(context.Background(), FiltroMigracoes{De: deTst, Ate: ateTst}))
 	if !errors.Is(err, ErrPerfilVarejistaObrigatorio) {
 		t.Fatalf("err = %v, quero ErrPerfilVarejistaObrigatorio", err)
 	}
@@ -228,7 +231,7 @@ func TestMigracoesListarPagina_WhenCursor_DevolveOProximo(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			c, srv := clienteSpec(t, []testserver.Rota{rota(http.MethodGet, modeloLista, resp(200, tc.fixture))})
-			pag, err := c.Migracoes.ListarPagina(context.Background(), FiltroMigracoes{}, tc.cursor)
+			pag, err := c.Migracoes.ListarPagina(context.Background(), FiltroMigracoes{De: deTst, Ate: ateTst}, tc.cursor)
 			if err != nil {
 				t.Fatalf("ListarPagina: %v", err)
 			}
@@ -246,7 +249,7 @@ func TestMigracoesListarPagina_WhenCursor_DevolveOProximo(t *testing.T) {
 func TestMigracoesListar_WhenToleranciaDaListagem_Converte(t *testing.T) {
 	t.Parallel()
 	c, _ := clienteSpec(t, []testserver.Rota{rota(http.MethodGet, modeloLista, resp(200, "migracoes_tolerancia.json"))})
-	itens, err := coletarSeq(t, c.Migracoes.Listar(context.Background(), FiltroMigracoes{}))
+	itens, err := coletarSeq(t, c.Migracoes.Listar(context.Background(), FiltroMigracoes{De: deTst, Ate: ateTst}))
 	if err != nil {
 		t.Fatalf("Listar: %v", err)
 	}
@@ -609,3 +612,52 @@ var (
 	_ ChaveNatural = ChaveMigracao{}
 	_ ChaveNatural = ChaveEdicao{}
 )
+
+func TestMigracoesListar_WhenFaixaDeMesesInvalida_FalhaSemRequisicao(t *testing.T) {
+	t.Parallel()
+	jan, fev := MesDe(2027, time.January), MesDe(2027, time.February)
+	tests := []struct {
+		name      string
+		filtro    FiltroMigracoes
+		wantErr   bool
+		wantCampo string
+	}{
+		{name: "sem De nem Ate", filtro: FiltroMigracoes{}, wantErr: true, wantCampo: "De"},
+		{name: "só De", filtro: FiltroMigracoes{De: jan}, wantErr: true, wantCampo: "Ate"},
+		{name: "só Ate", filtro: FiltroMigracoes{Ate: jan}, wantErr: true, wantCampo: "De"},
+		{name: "Ate antes de De", filtro: FiltroMigracoes{De: fev, Ate: jan}, wantErr: true, wantCampo: "Ate"},
+		{name: "faixa de um mês", filtro: FiltroMigracoes{De: jan, Ate: jan}},
+		{name: "faixa válida", filtro: FiltroMigracoes{De: jan, Ate: fev}},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			for _, via := range []string{"ListarPagina", "Listar"} {
+				c, srv := clienteSpec(t, []testserver.Rota{
+					rota(http.MethodGet, modeloLista, resp(200, "migracoes_vazia.json")),
+				})
+				var err error
+				if via == "ListarPagina" {
+					_, err = c.Migracoes.ListarPagina(context.Background(), tc.filtro, "")
+				} else {
+					_, err = coletarSeq(t, c.Migracoes.Listar(context.Background(), tc.filtro))
+				}
+				n := srv.Contagem(http.MethodGet, modeloLista)
+				if !tc.wantErr {
+					if err != nil || n != 1 {
+						t.Errorf("%s: err = %v, requisições = %d; quero nil e 1", via, err, n)
+					}
+					continue
+				}
+				if !errors.Is(err, ErrArgumentoInvalido) {
+					t.Errorf("%s: err = %v, quero ErrArgumentoInvalido", via, err)
+				} else if !strings.Contains(err.Error(), tc.wantCampo) {
+					t.Errorf("%s: a mensagem %q não cita o campo %s", via, err.Error(), tc.wantCampo)
+				}
+				if n != 0 || len(srv.Requisicoes()) != 0 {
+					t.Errorf("%s: houve %d requisição(ões) antes da validação local", via, len(srv.Requisicoes()))
+				}
+			}
+		})
+	}
+}

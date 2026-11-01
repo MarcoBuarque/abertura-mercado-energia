@@ -92,6 +92,9 @@ func (o *orcamento) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 	op, problema := o.validar(req, resp, corpo)
 	linha := fmt.Sprintf("requisição %d: %s -> %d; campos: %s", o.n.Load(), op, resp.StatusCode, nomesDeCampos(corpo))
+	if f := formatosDeCampos(corpo); f != "" {
+		linha += "; formatos: " + f
+	}
 	if code := codigoDoErro(corpo); code != "" {
 		linha += "; code: " + code
 	}
@@ -248,4 +251,102 @@ func codigoDoErro(corpo []byte) string {
 		return ""
 	}
 	return codigoSeguro(e.Error)
+}
+
+// camposTemporais são os únicos campos de data e hora cujo formato pode ser
+// descrito: nenhum é dado pessoal.
+var camposTemporais = map[string]bool{
+	"mesReferencia": true, "dataReferencia": true, "dataDenuncia": true, "dataSolicitacao": true,
+	"dataValidacao": true, "diaReferencia": true, "dataReferenciaConsumo": true,
+	"expires_in": true, "timestamp": true,
+}
+
+// tamanhoMaxMascara é o tamanho máximo, em caracteres, de uma máscara.
+const tamanhoMaxMascara = 40
+
+// mascarar troca cada dígito ASCII por 9 e cada letra ASCII por A, mantém os
+// demais caracteres e corta em tamanhoMaxMascara com "…". O valor em si nunca
+// sai daqui.
+func mascarar(valor string) string {
+	var b strings.Builder
+	n := 0
+	for _, r := range valor {
+		if n == tamanhoMaxMascara {
+			b.WriteString("…")
+			break
+		}
+		switch {
+		case r >= '0' && r <= '9':
+			r = '9'
+		case (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z'):
+			r = 'A'
+		}
+		b.WriteRune(r)
+		n++
+	}
+	return b.String()
+}
+
+// formatosDeCampos descreve o formato dos campos temporais da lista branca,
+// "campo=máscara" separados por vírgula, em ordem de nome: a primeira
+// ocorrência de cada um, procurada como em [nomesDeCampos]. Nulo vira "null";
+// número vira uma sequência de noves. Nunca o valor.
+func formatosDeCampos(corpo []byte) string {
+	dec := json.NewDecoder(bytes.NewReader(bytes.TrimSpace(corpo)))
+	dec.UseNumber()
+	var v any
+	if err := dec.Decode(&v); err != nil {
+		return ""
+	}
+	achados := map[string]string{}
+	var anda func(v any)
+	anda = func(v any) {
+		switch x := v.(type) {
+		case map[string]any:
+			chaves := make([]string, 0, len(x))
+			for k := range x {
+				chaves = append(chaves, k)
+			}
+			sort.Strings(chaves)
+			for _, k := range chaves {
+				if _, ja := achados[k]; camposTemporais[k] && !ja {
+					achados[k] = mascaraDoValor(x[k])
+				}
+				anda(x[k])
+			}
+		case []any:
+			if len(x) > 0 {
+				anda(x[0])
+			}
+		}
+	}
+	anda(v)
+	nomes := make([]string, 0, len(achados))
+	for k := range achados {
+		nomes = append(nomes, k)
+	}
+	sort.Strings(nomes)
+	partes := make([]string, 0, len(nomes))
+	for _, k := range nomes {
+		partes = append(partes, k+"="+achados[k])
+	}
+	return strings.Join(partes, ", ")
+}
+
+// mascaraDoValor mascara um valor JSON de campo temporal.
+func mascaraDoValor(v any) string {
+	switch x := v.(type) {
+	case nil:
+		return "null"
+	case string:
+		return mascarar(x)
+	case json.Number:
+		return mascarar(x.String())
+	case bool:
+		return "bool"
+	case map[string]any:
+		return "objeto"
+	default:
+		return "lista"
+	}
 }

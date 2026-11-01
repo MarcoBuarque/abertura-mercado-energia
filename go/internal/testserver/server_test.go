@@ -69,7 +69,7 @@ func get(t testing.TB, url string, cabecalhos map[string]string) (recebida, stri
 
 var cabecalhosValidos = map[string]string{"codigoAgente": "900002", "codigoPerfil": "900003"}
 
-const queryValida = "?codigoPerfilVarejista=900003"
+const queryValida = "?codigoPerfilVarejista=900003&mesReferenciaInicial=2027-01&mesReferenciaFinal=2027-03"
 
 func TestServer_WhenSequencia502502200_RespondeNaOrdemERepeteAUltima(t *testing.T) {
 	t.Parallel()
@@ -168,7 +168,7 @@ func TestServer_WhenRequisicaoForaDaSpec_ReprovaComMensagemClara(t *testing.T) {
 		wantMsg    string
 	}{
 		{name: "sem o cabeçalho codigoAgente", caminho: modeloListagem + queryValida, cabecalhos: map[string]string{"codigoPerfil": "900003"}, wantMsg: "codigoAgente"},
-		{name: "sem o parâmetro obrigatório codigoPerfilVarejista", caminho: modeloListagem, cabecalhos: cabecalhosValidos, wantMsg: "codigoPerfilVarejista"},
+		{name: "sem o parâmetro obrigatório codigoPerfilVarejista", caminho: modeloListagem + "?mesReferenciaInicial=2027-01&mesReferenciaFinal=2027-03", cabecalhos: cabecalhosValidos, wantMsg: "codigoPerfilVarejista"},
 		{name: "parâmetro de consulta desconhecido", caminho: modeloListagem + queryValida + "&parametroInventado=1", cabecalhos: cabecalhosValidos, wantMsg: "parametroInventado"},
 		{name: "caminho que a spec não tem", caminho: "/v1.1/varejista/inexistente", cabecalhos: cabecalhosValidos, wantMsg: "inexistente"},
 	}
@@ -202,7 +202,7 @@ func TestServer_WhenRequisicaoValida_NaoReportaViolacao(t *testing.T) {
 		Metodo: http.MethodGet, Modelo: modeloListagem,
 		Respostas: []testserver.Resposta{{Status: 200, Fixture: "migracoes_vazia.json"}},
 	})
-	get(t, srv.URL()+modeloListagem+queryValida+"&mesReferenciaInicial=2027-01", cabecalhosValidos)
+	get(t, srv.URL()+modeloListagem+queryValida, cabecalhosValidos)
 	if f := reg.falhas(); len(f) != 0 {
 		t.Errorf("falhas inesperadas: %q", f)
 	}

@@ -11,7 +11,8 @@ import (
 //
 // A API usa três formatos para o mesmo conceito: "2026-12" (envio), "12-2026"
 // e data e hora com deslocamento, como "2026-12-01T00:00:00-03:00". [ParseMes]
-// aceita os três.
+// aceita os três e, por tolerância, a data "2026-12-01" e a data e hora sem
+// deslocamento "2026-12-01T00:00:00".
 type Mes struct {
 	Ano int
 	Mes time.Month
@@ -22,13 +23,17 @@ func MesDe(ano int, mes time.Month) Mes {
 	return Mes{Ano: ano, Mes: mes}
 }
 
-// formatosMes são os formatos aceitos por [ParseMes]. O RFC 3339 também lê
-// fração de segundo, mesmo sem ela no layout.
-var formatosMes = []string{"2006-01", "01-2006", time.RFC3339}
+// formatosMes são os formatos aceitos por [ParseMes]. O RFC 3339 e a data e
+// hora sem deslocamento também leem fração de segundo, mesmo sem ela no
+// layout. Os dois últimos foram acrescentados como hipótese para a
+// dataReferencia do detalhe de uma migração, cujo formato ainda não está
+// registrado (D20).
+var formatosMes = []string{"2006-01", "01-2006", time.RFC3339, "2006-01-02", "2006-01-02T15:04:05"}
 
-// ParseMes lê um mês em "2026-12", "12-2026" ou "2026-12-01T00:00:00-03:00"
-// (com ou sem fração de segundo). Na data e hora vale o ano e o mês como
-// escritos, sem conversão de fuso. Texto vazio, mês fora de 1 a 12 e qualquer
+// ParseMes lê um mês em "2026-12", "12-2026", "2026-12-01T00:00:00-03:00",
+// "2026-12-01" ou "2026-12-01T00:00:00" (as datas e horas com ou sem fração de
+// segundo). Na data e hora vale o ano e o mês como escritos, sem conversão de
+// fuso. Texto vazio, mês fora de 1 a 12 e qualquer
 // outro formato devolvem erro.
 func ParseMes(s string) (Mes, error) {
 	s = strings.TrimSpace(s)
@@ -42,7 +47,7 @@ func ParseMes(s string) (Mes, error) {
 		}
 		return Mes{Ano: t.Year(), Mes: t.Month()}, nil
 	}
-	return Mes{}, fmt.Errorf("abertura: mês %q inválido: use \"2026-12\", \"12-2026\" ou data e hora RFC 3339", s)
+	return Mes{}, fmt.Errorf("abertura: mês %q inválido: use \"2026-12\", \"12-2026\", \"2026-12-01\" ou data e hora (RFC 3339, com ou sem deslocamento)", s)
 }
 
 // IsZero informa se o mês está ausente.

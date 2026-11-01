@@ -30,6 +30,11 @@ const (
 // sai como (zero, err) uma vez e encerra; cursor repetido da API dá
 // [ErrCursorRepetido].
 //
+// FiltroMigracoes.De e Ate são obrigatórios (a API exige a faixa de meses);
+// sem eles, ou com Ate antes de De, o erro sai antes de qualquer requisição,
+// como [ErrArgumentoInvalido]. A API também limita a largura da faixa, e o
+// limite não está publicado: veja [ErrFaixaDeMesesLargaDemais].
+//
 // O perfil da consulta é o do cliente (ou o da chamada, com [WithAgent]);
 // FiltroMigracoes.Perfil o troca.
 func (m *Migracoes) Listar(ctx context.Context, f FiltroMigracoes, opts ...CallOption) iter.Seq2[Migracao, error] {
@@ -42,14 +47,17 @@ func (m *Migracoes) Listar(ctx context.Context, f FiltroMigracoes, opts ...CallO
 // [Pagina].Proxima devolvido serve de cursor para retomar depois.
 func (m *Migracoes) ListarPagina(ctx context.Context, f FiltroMigracoes, cursor string, opts ...CallOption) (Pagina[Migracao], error) {
 	const id = "listarMigracoes"
+	if err := validarFaixaDeMeses(f); err != nil {
+		return Pagina[Migracao]{}, fmt.Errorf("%s: %w", id, err)
+	}
 	p := m.c.parametros(novoCallConfig(opts...))
 	perfil := p.perfil
 	if f.Perfil != 0 {
 		perfil = f.Perfil
 	}
 	q := url.Values{"codigoPerfilVarejista": {strconv.Itoa(perfil)}}
-	setSe(q, "mesReferenciaInicial", f.De.String())
-	setSe(q, "mesReferenciaFinal", f.Ate.String())
+	q.Set("mesReferenciaInicial", f.De.String())
+	q.Set("mesReferenciaFinal", f.Ate.String())
 	setSe(q, "codigoUnidadeConsumidora", f.UC)
 	setSe(q, "statusMigracao", string(f.Status))
 	setSe(q, "indexProximaPagina", cursor)
@@ -219,6 +227,24 @@ func (m *Migracoes) ConferirEdicao(ctx context.Context, k ChaveEdicao, opts ...C
 		(d.Email == "" || d.Email == atual.Email) &&
 		(d.Status == "" || d.Status == atual.Status)
 	return atual, bate, nil
+}
+
+// validarFaixaDeMeses confere a faixa de meses, que a API exige: sem
+// mesReferenciaInicial e mesReferenciaFinal ela responde 400
+// (ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO). O erro sai antes de qualquer
+// requisição. O teto da faixa quem impõe é a API ([ErrFaixaDeMesesLargaDemais]).
+func validarFaixaDeMeses(f FiltroMigracoes) error {
+	switch {
+	case f.De.IsZero() && f.Ate.IsZero():
+		return argumentoInvalido("a faixa de meses é obrigatória: preencha De e Ate")
+	case f.De.IsZero():
+		return argumentoInvalido("o campo De é obrigatório")
+	case f.Ate.IsZero():
+		return argumentoInvalido("o campo Ate é obrigatório")
+	case f.Ate.Ano*12+int(f.Ate.Mes) < f.De.Ano*12+int(f.De.Mes):
+		return argumentoInvalido("o campo Ate não pode ser anterior a De")
+	}
+	return nil
 }
 
 // validarID confere o id de uma migração, sem repeti-lo na mensagem.

@@ -313,6 +313,8 @@ CODIGOS = {
     "ERR_VALIDACAO_CAMPOS": ("validacao-campos", "Campo inválido na requisição"),
     "ERR_PERFIL_VAREJISTA_OBRIGATORIO": ("perfil-varejista-obrigatorio", "Perfil de varejista obrigatório"),
     "ERR_MIGRACAO_SOLICITADA": ("migracao-solicitada", "Migração já solicitada"),
+    "ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO": ("faixa-de-meses-obrigatoria", "Faixa de meses obrigatória"),
+    "ERR_MES_REFERENCIA_INICIAL_DIFERENCA": ("faixa-de-meses-larga-demais", "Faixa de meses larga demais"),
 }
 SEM_CODIGO = {
     404: ("nao-encontrado", "Recurso não encontrado"),

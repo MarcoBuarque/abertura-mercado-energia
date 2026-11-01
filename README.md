@@ -48,7 +48,8 @@ c, err := abertura.NewClient(mock,
 	abertura.WithCredentials("id-inventado", "segredo-inventado"),
 	abertura.WithAgent(900002, 900003))
 if err != nil { log.Fatal(err) }
-pag, err := c.Migracoes.ListarPagina(ctx, abertura.FiltroMigracoes{}, "")
+pag, err := c.Migracoes.ListarPagina(ctx, abertura.FiltroMigracoes{
+	De: abertura.MesDe(2027, 1), Ate: abertura.MesDe(2027, 3)}, "")
 if err != nil { log.Fatal(err) }
 for _, m := range pag.Itens {
 	fmt.Println(m.ID, m.Status, m.Mes) // 00000000-0000-4000-8000-000000000001 CRIADA 2027-03
