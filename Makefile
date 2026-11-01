@@ -28,7 +28,7 @@ export GITLEAKS
 $(GITLEAKS): Makefile
 	GOBIN=$(CURDIR)/out/bin go install github.com/zricethezav/gitleaks/v8@$(GITLEAKS_VERSION)
 
-.PHONY: segredos spec-lint spec-exemplos testa-regras spec-diff docs mock mock-smoke mock-imagem go-tidy go-gen go-test go-race go-lint go-contrato go-vuln go-deps checa-workflows testa-checa-tag checa-tag testa-checa-marca checa-marca hooks ci
+.PHONY: segredos spec-lint spec-exemplos testa-regras spec-diff docs mock mock-smoke mock-imagem go-tidy go-gen go-test go-race go-lint go-contrato go-vuln go-deps checa-workflows testa-quebra-spec quebra-spec testa-checa-tag checa-tag testa-checa-marca checa-marca hooks ci
 
 segredos: $(GITLEAKS) ## prova a guarda de segredos e varre o repositório
 	scripts/testa-segredos.sh
@@ -104,6 +104,12 @@ go-deps: ## confere as dependências do módulo Go (scripts/checa-deps.sh)
 checa-workflows: ## actionlint, actions por SHA, imagens por digest, permissions e alvos do Makefile
 	ACTIONLINT_VERSION=$(ACTIONLINT_VERSION) scripts/checa-workflows.sh
 
+testa-quebra-spec: ## prova a leitura da seção Quebras do CHANGELOG (tabela de casos sintéticos)
+	scripts/testa-quebra-spec.sh
+
+quebra-spec: ## imprime 1 se a seção Quebras de [Não lançado] está preenchida, 0 se não
+	@scripts/quebra-spec.sh
+
 testa-checa-tag: ## prova as checagens de tag (tabela de casos, sem criar tag)
 	scripts/testa-checa-tag.sh
 
@@ -127,4 +133,4 @@ hooks: $(GITLEAKS) ## instala o gancho de pre-commit (funciona em worktree)
 		install -m 755 scripts/pre-commit "$$dir/pre-commit" && \
 		echo "gancho instalado em $$dir/pre-commit"
 
-ci: segredos testa-checa-marca checa-marca checa-workflows testa-checa-tag testa-regras spec-lint spec-exemplos spec-diff docs mock mock-smoke go-tidy go-gen go-test go-race go-lint go-contrato go-vuln go-deps
+ci: segredos testa-checa-marca checa-marca checa-workflows testa-checa-tag testa-quebra-spec testa-regras spec-lint spec-exemplos spec-diff docs mock mock-smoke go-tidy go-gen go-test go-race go-lint go-contrato go-vuln go-deps

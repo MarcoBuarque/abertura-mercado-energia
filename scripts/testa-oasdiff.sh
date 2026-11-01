@@ -4,6 +4,8 @@
 #   2. com tag e spec igual: sai 0;
 #   3. com tag e uma propriedade de resposta removida: sai diferente de 0;
 #   4. a mesma quebra com QUEBRA_SPEC=1: sai 0 e avisa;
+#   4b. sem a variável, a quebra passa só se a seção Quebras de [Não lançado]
+#       do CHANGELOG está preenchida; QUEBRA_SPEC=0 força o modo estrito;
 #   5. mudança que não quebra (descrição nova): sai 0.
 set -euo pipefail
 
@@ -83,5 +85,17 @@ done
 codigo=0
 saida="$(cd "$repo" && QUEBRA_SPEC=1 scripts/oasdiff.sh 2>&1)" || codigo=$?
 if [ "$codigo" -eq 0 ] && grep -qi "QUEBRA_SPEC" <<<"$saida"; then ok "QUEBRA_SPEC=1: passa e avisa"; else falha "QUEBRA_SPEC=1 devia passar com aviso (código $codigo): $saida"; fi
+
+# 4b. derivação a partir do CHANGELOG (a quebra de troca_tipo segue na cópia)
+cp "$raiz/scripts/quebra-spec.sh" "$repo/scripts/"
+printf '# Changelog\n\n## [Não lançado]\n\n### Quebras\n\nO tipo de expires_in muda.\n' >"$repo/openapi/CHANGELOG.md"
+roda
+if [ "$codigo" -eq 0 ]; then ok "quebra registrada no CHANGELOG: passa sem a variável"; else falha "quebra registrada devia passar (código $codigo): $saida"; fi
+codigo=0
+saida="$(cd "$repo" && QUEBRA_SPEC=0 scripts/oasdiff.sh 2>&1)" || codigo=$?
+if [ "$codigo" -ne 0 ]; then ok "QUEBRA_SPEC=0 força o modo estrito"; else falha "QUEBRA_SPEC=0 devia reprovar (código $codigo): $saida"; fi
+printf '# Changelog\n\n## [Não lançado]\n\n### Quebras\n\nNenhuma.\n' >"$repo/openapi/CHANGELOG.md"
+roda
+if [ "$codigo" -ne 0 ]; then ok "quebra não registrada: reprova"; else falha "quebra não registrada devia reprovar (código $codigo): $saida"; fi
 
 exit "$falhou"
