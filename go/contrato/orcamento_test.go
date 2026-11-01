@@ -199,7 +199,8 @@ func TestOrcamento_Descreve_WhenErroDeCampoIlegivel_NomeiaOCampo(t *testing.T) {
 	}{
 		{name: "campo ilegível embrulhado", err: fmt.Errorf("obterMigracao: %w", errors.New(`o campo "dataReferencia" da resposta tem um valor ilegível`)), want: "campo ilegível na resposta: dataReferencia"},
 		{name: "campo aninhado", err: errors.New(`x: o campo "a.b_c" da resposta tem um valor ilegível`), want: "campo ilegível na resposta: a.b_c"},
-		{name: "tipo inesperado na resposta", err: fmt.Errorf("obterMigracao: %w", &json.UnmarshalTypeError{Field: "migracao.dataReferencia", Value: "string", Type: reflect.TypeOf(0)}), want: "campo com tipo inesperado na resposta: migracao.dataReferencia (string → int)"},
+		{name: "tipo inesperado, texto fixo do SDK", err: fmt.Errorf("obterMigracao: %w", errors.New(`decodificar a resposta: campo "migracao.dataReferencia" com tipo inesperado (esperado string)`)), want: "campo com tipo inesperado na resposta: migracao.dataReferencia"},
+		{name: "erro tipado do encoding/json nunca imprime o valor", err: &json.UnmarshalTypeError{Field: "migracao.consumo", Value: "number 1234", Type: reflect.TypeOf(0)}, want: "erro do tipo *json.UnmarshalTypeError"},
 		{name: "JSON inválido", err: fmt.Errorf("obterMigracao: %w", &json.SyntaxError{Offset: 7}), want: "resposta não é JSON válido (offset 7)"},
 		{name: "outro erro mantém o tipo", err: errors.New("algo com valor-secreto"), want: "erro do tipo *errors.errorString"},
 		{name: "nome com caractere fora do padrão não casa", err: errors.New(`o campo "a b@c" da resposta tem um valor ilegível`), want: "erro do tipo *errors.errorString"},
@@ -335,5 +336,49 @@ func TestOrcamento_WhenRaizTemDoisItensDiferentes_LinhaEGuardadoTrazemCampos(t *
 	}
 	if strings.Contains(l, "secreto") {
 		t.Errorf("valor vazou: %s", l)
+	}
+}
+
+func TestOrcamento_HorasDeCampos_WhenRFC3339_ImprimeSoAHora(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{name: "UTC e -03:00", in: `{"dataDenuncia":"2027-01-15T00:00:00Z","dataReferencia":"2027-03-01T00:00:00-03:00"}`, want: "dataDenuncia=T00:00:00Z, dataReferencia=T00:00:00-03:00"},
+		{name: "fração de segundo", in: `{"dataSolicitacao":"2027-01-10T14:30:15.123-03:00"}`, want: "dataSolicitacao=T14:30:15.123-03:00"},
+		{name: "só o dia não tem hora", in: `{"dataDenuncia":"2027-01-15"}`, want: ""},
+		{name: "campo fora da lista não aparece", in: `{"emailUnidadeConsumidora":"2027-01-15T00:00:00Z"}`, want: ""},
+		{name: "texto comum não casa", in: `{"dataValidacao":"segredo T00:00:00Z"}`, want: ""},
+		{name: "não JSON", in: `Bad Gateway`, want: ""},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := horasDeCampos([]byte(tc.in))
+			if got != tc.want {
+				t.Errorf("got %q, quero %q", got, tc.want)
+			}
+			if strings.Contains(got, "2027") {
+				t.Errorf("a data vazou: %q", got)
+			}
+		})
+	}
+}
+
+func TestOrcamento_WhenCampoTemporalRFC3339_LinhaTrazHoras(t *testing.T) {
+	s := servidorLocal(t, 200, `{"migracao":[{"dataReferencia":"2026-12-01T00:00:00-03:00"}]}`)
+	o, err := novoOrcamento(http.DefaultTransport, 90)
+	if err != nil {
+		t.Fatalf("novoOrcamento: %v", err)
+	}
+	if err := pegar(t, o, s.URL+"/v1.1/varejista/migracoes"); err != nil {
+		t.Fatalf("pegar: %v", err)
+	}
+	l := strings.Join(o.descarregar(), "\n")
+	if !strings.Contains(l, "horas: dataReferencia=T00:00:00-03:00") {
+		t.Errorf("faltou a linha de horas: %s", l)
+	}
+	if strings.Contains(l, "2026-12") {
+		t.Errorf("a data vazou: %s", l)
 	}
 }
