@@ -676,6 +676,7 @@ func TestSend_WhenWaitInterruptedByCtx_ReturnsCtxError(t *testing.T) {
 	srv := newServer(t, sequence(t, stubResponse{status: 502}))
 	c, _ := newTestClient(t, srv)
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	c.sleep = func(ctx context.Context, d time.Duration) error {
 		cancel()
 		return ctx.Err()

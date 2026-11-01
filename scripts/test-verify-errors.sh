@@ -8,7 +8,7 @@ tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
 cat > "$tmp/errors.md" <<'MD'
-# Catalogue
+# Catalog
 
 <a id="one-slug"></a>
 ## One

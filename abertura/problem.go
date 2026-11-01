@@ -14,7 +14,7 @@ import (
 // type. Use it in the Content-Type header when you return a [Problem] as JSON.
 const ProblemContentType = "application/problem+json"
 
-// ErrorCatalogURL is the error catalogue page. The Type field of a [Problem]
+// ErrorCatalogURL is the error catalog page. The Type field of a [Problem]
 // is this URL plus "#" and the slug of the entry.
 //
 // The page is generated from docs/errors.md by "make docs"
@@ -22,16 +22,16 @@ const ProblemContentType = "application/problem+json"
 // Pages, next to the Redoc description, by the release-openapi workflow at
 // every final openapi/vX.Y.Z tag (-rc.N pre-releases do not publish) and only
 // while the repository is public. Until the first publication the address does
-// not respond, and the catalogue can be read in docs/errors.md.
+// not respond, and the catalog can be read in docs/errors.md.
 const ErrorCatalogURL = "https://marcobuarque.github.io/abertura-mercado-energia/errors"
 
 // Problem is an SDK error in the RFC 9457 format (Problem Details for HTTP
 // APIs). The API returns only four fields (timestamp, status, error, message);
 // the SDK delivers this format on top of it, with a title and an explanation
-// written by the project and linked to the catalogue at [ErrorCatalogURL].
+// written by the project and linked to the catalog at [ErrorCatalogURL].
 //
 // A Problem never carries the raw API message, which may mention a consumer
-// unit, a document or an e-mail: Detail is catalogue text. The original
+// unit, a document or an e-mail: Detail is catalog text. The original
 // message stays in [APIError].Message, for callers who decide to use it. It
 // also carries no token, secret, URL with a query string or body.
 //
@@ -40,7 +40,7 @@ const ErrorCatalogURL = "https://marcobuarque.github.io/abertura-mercado-energia
 // server responds with another status, set Status to the same value before
 // encoding, as the RFC asks.
 type Problem struct {
-	// Type is the URI of the catalogue entry (".../errors#migration-already-requested").
+	// Type is the URI of the catalog entry (".../errors#migration-already-requested").
 	// [ProblemFrom] always fills it, using "#not-in-catalog" for what has no
 	// entry of its own. Empty, or "about:blank", is a Problem built by hand for
 	// an error with no specific semantics (RFC 9457, 4.2.1): the JSON omits the
@@ -55,7 +55,7 @@ type Problem struct {
 	// the JSON. The [ErrNotFound] of a lookup by id that came back empty
 	// carries 404, even though the API answered 200.
 	Status int
-	// Detail explains this occurrence with catalogue text and the operation
+	// Detail explains this occurrence with catalog text and the operation
 	// name. It never carries personal data.
 	Detail string
 	// Instance identifies this occurrence. It is empty in v0.1 and omitted from
@@ -137,7 +137,7 @@ func invalidArgumentBecause(err error, format string, a ...any) error {
 	return &argumentError{msg: fmt.Sprintf(format, a...), err: err}
 }
 
-// catalogEntry is a catalogue entry; the anchor in docs/errors.md is the slug.
+// catalogEntry is a catalog entry; the anchor in docs/errors.md is the slug.
 type catalogEntry struct {
 	title  string
 	detail string
@@ -145,6 +145,8 @@ type catalogEntry struct {
 
 // catalog is the only source, in the code, of slugs and titles. The parity
 // test checks each slug against the anchors in docs/errors.md.
+//
+//nolint:gochecknoglobals // read-only table, never written after initialization
 var catalog = map[string]catalogEntry{
 	"invalid-credential-authorizer": {
 		title:  "Credential refused by the authorizer",
@@ -231,8 +233,8 @@ var catalog = map[string]catalogEntry{
 		detail: "The SDK refused the call before sending it: an argument is missing or extra. Nothing was sent.",
 	},
 	"not-in-catalog": {
-		title:  "Error outside the catalogue",
-		detail: "The error does not come from the SDK, or has no catalogue entry.",
+		title:  "Error outside the catalog",
+		detail: "The error does not come from the SDK, or has no catalog entry.",
 	},
 }
 
@@ -267,7 +269,7 @@ func onlyIdentifier(s string) string {
 	return s
 }
 
-// newProblem builds the Problem for a catalogue entry.
+// newProblem builds the Problem for a catalog entry.
 func newProblem(slug string, status int, op string) Problem {
 	e := catalog[slug]
 	p := Problem{Type: ErrorCatalogURL + "#" + slug, Title: e.title, Status: status, Detail: e.detail}
@@ -365,7 +367,7 @@ func applyDecision(p *Problem, httpMethod string, d outcome) {
 	}
 }
 
-// slug tells which catalogue entry describes the error.
+// slug tells which catalog entry describes the error.
 func (e *APIError) slug(code string) string {
 	switch {
 	case e.Operation == tokenOperation:
@@ -400,7 +402,7 @@ func (e *APIError) slug(code string) string {
 }
 
 // Problem translates the error into a [Problem]. Detail comes from the
-// catalogue; the API message is left out (use e.Message). Retryable and
+// catalog; the API message is left out (use e.Message). Retryable and
 // Uncertain follow the same decision function as the transport, based on the
 // call method the SDK recorded; an APIError built by hand has no method and
 // asserts neither.

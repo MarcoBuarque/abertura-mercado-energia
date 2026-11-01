@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-// scenarios are representative situations of a catalogue entry, with what
+// scenarios are representative situations of a catalog entry, with what
 // decide answers for each one. The "" label is the unconditional case; the
 // other labels ("nothing left", "left", "with mark", "without mark") are the
 // two sides of a conditional rule written in the table.
@@ -113,7 +113,7 @@ func responses(httpMethod string, cs scenarios) map[string]action {
 }
 
 // checkCell compares the text of a cell with what decide answered. Text with
-// no known rule fails: whoever changes the catalogue picks the rule here.
+// no known rule fails: whoever changes the catalog picks the rule here.
 func checkCell(text string, r map[string]action) string {
 	t := strings.ToLower(text)
 	has := func(label string, want action) bool { a, ok := r[label]; return ok && a == want }
@@ -144,7 +144,7 @@ func checkCell(text string, r map[string]action) string {
 		}
 	case strings.HasPrefix(t, "no"):
 		if has("", actionRetry) {
-			return "decide orders a retry, and the catalogue says no: " + formatResponses(r)
+			return "decide orders a retry, and the catalog says no: " + formatResponses(r)
 		}
 	default:
 		return "text without a parity rule; add a rule in checkCell"
@@ -205,7 +205,7 @@ func TestCatalog_WhenRetryInTable_MatchesDecide(t *testing.T) {
 }
 
 // TestCheckCell_WhenTextDivergesFromDecide_Fails proves that the parity test
-// catches the divergence that motivated the check: the catalogue says "retry"
+// catches the divergence that motivated the check: the catalog says "retry"
 // where the code does not retry.
 func TestCheckCell_WhenTextDivergesFromDecide_Fails(t *testing.T) {
 	t.Parallel()

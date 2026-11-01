@@ -28,7 +28,7 @@ Methods: `Migrations` (`List`, `ListPage`, `Get`, `Create`, `Edit`, `CheckCreate
 
 Creating a migration takes a `abertura.CPF(...)` or `abertura.CNPJ(...)` document in `MigrationRequest.Document`; the document is masked whenever it is printed.
 
-Errors: `abertura.ProblemFrom(err)` turns any SDK error into a `Problem` in the RFC 9457 format (`application/problem+json`), with no personal data, whose `type` points to the [error catalogue](https://marcobuarque.github.io/abertura-mercado-energia/errors/):
+Errors: `abertura.ProblemFrom(err)` turns any SDK error into a `Problem` in the RFC 9457 format (`application/problem+json`), with no personal data, whose `type` points to the [error catalog](https://marcobuarque.github.io/abertura-mercado-energia/errors/):
 
 ```go
 p := abertura.ProblemFrom(err) // also works with an error wrapped by %w

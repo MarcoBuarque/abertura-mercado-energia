@@ -8,23 +8,23 @@ info:
 actions:
   # Decimal values of the migration: json.Number preserves precision and accepts
   # a number or a numeric string.
-  - target: $.components.schemas.MigracaoResumo.properties.valorDHC
+  - target: $.components.schemas.MigrationSummary.properties.valorDHC
     update:
       x-go-type: json.Number
-  - target: $.components.schemas.MigracaoResumo.properties.valorMusd
+  - target: $.components.schemas.MigrationSummary.properties.valorMusd
     update:
       x-go-type: json.Number
-  - target: $.components.schemas.MigracaoDetalhe.properties.valorDHC
+  - target: $.components.schemas.MigrationDetail.properties.valorDHC
     update:
       x-go-type: json.Number
-  - target: $.components.schemas.MigracaoDetalhe.properties.valorMusd
+  - target: $.components.schemas.MigrationDetail.properties.valorMusd
     update:
       x-go-type: json.Number
   # Measurement: the real type was not observed (Postman shows a string).
-  - target: $.components.schemas.Medicao.properties.consumo
+  - target: $.components.schemas.Measurement.properties.consumo
     update:
       x-go-type: json.Number
-  - target: $.components.schemas.Medicao.properties.codigoAgenteConcessionaria
+  - target: $.components.schemas.Measurement.properties.codigoAgenteConcessionaria
     update:
       x-go-type: json.Number
   # not-before-policy does not become a Go identifier.

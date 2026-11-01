@@ -87,6 +87,7 @@ func newTokenServer(t *testing.T, delay time.Duration, failure func(w http.Respo
 
 	s := &tokenServer{}
 	s.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 		if err := r.ParseForm(); err != nil {
 			http.Error(w, "unreadable form", http.StatusBadRequest)
 			return
@@ -478,7 +479,7 @@ func TestTokenCache_Renewable_WhenCredentials_IsTrue(t *testing.T) {
 func TestExternalSource_WhenTokenSource_DoesNotRenew(t *testing.T) {
 	t.Parallel()
 
-	external := &oauth2.Token{AccessToken: "fake-token-external", TokenType: "Bearer"}
+	external := &oauth2.Token{AccessToken: "fake-token-external", TokenType: "Bearer"} //nolint:gosec // fake token for the test
 	var source tokenProvider = newExternalSource(oauth2.StaticTokenSource(external))
 
 	if source.renewable() {
@@ -518,7 +519,7 @@ func TestExternalSource_WhenSourceFailsOrCtxCanceled_ReturnsError(t *testing.T) 
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	good := newExternalSource(oauth2.StaticTokenSource(&oauth2.Token{AccessToken: "fake-token-external"}))
+	good := newExternalSource(oauth2.StaticTokenSource(&oauth2.Token{AccessToken: "fake-token-external"})) //nolint:gosec // fake token for the test
 	if _, err := good.token(ctx); !errors.Is(err, context.Canceled) {
 		t.Errorf("err = %v, want context.Canceled", err)
 	}
@@ -646,6 +647,7 @@ func TestTokenCache_WhenCtxCanceled_InterruptsFetch(t *testing.T) {
 	c := newTestCache(s, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	go func() {
 		time.Sleep(50 * time.Millisecond)
 		cancel()

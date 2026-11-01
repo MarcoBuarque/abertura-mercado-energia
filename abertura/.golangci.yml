@@ -7,6 +7,22 @@ linters:
     - gosec
     - bodyclose
     - nilerr
+    - gochecknoglobals
+    - revive
+    - misspell
   settings:
     errcheck:
       check-type-assertions: true
+    misspell:
+      locale: US
+    revive:
+      rules:
+        - name: exported
+        - name: var-naming
+        - name: receiver-naming
+        - name: package-comments
+        - name: error-naming
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters: [gochecknoglobals]

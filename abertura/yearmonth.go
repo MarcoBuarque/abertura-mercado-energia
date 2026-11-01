@@ -31,6 +31,8 @@ func NewYearMonth(year int, month time.Month) YearMonth {
 // layout has none. The last two are tolerances: the sandbox returned
 // dataReferencia as RFC 3339 with an offset (D21), and the Get failure has
 // another cause (D23); they stay because they are harmless.
+//
+//nolint:gochecknoglobals // read-only table, never written after initialization
 var monthFormats = []string{"2006-01", "01-2006", time.RFC3339, "2006-01-02", "2006-01-02T15:04:05"}
 
 // ParseYearMonth reads a month in "2026-12", "12-2026",

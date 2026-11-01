@@ -50,7 +50,7 @@ func (m *Measurements) ListPage(ctx context.Context, f MeasurementFilter, cursor
 	if err != nil {
 		return Page[Measurement]{}, err
 	}
-	var list gen.ListaMedicoes
+	var list gen.MeasurementList
 	if err := decodeOutput(body, &list); err != nil {
 		return Page[Measurement]{}, fmt.Errorf("%s: %w", id, err)
 	}

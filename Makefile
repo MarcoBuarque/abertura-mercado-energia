@@ -50,7 +50,7 @@ spec-diff: ## compare the spec with the latest openapi/v* tag (oasdiff); skips i
 	OASDIFF_IMAGE=$(OASDIFF_IMAGE) scripts/oasdiff.sh
 	OASDIFF_IMAGE=$(OASDIFF_IMAGE) scripts/test-oasdiff.sh
 
-docs: ## build the Redoc page (out/docs/index.html) and the error catalogue (out/docs/errors/index.html, plus the /erros/ redirect), not versioned
+docs: ## build the Redoc page (out/docs/index.html) and the error catalog (out/docs/errors/index.html, plus the /erros/ redirect), not versioned
 	mkdir -p out/docs
 	docker run --rm -v "$(CURDIR)":/work -w /work $(REDOCLY_IMAGE) build-docs openapi/abertura.yaml -o out/docs/index.html --inlineBundle --template docs/template.hbs --config docs/redocly.yaml
 	@grep -q "unofficial description" out/docs/index.html && echo "'unofficial description' banner present in out/docs/index.html"

@@ -7,364 +7,353 @@ import (
 	"encoding/json"
 )
 
-// Defines values for DecisaoSolicitacaoSituacaoAlteracao.
+// Defines values for ChangeRequestDecisionSituacaoAlteracao.
 const (
-	DecisaoSolicitacaoSituacaoAlteracaoCONCLUIDA DecisaoSolicitacaoSituacaoAlteracao = "CONCLUIDA"
-	DecisaoSolicitacaoSituacaoAlteracaoREPROVADA DecisaoSolicitacaoSituacaoAlteracao = "REPROVADA"
+	ChangeRequestDecisionSituacaoAlteracaoCONCLUIDA ChangeRequestDecisionSituacaoAlteracao = "CONCLUIDA"
+	ChangeRequestDecisionSituacaoAlteracaoREPROVADA ChangeRequestDecisionSituacaoAlteracao = "REPROVADA"
 )
 
-// Valid indicates whether the value is a known member of the DecisaoSolicitacaoSituacaoAlteracao enum.
-func (e DecisaoSolicitacaoSituacaoAlteracao) Valid() bool {
+// Valid indicates whether the value is a known member of the ChangeRequestDecisionSituacaoAlteracao enum.
+func (e ChangeRequestDecisionSituacaoAlteracao) Valid() bool {
 	switch e {
-	case DecisaoSolicitacaoSituacaoAlteracaoCONCLUIDA:
+	case ChangeRequestDecisionSituacaoAlteracaoCONCLUIDA:
 		return true
-	case DecisaoSolicitacaoSituacaoAlteracaoREPROVADA:
+	case ChangeRequestDecisionSituacaoAlteracaoREPROVADA:
 		return true
 	default:
 		return false
 	}
 }
 
-// Defines values for EdicaoMigracaoTipoDocumento.
+// Defines values for MigrationEditTipoDocumento.
 const (
-	EdicaoMigracaoTipoDocumentoCNPJ EdicaoMigracaoTipoDocumento = "CNPJ"
-	EdicaoMigracaoTipoDocumentoCPF  EdicaoMigracaoTipoDocumento = "CPF"
+	MigrationEditTipoDocumentoCNPJ MigrationEditTipoDocumento = "CNPJ"
+	MigrationEditTipoDocumentoCPF  MigrationEditTipoDocumento = "CPF"
 )
 
-// Valid indicates whether the value is a known member of the EdicaoMigracaoTipoDocumento enum.
-func (e EdicaoMigracaoTipoDocumento) Valid() bool {
+// Valid indicates whether the value is a known member of the MigrationEditTipoDocumento enum.
+func (e MigrationEditTipoDocumento) Valid() bool {
 	switch e {
-	case EdicaoMigracaoTipoDocumentoCNPJ:
+	case MigrationEditTipoDocumentoCNPJ:
 		return true
-	case EdicaoMigracaoTipoDocumentoCPF:
+	case MigrationEditTipoDocumentoCPF:
 		return true
 	default:
 		return false
 	}
 }
 
-// Defines values for NovaMigracaoTipoDocumento.
+// Defines values for MigrationRequestTipoDocumento.
 const (
-	NovaMigracaoTipoDocumentoCNPJ NovaMigracaoTipoDocumento = "CNPJ"
-	NovaMigracaoTipoDocumentoCPF  NovaMigracaoTipoDocumento = "CPF"
+	MigrationRequestTipoDocumentoCNPJ MigrationRequestTipoDocumento = "CNPJ"
+	MigrationRequestTipoDocumentoCPF  MigrationRequestTipoDocumento = "CPF"
 )
 
-// Valid indicates whether the value is a known member of the NovaMigracaoTipoDocumento enum.
-func (e NovaMigracaoTipoDocumento) Valid() bool {
+// Valid indicates whether the value is a known member of the MigrationRequestTipoDocumento enum.
+func (e MigrationRequestTipoDocumento) Valid() bool {
 	switch e {
-	case NovaMigracaoTipoDocumentoCNPJ:
+	case MigrationRequestTipoDocumentoCNPJ:
 		return true
-	case NovaMigracaoTipoDocumentoCPF:
+	case MigrationRequestTipoDocumentoCPF:
 		return true
 	default:
 		return false
 	}
 }
 
-// Defines values for SolicitacaoRepresentanteTipoSolicitacao.
+// Defines values for RepresentativeChangeRequestTipoSolicitacao.
 const (
-	SolicitacaoRepresentanteTipoSolicitacaoALTERACAOALFAVAREJISTADESLIGAMENTO SolicitacaoRepresentanteTipoSolicitacao = "ALTERACAO_ALFA_VAREJISTA_DESLIGAMENTO"
-	SolicitacaoRepresentanteTipoSolicitacaoALTERACAOALFAVAREJISTARESILICAO    SolicitacaoRepresentanteTipoSolicitacao = "ALTERACAO_ALFA_VAREJISTA_RESILICAO"
-	SolicitacaoRepresentanteTipoSolicitacaoALTERACAOALFAVAREJISTARESOLUCAO    SolicitacaoRepresentanteTipoSolicitacao = "ALTERACAO_ALFA_VAREJISTA_RESOLUCAO"
+	RepresentativeChangeRequestTipoSolicitacaoALTERACAOALFAVAREJISTADESLIGAMENTO RepresentativeChangeRequestTipoSolicitacao = "ALTERACAO_ALFA_VAREJISTA_DESLIGAMENTO"
+	RepresentativeChangeRequestTipoSolicitacaoALTERACAOALFAVAREJISTARESILICAO    RepresentativeChangeRequestTipoSolicitacao = "ALTERACAO_ALFA_VAREJISTA_RESILICAO"
+	RepresentativeChangeRequestTipoSolicitacaoALTERACAOALFAVAREJISTARESOLUCAO    RepresentativeChangeRequestTipoSolicitacao = "ALTERACAO_ALFA_VAREJISTA_RESOLUCAO"
 )
 
-// Valid indicates whether the value is a known member of the SolicitacaoRepresentanteTipoSolicitacao enum.
-func (e SolicitacaoRepresentanteTipoSolicitacao) Valid() bool {
+// Valid indicates whether the value is a known member of the RepresentativeChangeRequestTipoSolicitacao enum.
+func (e RepresentativeChangeRequestTipoSolicitacao) Valid() bool {
 	switch e {
-	case SolicitacaoRepresentanteTipoSolicitacaoALTERACAOALFAVAREJISTADESLIGAMENTO:
+	case RepresentativeChangeRequestTipoSolicitacaoALTERACAOALFAVAREJISTADESLIGAMENTO:
 		return true
-	case SolicitacaoRepresentanteTipoSolicitacaoALTERACAOALFAVAREJISTARESILICAO:
+	case RepresentativeChangeRequestTipoSolicitacaoALTERACAOALFAVAREJISTARESILICAO:
 		return true
-	case SolicitacaoRepresentanteTipoSolicitacaoALTERACAOALFAVAREJISTARESOLUCAO:
+	case RepresentativeChangeRequestTipoSolicitacaoALTERACAOALFAVAREJISTARESOLUCAO:
 		return true
 	default:
 		return false
 	}
 }
 
-// Defines values for SolicitacaoSuspensaoTipoSolicitacao.
+// Defines values for SupplySuspensionRequestTipoSolicitacao.
 const (
-	SolicitacaoSuspensaoTipoSolicitacaoSUSPENSAOFORNECIMENTODESLIGAMENTO SolicitacaoSuspensaoTipoSolicitacao = "SUSPENSAO_FORNECIMENTO_DESLIGAMENTO"
-	SolicitacaoSuspensaoTipoSolicitacaoSUSPENSAOFORNECIMENTORESILICAO    SolicitacaoSuspensaoTipoSolicitacao = "SUSPENSAO_FORNECIMENTO_RESILICAO"
-	SolicitacaoSuspensaoTipoSolicitacaoSUSPENSAOFORNECIMENTORESOLUCAO    SolicitacaoSuspensaoTipoSolicitacao = "SUSPENSAO_FORNECIMENTO_RESOLUCAO"
+	SupplySuspensionRequestTipoSolicitacaoSUSPENSAOFORNECIMENTODESLIGAMENTO SupplySuspensionRequestTipoSolicitacao = "SUSPENSAO_FORNECIMENTO_DESLIGAMENTO"
+	SupplySuspensionRequestTipoSolicitacaoSUSPENSAOFORNECIMENTORESILICAO    SupplySuspensionRequestTipoSolicitacao = "SUSPENSAO_FORNECIMENTO_RESILICAO"
+	SupplySuspensionRequestTipoSolicitacaoSUSPENSAOFORNECIMENTORESOLUCAO    SupplySuspensionRequestTipoSolicitacao = "SUSPENSAO_FORNECIMENTO_RESOLUCAO"
 )
 
-// Valid indicates whether the value is a known member of the SolicitacaoSuspensaoTipoSolicitacao enum.
-func (e SolicitacaoSuspensaoTipoSolicitacao) Valid() bool {
+// Valid indicates whether the value is a known member of the SupplySuspensionRequestTipoSolicitacao enum.
+func (e SupplySuspensionRequestTipoSolicitacao) Valid() bool {
 	switch e {
-	case SolicitacaoSuspensaoTipoSolicitacaoSUSPENSAOFORNECIMENTODESLIGAMENTO:
+	case SupplySuspensionRequestTipoSolicitacaoSUSPENSAOFORNECIMENTODESLIGAMENTO:
 		return true
-	case SolicitacaoSuspensaoTipoSolicitacaoSUSPENSAOFORNECIMENTORESILICAO:
+	case SupplySuspensionRequestTipoSolicitacaoSUSPENSAOFORNECIMENTORESILICAO:
 		return true
-	case SolicitacaoSuspensaoTipoSolicitacaoSUSPENSAOFORNECIMENTORESOLUCAO:
+	case SupplySuspensionRequestTipoSolicitacaoSUSPENSAOFORNECIMENTORESOLUCAO:
 		return true
 	default:
 		return false
 	}
 }
 
-// Defines values for SituacaoAlteracaoQuery.
+// Defines values for ChangeRequestStatusQuery.
 const (
-	SituacaoAlteracaoQueryCANCELADA SituacaoAlteracaoQuery = "CANCELADA"
-	SituacaoAlteracaoQueryCONCLUIDA SituacaoAlteracaoQuery = "CONCLUIDA"
-	SituacaoAlteracaoQueryCRIADA    SituacaoAlteracaoQuery = "CRIADA"
-	SituacaoAlteracaoQueryEXPIRADA  SituacaoAlteracaoQuery = "EXPIRADA"
-	SituacaoAlteracaoQueryREPROVADA SituacaoAlteracaoQuery = "REPROVADA"
+	ChangeRequestStatusQueryCANCELADA ChangeRequestStatusQuery = "CANCELADA"
+	ChangeRequestStatusQueryCONCLUIDA ChangeRequestStatusQuery = "CONCLUIDA"
+	ChangeRequestStatusQueryCRIADA    ChangeRequestStatusQuery = "CRIADA"
+	ChangeRequestStatusQueryEXPIRADA  ChangeRequestStatusQuery = "EXPIRADA"
+	ChangeRequestStatusQueryREPROVADA ChangeRequestStatusQuery = "REPROVADA"
 )
 
-// Valid indicates whether the value is a known member of the SituacaoAlteracaoQuery enum.
-func (e SituacaoAlteracaoQuery) Valid() bool {
+// Valid indicates whether the value is a known member of the ChangeRequestStatusQuery enum.
+func (e ChangeRequestStatusQuery) Valid() bool {
 	switch e {
-	case SituacaoAlteracaoQueryCANCELADA:
+	case ChangeRequestStatusQueryCANCELADA:
 		return true
-	case SituacaoAlteracaoQueryCONCLUIDA:
+	case ChangeRequestStatusQueryCONCLUIDA:
 		return true
-	case SituacaoAlteracaoQueryCRIADA:
+	case ChangeRequestStatusQueryCRIADA:
 		return true
-	case SituacaoAlteracaoQueryEXPIRADA:
+	case ChangeRequestStatusQueryEXPIRADA:
 		return true
-	case SituacaoAlteracaoQueryREPROVADA:
+	case ChangeRequestStatusQueryREPROVADA:
 		return true
 	default:
 		return false
 	}
 }
 
-// Defines values for SituacaoMedicaoQuery.
+// Defines values for ChangeRequestTypeQuery.
 const (
-	SituacaoMedicaoQueryCONSISTIDA SituacaoMedicaoQuery = "CONSISTIDA"
-	SituacaoMedicaoQueryREJEITADA  SituacaoMedicaoQuery = "REJEITADA"
+	ChangeRequestTypeQueryALTERACAOALFAVAREJISTADESLIGAMENTO             ChangeRequestTypeQuery = "ALTERACAO_ALFA_VAREJISTA_DESLIGAMENTO"
+	ChangeRequestTypeQueryALTERACAOALFAVAREJISTARESILICAO                ChangeRequestTypeQuery = "ALTERACAO_ALFA_VAREJISTA_RESILICAO"
+	ChangeRequestTypeQueryALTERACAOALFAVAREJISTARESOLUCAO                ChangeRequestTypeQuery = "ALTERACAO_ALFA_VAREJISTA_RESOLUCAO"
+	ChangeRequestTypeQueryALTERACAORETORNOCATIVODESLIGAMENTO             ChangeRequestTypeQuery = "ALTERACAO_RETORNO_CATIVO_DESLIGAMENTO"
+	ChangeRequestTypeQueryALTERACAORETORNOCATIVORESILICAO                ChangeRequestTypeQuery = "ALTERACAO_RETORNO_CATIVO_RESILICAO"
+	ChangeRequestTypeQueryALTERACAORETORNOCATIVORESOLUCAO                ChangeRequestTypeQuery = "ALTERACAO_RETORNO_CATIVO_RESOLUCAO"
+	ChangeRequestTypeQuerySUSPENSAOFORNECIMENTODESLIGAMENTO              ChangeRequestTypeQuery = "SUSPENSAO_FORNECIMENTO_DESLIGAMENTO"
+	ChangeRequestTypeQuerySUSPENSAOFORNECIMENTORESILICAO                 ChangeRequestTypeQuery = "SUSPENSAO_FORNECIMENTO_RESILICAO"
+	ChangeRequestTypeQuerySUSPENSAOFORNECIMENTORESOLUCAO                 ChangeRequestTypeQuery = "SUSPENSAO_FORNECIMENTO_RESOLUCAO"
+	ChangeRequestTypeQuerySUSPENSAOFORNECIMENTORESOLUCAOUCCONCESSIONARIA ChangeRequestTypeQuery = "SUSPENSAO_FORNECIMENTO_RESOLUCAO_UC_CONCESSIONARIA"
 )
 
-// Valid indicates whether the value is a known member of the SituacaoMedicaoQuery enum.
-func (e SituacaoMedicaoQuery) Valid() bool {
+// Valid indicates whether the value is a known member of the ChangeRequestTypeQuery enum.
+func (e ChangeRequestTypeQuery) Valid() bool {
 	switch e {
-	case SituacaoMedicaoQueryCONSISTIDA:
+	case ChangeRequestTypeQueryALTERACAOALFAVAREJISTADESLIGAMENTO:
 		return true
-	case SituacaoMedicaoQueryREJEITADA:
+	case ChangeRequestTypeQueryALTERACAOALFAVAREJISTARESILICAO:
+		return true
+	case ChangeRequestTypeQueryALTERACAOALFAVAREJISTARESOLUCAO:
+		return true
+	case ChangeRequestTypeQueryALTERACAORETORNOCATIVODESLIGAMENTO:
+		return true
+	case ChangeRequestTypeQueryALTERACAORETORNOCATIVORESILICAO:
+		return true
+	case ChangeRequestTypeQueryALTERACAORETORNOCATIVORESOLUCAO:
+		return true
+	case ChangeRequestTypeQuerySUSPENSAOFORNECIMENTODESLIGAMENTO:
+		return true
+	case ChangeRequestTypeQuerySUSPENSAOFORNECIMENTORESILICAO:
+		return true
+	case ChangeRequestTypeQuerySUSPENSAOFORNECIMENTORESOLUCAO:
+		return true
+	case ChangeRequestTypeQuerySUSPENSAOFORNECIMENTORESOLUCAOUCCONCESSIONARIA:
 		return true
 	default:
 		return false
 	}
 }
 
-// Defines values for TipoSolicitacaoQuery.
+// Defines values for MeasurementStatusQuery.
 const (
-	TipoSolicitacaoQueryALTERACAOALFAVAREJISTADESLIGAMENTO             TipoSolicitacaoQuery = "ALTERACAO_ALFA_VAREJISTA_DESLIGAMENTO"
-	TipoSolicitacaoQueryALTERACAOALFAVAREJISTARESILICAO                TipoSolicitacaoQuery = "ALTERACAO_ALFA_VAREJISTA_RESILICAO"
-	TipoSolicitacaoQueryALTERACAOALFAVAREJISTARESOLUCAO                TipoSolicitacaoQuery = "ALTERACAO_ALFA_VAREJISTA_RESOLUCAO"
-	TipoSolicitacaoQueryALTERACAORETORNOCATIVODESLIGAMENTO             TipoSolicitacaoQuery = "ALTERACAO_RETORNO_CATIVO_DESLIGAMENTO"
-	TipoSolicitacaoQueryALTERACAORETORNOCATIVORESILICAO                TipoSolicitacaoQuery = "ALTERACAO_RETORNO_CATIVO_RESILICAO"
-	TipoSolicitacaoQueryALTERACAORETORNOCATIVORESOLUCAO                TipoSolicitacaoQuery = "ALTERACAO_RETORNO_CATIVO_RESOLUCAO"
-	TipoSolicitacaoQuerySUSPENSAOFORNECIMENTODESLIGAMENTO              TipoSolicitacaoQuery = "SUSPENSAO_FORNECIMENTO_DESLIGAMENTO"
-	TipoSolicitacaoQuerySUSPENSAOFORNECIMENTORESILICAO                 TipoSolicitacaoQuery = "SUSPENSAO_FORNECIMENTO_RESILICAO"
-	TipoSolicitacaoQuerySUSPENSAOFORNECIMENTORESOLUCAO                 TipoSolicitacaoQuery = "SUSPENSAO_FORNECIMENTO_RESOLUCAO"
-	TipoSolicitacaoQuerySUSPENSAOFORNECIMENTORESOLUCAOUCCONCESSIONARIA TipoSolicitacaoQuery = "SUSPENSAO_FORNECIMENTO_RESOLUCAO_UC_CONCESSIONARIA"
+	MeasurementStatusQueryCONSISTIDA MeasurementStatusQuery = "CONSISTIDA"
+	MeasurementStatusQueryREJEITADA  MeasurementStatusQuery = "REJEITADA"
 )
 
-// Valid indicates whether the value is a known member of the TipoSolicitacaoQuery enum.
-func (e TipoSolicitacaoQuery) Valid() bool {
+// Valid indicates whether the value is a known member of the MeasurementStatusQuery enum.
+func (e MeasurementStatusQuery) Valid() bool {
 	switch e {
-	case TipoSolicitacaoQueryALTERACAOALFAVAREJISTADESLIGAMENTO:
+	case MeasurementStatusQueryCONSISTIDA:
 		return true
-	case TipoSolicitacaoQueryALTERACAOALFAVAREJISTARESILICAO:
-		return true
-	case TipoSolicitacaoQueryALTERACAOALFAVAREJISTARESOLUCAO:
-		return true
-	case TipoSolicitacaoQueryALTERACAORETORNOCATIVODESLIGAMENTO:
-		return true
-	case TipoSolicitacaoQueryALTERACAORETORNOCATIVORESILICAO:
-		return true
-	case TipoSolicitacaoQueryALTERACAORETORNOCATIVORESOLUCAO:
-		return true
-	case TipoSolicitacaoQuerySUSPENSAOFORNECIMENTODESLIGAMENTO:
-		return true
-	case TipoSolicitacaoQuerySUSPENSAOFORNECIMENTORESILICAO:
-		return true
-	case TipoSolicitacaoQuerySUSPENSAOFORNECIMENTORESOLUCAO:
-		return true
-	case TipoSolicitacaoQuerySUSPENSAOFORNECIMENTORESOLUCAOUCCONCESSIONARIA:
+	case MeasurementStatusQueryREJEITADA:
 		return true
 	default:
 		return false
 	}
 }
 
-// Defines values for ListarSolicitacoesParamsTipoSolicitacao.
+// Defines values for ListChangeRequestsParamsTipoSolicitacao.
 const (
-	ListarSolicitacoesParamsTipoSolicitacaoALTERACAOALFAVAREJISTADESLIGAMENTO             ListarSolicitacoesParamsTipoSolicitacao = "ALTERACAO_ALFA_VAREJISTA_DESLIGAMENTO"
-	ListarSolicitacoesParamsTipoSolicitacaoALTERACAOALFAVAREJISTARESILICAO                ListarSolicitacoesParamsTipoSolicitacao = "ALTERACAO_ALFA_VAREJISTA_RESILICAO"
-	ListarSolicitacoesParamsTipoSolicitacaoALTERACAOALFAVAREJISTARESOLUCAO                ListarSolicitacoesParamsTipoSolicitacao = "ALTERACAO_ALFA_VAREJISTA_RESOLUCAO"
-	ListarSolicitacoesParamsTipoSolicitacaoALTERACAORETORNOCATIVODESLIGAMENTO             ListarSolicitacoesParamsTipoSolicitacao = "ALTERACAO_RETORNO_CATIVO_DESLIGAMENTO"
-	ListarSolicitacoesParamsTipoSolicitacaoALTERACAORETORNOCATIVORESILICAO                ListarSolicitacoesParamsTipoSolicitacao = "ALTERACAO_RETORNO_CATIVO_RESILICAO"
-	ListarSolicitacoesParamsTipoSolicitacaoALTERACAORETORNOCATIVORESOLUCAO                ListarSolicitacoesParamsTipoSolicitacao = "ALTERACAO_RETORNO_CATIVO_RESOLUCAO"
-	ListarSolicitacoesParamsTipoSolicitacaoSUSPENSAOFORNECIMENTODESLIGAMENTO              ListarSolicitacoesParamsTipoSolicitacao = "SUSPENSAO_FORNECIMENTO_DESLIGAMENTO"
-	ListarSolicitacoesParamsTipoSolicitacaoSUSPENSAOFORNECIMENTORESILICAO                 ListarSolicitacoesParamsTipoSolicitacao = "SUSPENSAO_FORNECIMENTO_RESILICAO"
-	ListarSolicitacoesParamsTipoSolicitacaoSUSPENSAOFORNECIMENTORESOLUCAO                 ListarSolicitacoesParamsTipoSolicitacao = "SUSPENSAO_FORNECIMENTO_RESOLUCAO"
-	ListarSolicitacoesParamsTipoSolicitacaoSUSPENSAOFORNECIMENTORESOLUCAOUCCONCESSIONARIA ListarSolicitacoesParamsTipoSolicitacao = "SUSPENSAO_FORNECIMENTO_RESOLUCAO_UC_CONCESSIONARIA"
+	ListChangeRequestsParamsTipoSolicitacaoALTERACAOALFAVAREJISTADESLIGAMENTO             ListChangeRequestsParamsTipoSolicitacao = "ALTERACAO_ALFA_VAREJISTA_DESLIGAMENTO"
+	ListChangeRequestsParamsTipoSolicitacaoALTERACAOALFAVAREJISTARESILICAO                ListChangeRequestsParamsTipoSolicitacao = "ALTERACAO_ALFA_VAREJISTA_RESILICAO"
+	ListChangeRequestsParamsTipoSolicitacaoALTERACAOALFAVAREJISTARESOLUCAO                ListChangeRequestsParamsTipoSolicitacao = "ALTERACAO_ALFA_VAREJISTA_RESOLUCAO"
+	ListChangeRequestsParamsTipoSolicitacaoALTERACAORETORNOCATIVODESLIGAMENTO             ListChangeRequestsParamsTipoSolicitacao = "ALTERACAO_RETORNO_CATIVO_DESLIGAMENTO"
+	ListChangeRequestsParamsTipoSolicitacaoALTERACAORETORNOCATIVORESILICAO                ListChangeRequestsParamsTipoSolicitacao = "ALTERACAO_RETORNO_CATIVO_RESILICAO"
+	ListChangeRequestsParamsTipoSolicitacaoALTERACAORETORNOCATIVORESOLUCAO                ListChangeRequestsParamsTipoSolicitacao = "ALTERACAO_RETORNO_CATIVO_RESOLUCAO"
+	ListChangeRequestsParamsTipoSolicitacaoSUSPENSAOFORNECIMENTODESLIGAMENTO              ListChangeRequestsParamsTipoSolicitacao = "SUSPENSAO_FORNECIMENTO_DESLIGAMENTO"
+	ListChangeRequestsParamsTipoSolicitacaoSUSPENSAOFORNECIMENTORESILICAO                 ListChangeRequestsParamsTipoSolicitacao = "SUSPENSAO_FORNECIMENTO_RESILICAO"
+	ListChangeRequestsParamsTipoSolicitacaoSUSPENSAOFORNECIMENTORESOLUCAO                 ListChangeRequestsParamsTipoSolicitacao = "SUSPENSAO_FORNECIMENTO_RESOLUCAO"
+	ListChangeRequestsParamsTipoSolicitacaoSUSPENSAOFORNECIMENTORESOLUCAOUCCONCESSIONARIA ListChangeRequestsParamsTipoSolicitacao = "SUSPENSAO_FORNECIMENTO_RESOLUCAO_UC_CONCESSIONARIA"
 )
 
-// Valid indicates whether the value is a known member of the ListarSolicitacoesParamsTipoSolicitacao enum.
-func (e ListarSolicitacoesParamsTipoSolicitacao) Valid() bool {
+// Valid indicates whether the value is a known member of the ListChangeRequestsParamsTipoSolicitacao enum.
+func (e ListChangeRequestsParamsTipoSolicitacao) Valid() bool {
 	switch e {
-	case ListarSolicitacoesParamsTipoSolicitacaoALTERACAOALFAVAREJISTADESLIGAMENTO:
+	case ListChangeRequestsParamsTipoSolicitacaoALTERACAOALFAVAREJISTADESLIGAMENTO:
 		return true
-	case ListarSolicitacoesParamsTipoSolicitacaoALTERACAOALFAVAREJISTARESILICAO:
+	case ListChangeRequestsParamsTipoSolicitacaoALTERACAOALFAVAREJISTARESILICAO:
 		return true
-	case ListarSolicitacoesParamsTipoSolicitacaoALTERACAOALFAVAREJISTARESOLUCAO:
+	case ListChangeRequestsParamsTipoSolicitacaoALTERACAOALFAVAREJISTARESOLUCAO:
 		return true
-	case ListarSolicitacoesParamsTipoSolicitacaoALTERACAORETORNOCATIVODESLIGAMENTO:
+	case ListChangeRequestsParamsTipoSolicitacaoALTERACAORETORNOCATIVODESLIGAMENTO:
 		return true
-	case ListarSolicitacoesParamsTipoSolicitacaoALTERACAORETORNOCATIVORESILICAO:
+	case ListChangeRequestsParamsTipoSolicitacaoALTERACAORETORNOCATIVORESILICAO:
 		return true
-	case ListarSolicitacoesParamsTipoSolicitacaoALTERACAORETORNOCATIVORESOLUCAO:
+	case ListChangeRequestsParamsTipoSolicitacaoALTERACAORETORNOCATIVORESOLUCAO:
 		return true
-	case ListarSolicitacoesParamsTipoSolicitacaoSUSPENSAOFORNECIMENTODESLIGAMENTO:
+	case ListChangeRequestsParamsTipoSolicitacaoSUSPENSAOFORNECIMENTODESLIGAMENTO:
 		return true
-	case ListarSolicitacoesParamsTipoSolicitacaoSUSPENSAOFORNECIMENTORESILICAO:
+	case ListChangeRequestsParamsTipoSolicitacaoSUSPENSAOFORNECIMENTORESILICAO:
 		return true
-	case ListarSolicitacoesParamsTipoSolicitacaoSUSPENSAOFORNECIMENTORESOLUCAO:
+	case ListChangeRequestsParamsTipoSolicitacaoSUSPENSAOFORNECIMENTORESOLUCAO:
 		return true
-	case ListarSolicitacoesParamsTipoSolicitacaoSUSPENSAOFORNECIMENTORESOLUCAOUCCONCESSIONARIA:
+	case ListChangeRequestsParamsTipoSolicitacaoSUSPENSAOFORNECIMENTORESOLUCAOUCCONCESSIONARIA:
 		return true
 	default:
 		return false
 	}
 }
 
-// Defines values for ListarSolicitacoesParamsSituacaoAlteracao.
+// Defines values for ListChangeRequestsParamsSituacaoAlteracao.
 const (
-	ListarSolicitacoesParamsSituacaoAlteracaoCANCELADA ListarSolicitacoesParamsSituacaoAlteracao = "CANCELADA"
-	ListarSolicitacoesParamsSituacaoAlteracaoCONCLUIDA ListarSolicitacoesParamsSituacaoAlteracao = "CONCLUIDA"
-	ListarSolicitacoesParamsSituacaoAlteracaoCRIADA    ListarSolicitacoesParamsSituacaoAlteracao = "CRIADA"
-	ListarSolicitacoesParamsSituacaoAlteracaoEXPIRADA  ListarSolicitacoesParamsSituacaoAlteracao = "EXPIRADA"
-	ListarSolicitacoesParamsSituacaoAlteracaoREPROVADA ListarSolicitacoesParamsSituacaoAlteracao = "REPROVADA"
+	ListChangeRequestsParamsSituacaoAlteracaoCANCELADA ListChangeRequestsParamsSituacaoAlteracao = "CANCELADA"
+	ListChangeRequestsParamsSituacaoAlteracaoCONCLUIDA ListChangeRequestsParamsSituacaoAlteracao = "CONCLUIDA"
+	ListChangeRequestsParamsSituacaoAlteracaoCRIADA    ListChangeRequestsParamsSituacaoAlteracao = "CRIADA"
+	ListChangeRequestsParamsSituacaoAlteracaoEXPIRADA  ListChangeRequestsParamsSituacaoAlteracao = "EXPIRADA"
+	ListChangeRequestsParamsSituacaoAlteracaoREPROVADA ListChangeRequestsParamsSituacaoAlteracao = "REPROVADA"
 )
 
-// Valid indicates whether the value is a known member of the ListarSolicitacoesParamsSituacaoAlteracao enum.
-func (e ListarSolicitacoesParamsSituacaoAlteracao) Valid() bool {
+// Valid indicates whether the value is a known member of the ListChangeRequestsParamsSituacaoAlteracao enum.
+func (e ListChangeRequestsParamsSituacaoAlteracao) Valid() bool {
 	switch e {
-	case ListarSolicitacoesParamsSituacaoAlteracaoCANCELADA:
+	case ListChangeRequestsParamsSituacaoAlteracaoCANCELADA:
 		return true
-	case ListarSolicitacoesParamsSituacaoAlteracaoCONCLUIDA:
+	case ListChangeRequestsParamsSituacaoAlteracaoCONCLUIDA:
 		return true
-	case ListarSolicitacoesParamsSituacaoAlteracaoCRIADA:
+	case ListChangeRequestsParamsSituacaoAlteracaoCRIADA:
 		return true
-	case ListarSolicitacoesParamsSituacaoAlteracaoEXPIRADA:
+	case ListChangeRequestsParamsSituacaoAlteracaoEXPIRADA:
 		return true
-	case ListarSolicitacoesParamsSituacaoAlteracaoREPROVADA:
+	case ListChangeRequestsParamsSituacaoAlteracaoREPROVADA:
 		return true
 	default:
 		return false
 	}
 }
 
-// Defines values for ListarMedicoesParamsSituacaoMedicao.
+// Defines values for ListMeasurementsParamsSituacaoMedicao.
 const (
-	ListarMedicoesParamsSituacaoMedicaoCONSISTIDA ListarMedicoesParamsSituacaoMedicao = "CONSISTIDA"
-	ListarMedicoesParamsSituacaoMedicaoREJEITADA  ListarMedicoesParamsSituacaoMedicao = "REJEITADA"
+	ListMeasurementsParamsSituacaoMedicaoCONSISTIDA ListMeasurementsParamsSituacaoMedicao = "CONSISTIDA"
+	ListMeasurementsParamsSituacaoMedicaoREJEITADA  ListMeasurementsParamsSituacaoMedicao = "REJEITADA"
 )
 
-// Valid indicates whether the value is a known member of the ListarMedicoesParamsSituacaoMedicao enum.
-func (e ListarMedicoesParamsSituacaoMedicao) Valid() bool {
+// Valid indicates whether the value is a known member of the ListMeasurementsParamsSituacaoMedicao enum.
+func (e ListMeasurementsParamsSituacaoMedicao) Valid() bool {
 	switch e {
-	case ListarMedicoesParamsSituacaoMedicaoCONSISTIDA:
+	case ListMeasurementsParamsSituacaoMedicaoCONSISTIDA:
 		return true
-	case ListarMedicoesParamsSituacaoMedicaoREJEITADA:
+	case ListMeasurementsParamsSituacaoMedicaoREJEITADA:
 		return true
 	default:
 		return false
 	}
 }
 
-// DecisaoSolicitacao Corpo da decisão sobre uma solicitação.
-type DecisaoSolicitacao struct {
-	DescricaoJustificativa string                              `json:"descricaoJustificativa,omitempty"`
-	SituacaoAlteracao      DecisaoSolicitacaoSituacaoAlteracao `json:"situacaoAlteracao"`
-	TipoSolicitacao        string                              `json:"tipoSolicitacao"`
+// ChangeRequest defines model for ChangeRequest.
+type ChangeRequest struct {
+	CodigoAgenteConcessionaria int    `json:"codigoAgenteConcessionaria,omitempty"`
+	CodigoAgenteVarejistaAtual int    `json:"codigoAgenteVarejistaAtual,omitempty"`
+	CodigoAgenteVarejistaNovo  int    `json:"codigoAgenteVarejistaNovo,omitempty"`
+	CodigoPerfilVarejistaAtual int    `json:"codigoPerfilVarejistaAtual,omitempty"`
+	CodigoPerfilVarejistaNovo  int    `json:"codigoPerfilVarejistaNovo,omitempty"`
+	CodigoUnidadeConsumidora   string `json:"codigoUnidadeConsumidora,omitempty"`
+	DataAtraso                 string `json:"dataAtraso,omitempty"`
+
+	// DataNotificacao Date only.
+	DataNotificacao string `json:"dataNotificacao,omitempty"`
+
+	// DataSolicitacao Date only.
+	DataSolicitacao        string `json:"dataSolicitacao,omitempty"`
+	DescricaoJustificativa string `json:"descricaoJustificativa,omitempty"`
+	IdCelebracaoCER        string `json:"idCelebracaoCER,omitempty"`
+	IdMigracaoAlterada     string `json:"idMigracaoAlterada,omitempty"`
+	IdSolicitacaoAlteracao string `json:"idSolicitacaoAlteracao"`
+	IndicadorAntecedencia  string `json:"indicadorAntecedencia,omitempty"`
+	MesReferencia          string `json:"mesReferencia,omitempty"`
+	SituacaoAlteracao      string `json:"situacaoAlteracao,omitempty"`
+	TipoSolicitacao        string `json:"tipoSolicitacao,omitempty"`
 }
 
-// DecisaoSolicitacaoSituacaoAlteracao defines model for DecisaoSolicitacao.SituacaoAlteracao.
-type DecisaoSolicitacaoSituacaoAlteracao string
-
-// EdicaoMigracao Corpo do PUT de edição cadastral (v1). Não se sabe quais campos são obrigatórios.
-type EdicaoMigracao struct {
-	CodigoPerfilVarejista   int                         `json:"codigoPerfilVarejista,omitempty"`
-	EmailUnidadeConsumidora string                      `json:"emailUnidadeConsumidora,omitempty"`
-	MesReferencia           string                      `json:"mesReferencia,omitempty"`
-	NumeroDocumento         string                      `json:"numeroDocumento,omitempty"`
-	StatusMigracao          string                      `json:"statusMigracao,omitempty"`
-	TipoDocumento           EdicaoMigracaoTipoDocumento `json:"tipoDocumento,omitempty"`
+// ChangeRequestDecision Body of the decision on a change request.
+type ChangeRequestDecision struct {
+	DescricaoJustificativa string                                 `json:"descricaoJustificativa,omitempty"`
+	SituacaoAlteracao      ChangeRequestDecisionSituacaoAlteracao `json:"situacaoAlteracao"`
+	TipoSolicitacao        string                                 `json:"tipoSolicitacao"`
 }
 
-// EdicaoMigracaoTipoDocumento defines model for EdicaoMigracao.TipoDocumento.
-type EdicaoMigracaoTipoDocumento string
+// ChangeRequestDecisionSituacaoAlteracao defines model for ChangeRequestDecision.SituacaoAlteracao.
+type ChangeRequestDecisionSituacaoAlteracao string
 
-// Erro Corpo de erro do backend e do autorizador, com os mesmos quatro campos,
-// em `application/json` (não em `application/problem+json`). O SDK Go
-// entrega o mesmo erro como Problem Details da RFC 9457; o catálogo
-// explica cada código e cada situação sem código.
+// ChangeRequestList An object, not an array. The list is in `solicitacao`, in the singular.
+type ChangeRequestList struct {
+	IndexProximaPagina string          `json:"indexProximaPagina,omitempty"`
+	Solicitacao        []ChangeRequest `json:"solicitacao"`
+}
+
+// Error Error body of the backend and of the authorizer, with the same four fields,
+// as `application/json` (not `application/problem+json`). The Go SDK delivers
+// the same error as an RFC 9457 Problem Details object; the catalog explains
+// each code and each situation without a code.
 //
-// Códigos conhecidos:
+// Known codes:
 //
-// - `ERR_CREDENCIAL_INVALIDA`: 403. Token, agente ou perfil recusados.
-// - `ERR_VALIDACAO_CAMPOS`: 400. Um campo foi recusado; a validação para no primeiro.
-// - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. A consulta não trouxe o perfil.
-// - `ERR_MIGRACAO_SOLICITADA`: 400. Já existe migração ativa para a UC e a concessionária.
-// - `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`: 400. A listagem de migrações não trouxe o intervalo de meses ([catálogo](docs/erros.md#faixa-de-meses-obrigatoria)).
-// - `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`: 400. O intervalo de meses é largo demais ([catálogo](docs/erros.md#faixa-de-meses-larga-demais)).
-type Erro struct {
-	// Error Código textual estável do erro.
+// - `ERR_CREDENCIAL_INVALIDA`: 403. Token, agent or profile refused.
+// - `ERR_VALIDACAO_CAMPOS`: 400. A field was refused; validation stops at the first one.
+// - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. The query did not carry the profile.
+// - `ERR_MIGRACAO_SOLICITADA`: 400. There is already an active migration for the UC and the distributor.
+// - `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`: 400. The migration list did not carry the month range ([catalog](docs/errors.md#month-range-required)).
+// - `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`: 400. The month range is too wide ([catalog](docs/errors.md#month-range-too-wide)).
+type Error struct {
+	// Error Stable textual error code.
 	Error string `json:"error"`
 
-	// Message Texto para humanos, em português.
+	// Message Human-readable text, in Portuguese.
 	Message string `json:"message"`
 	Status  int    `json:"status,omitempty"`
 
-	// Timestamp Instante do erro, em RFC 3339 com deslocamento. A fração de segundo
-	// tem comprimento variável (2 ou 3 dígitos observados, com zeros à
-	// direita cortados) ou não existe, como no autorizador (D21). Sem
-	// `format`, para não rejeitar essas variações.
+	// Timestamp Instant of the error, in RFC 3339 with an offset. The fractional second has
+	// a variable length (2 or 3 digits observed, with trailing zeros trimmed) or is
+	// absent, as in the authorizer (D21). No `format`, so as not to reject these
+	// variations.
 	Timestamp string `json:"timestamp,omitempty"`
 }
 
-// ErroOAuth2 Corpo do 400 de `POST /sso/oauth/token`, no formato de erro OAuth2 (RFC
-// 6749, seção 5.2). Não tem `status` nem `timestamp`; não é o `Erro`.
-type ErroOAuth2 struct {
-	// Error Código OAuth2. Não se viu qual deles o servidor devolve.
-	Error string `json:"error"`
-
-	// ErrorDescription Texto para humanos.
-	ErrorDescription string `json:"error_description,omitempty"`
-}
-
-// ListaMedicoes defines model for ListaMedicoes.
-type ListaMedicoes struct {
-	IndexProximaPagina string    `json:"indexProximaPagina,omitempty"`
-	Medicoes           []Medicao `json:"medicoes"`
-}
-
-// ListaMigracoes defines model for ListaMigracoes.
-type ListaMigracoes struct {
-	// IndexProximaPagina Cursor da próxima página. Em todos os testes veio nulo.
-	IndexProximaPagina string           `json:"indexProximaPagina,omitempty"`
-	Migracao           []MigracaoResumo `json:"migracao"`
-}
-
-// ListaSolicitacoes Objeto, não array. A lista fica em `solicitacao`, no singular.
-type ListaSolicitacoes struct {
-	IndexProximaPagina string        `json:"indexProximaPagina,omitempty"`
-	Solicitacao        []Solicitacao `json:"solicitacao"`
-}
-
-// Medicao Medição de consumo. Nenhum item foi observado no sandbox: todos os
-// campos vêm da documentação pública.
-type Medicao struct {
-	// CodigoAgenteConcessionaria O Postman mostra string; o tipo real não foi observado.
+// Measurement Consumption measurement. No item was observed in the sandbox: all the
+// fields come from the public documentation.
+type Measurement struct {
+	// CodigoAgenteConcessionaria Postman shows a string; the real type was not observed.
 	CodigoAgenteConcessionaria json.Number `json:"codigoAgenteConcessionaria,omitempty"`
 	CodigoUnidadeConsumidora   string      `json:"codigoUnidadeConsumidora,omitempty"`
 
-	// Consumo O Postman mostra string; o tipo real não foi observado. Unidade não declarada (D16).
+	// Consumo Postman shows a string; the real type was not observed. Unit not declared (D16).
 	Consumo                     json.Number `json:"consumo,omitempty"`
 	DataAtualizacao             string      `json:"dataAtualizacao,omitempty"`
 	DataReferenciaConsumo       string      `json:"dataReferenciaConsumo,omitempty"`
@@ -374,11 +363,17 @@ type Medicao struct {
 	TipoConsumo                 string      `json:"tipoConsumo,omitempty"`
 }
 
-// MigracaoDetalhe Migração no formato do detalhe (POST, GET por identificador e PUT). Usa
-// `dataReferencia` e `codigoSupridora` onde a listagem usa `mesReferencia`
-// e `codigoAgenteSupridora`, acrescenta `tipoConectado` e não traz
+// MeasurementList defines model for MeasurementList.
+type MeasurementList struct {
+	IndexProximaPagina string        `json:"indexProximaPagina,omitempty"`
+	Medicoes           []Measurement `json:"medicoes"`
+}
+
+// MigrationDetail Migration in the detail format (POST, GET by identifier and PUT). It uses
+// `dataReferencia` and `codigoSupridora` where the list uses `mesReferencia`
+// and `codigoAgenteSupridora`, adds `tipoConectado` and does not carry
 // `idCelebracaoCER`.
-type MigracaoDetalhe struct {
+type MigrationDetail struct {
 	CodigoAgenteConcessionaria                   int    `json:"codigoAgenteConcessionaria,omitempty"`
 	CodigoAgenteConcessionariaUnidadeConsumidora string `json:"codigoAgenteConcessionariaUnidadeConsumidora,omitempty"`
 	CodigoAgenteVarejista                        int    `json:"codigoAgenteVarejista,omitempty"`
@@ -387,25 +382,25 @@ type MigracaoDetalhe struct {
 	CodigoUnidadeConsumidora                     string `json:"codigoUnidadeConsumidora,omitempty"`
 	Comentario                                   string `json:"comentario,omitempty"`
 
-	// DataDenuncia RFC 3339 em UTC, com `Z` (D21).
+	// DataDenuncia RFC 3339 in UTC, with `Z` (D21).
 	//
 	// Example: 2027-01-15T03:00:00Z
 	DataDenuncia string `json:"dataDenuncia,omitempty"`
 
-	// DataReferencia Mês de referência como data e hora RFC 3339 com deslocamento e sem
-	// fração de segundo (por exemplo, o dia 1 do mês à meia-noite em
-	// -03:00). Observado em 01/11/2026 (D21); o SDK o lê sem problema.
+	// DataReferencia Reference month as an RFC 3339 date and time with an offset and no
+	// fractional second (for example, day 1 of the month at midnight at
+	// -03:00). Observed on 2026-11-01 (D21); the SDK reads it without trouble.
 	//
 	//
 	// Example: 2027-03-01T00:00:00-03:00
 	DataReferencia string `json:"dataReferencia,omitempty"`
 
-	// DataSolicitacao RFC 3339 com três dígitos de fração e deslocamento (D21).
+	// DataSolicitacao RFC 3339 with three fractional digits and an offset (D21).
 	//
 	// Example: 2027-01-10T14:30:15.123-03:00
 	DataSolicitacao string `json:"dataSolicitacao,omitempty"`
 
-	// DataValidacao RFC 3339 com deslocamento; a fração de segundo aparece em algumas respostas e em outras não (D21).
+	// DataValidacao RFC 3339 with an offset; the fractional second appears in some responses and not in others (D21).
 	//
 	// Example: 2027-02-20T09:00:00-03:00
 	DataValidacao           string      `json:"dataValidacao,omitempty"`
@@ -423,11 +418,59 @@ type MigracaoDetalhe struct {
 	ValorMusd               json.Number `json:"valorMusd,omitempty"`
 }
 
-// MigracaoResumo Migração no formato da listagem (v1.1).
-type MigracaoResumo struct {
+// MigrationEdit Body of the registration-edit PUT (v1). It is not known which fields are required.
+type MigrationEdit struct {
+	CodigoPerfilVarejista   int                        `json:"codigoPerfilVarejista,omitempty"`
+	EmailUnidadeConsumidora string                     `json:"emailUnidadeConsumidora,omitempty"`
+	MesReferencia           string                     `json:"mesReferencia,omitempty"`
+	NumeroDocumento         string                     `json:"numeroDocumento,omitempty"`
+	StatusMigracao          string                     `json:"statusMigracao,omitempty"`
+	TipoDocumento           MigrationEditTipoDocumento `json:"tipoDocumento,omitempty"`
+}
+
+// MigrationEditTipoDocumento defines model for MigrationEdit.TipoDocumento.
+type MigrationEditTipoDocumento string
+
+// MigrationList defines model for MigrationList.
+type MigrationList struct {
+	// IndexProximaPagina Cursor of the next page. It was null in every test.
+	IndexProximaPagina string             `json:"indexProximaPagina,omitempty"`
+	Migracao           []MigrationSummary `json:"migracao"`
+}
+
+// MigrationRequest Body of the migration POST (v1.1).
+type MigrationRequest struct {
+	CodigoAgenteConcessionaria int `json:"codigoAgenteConcessionaria"`
+	CodigoAgenteVarejista      int `json:"codigoAgenteVarejista"`
+	CodigoPerfilVarejista      int `json:"codigoPerfilVarejista"`
+
+	// CodigoUnidadeConsumidora 15 digits, with a check digit (algorithm not documented).
+	CodigoUnidadeConsumidora string `json:"codigoUnidadeConsumidora"`
+
+	// Comentario Optional.
+	Comentario              string `json:"comentario,omitempty"`
+	DataDenuncia            string `json:"dataDenuncia"`
+	EmailUnidadeConsumidora string `json:"emailUnidadeConsumidora"`
+
+	// MesReferencia Month in YYYY-MM format.
+	MesReferencia string `json:"mesReferencia"`
+
+	// NumeroDocumento No digit `pattern`, because the CNPJ gains letters from July 2026.
+	NumeroDocumento string                        `json:"numeroDocumento"`
+	TipoDocumento   MigrationRequestTipoDocumento `json:"tipoDocumento"`
+}
+
+// MigrationRequestTipoDocumento defines model for MigrationRequest.TipoDocumento.
+type MigrationRequestTipoDocumento string
+
+// MigrationStatus Migration status. The list may grow.
+type MigrationStatus = string
+
+// MigrationSummary Migration in the list format (v1.1).
+type MigrationSummary struct {
 	CodigoAgenteConcessionaria int `json:"codigoAgenteConcessionaria,omitempty"`
 
-	// CodigoAgenteConcessionariaUnidadeConsumidora Composição "<concessionária>_<UC>".
+	// CodigoAgenteConcessionariaUnidadeConsumidora Composition "<distributor>_<UC>".
 	CodigoAgenteConcessionariaUnidadeConsumidora string `json:"codigoAgenteConcessionariaUnidadeConsumidora,omitempty"`
 	CodigoAgenteSupridora                        int    `json:"codigoAgenteSupridora,omitempty"`
 	CodigoAgenteVarejista                        int    `json:"codigoAgenteVarejista,omitempty"`
@@ -435,17 +478,17 @@ type MigracaoResumo struct {
 	CodigoUnidadeConsumidora                     string `json:"codigoUnidadeConsumidora,omitempty"`
 	Comentario                                   string `json:"comentario,omitempty"`
 
-	// DataDenuncia RFC 3339 em UTC, com `Z` (D21).
+	// DataDenuncia RFC 3339 in UTC, with `Z` (D21).
 	//
 	// Example: 2027-01-15T03:00:00Z
 	DataDenuncia string `json:"dataDenuncia,omitempty"`
 
-	// DataSolicitacao RFC 3339 com três dígitos de fração e deslocamento (D21).
+	// DataSolicitacao RFC 3339 with three fractional digits and an offset (D21).
 	//
 	// Example: 2027-01-10T14:30:15.123-03:00
 	DataSolicitacao string `json:"dataSolicitacao,omitempty"`
 
-	// DataValidacao RFC 3339 com deslocamento; a fração de segundo aparece em algumas respostas e em outras não (D21).
+	// DataValidacao RFC 3339 with an offset; the fractional second appears in some responses and not in others (D21).
 	//
 	// Example: 2027-02-20T09:00:00-03:00
 	DataValidacao           string `json:"dataValidacao,omitempty"`
@@ -455,10 +498,10 @@ type MigracaoResumo struct {
 	IndicadorProcessoSiga   string `json:"indicadorProcessoSiga,omitempty"`
 	Justificativa           string `json:"justificativa,omitempty"`
 
-	// MesReferencia Não é `AAAA-MM`: é data e hora RFC 3339 com deslocamento e sem
-	// fração de segundo (por exemplo, o dia 1 do mês à meia-noite em
-	// -03:00). Observado em 01/11/2026 (D21). O parâmetro de consulta
-	// continua `AAAA-MM`.
+	// MesReferencia Not `YYYY-MM`: it is an RFC 3339 date and time with an offset and no
+	// fractional second (for example, day 1 of the month at midnight at
+	// -03:00). Observed on 2026-11-01 (D21). The query parameter
+	// remains `YYYY-MM`.
 	//
 	//
 	// Example: 2027-03-01T00:00:00-03:00
@@ -472,403 +515,360 @@ type MigracaoResumo struct {
 	ValorMusd       json.Number `json:"valorMusd,omitempty"`
 }
 
-// NovaMigracao Corpo do POST de migração (v1.1).
-type NovaMigracao struct {
-	CodigoAgenteConcessionaria int `json:"codigoAgenteConcessionaria"`
-	CodigoAgenteVarejista      int `json:"codigoAgenteVarejista"`
-	CodigoPerfilVarejista      int `json:"codigoPerfilVarejista"`
+// OAuth2Error Body of the 400 of `POST /sso/oauth/token`, in the OAuth2 error format (RFC
+// 6749, section 5.2). It has no `status` or `timestamp`; it is not the `Error` schema.
+type OAuth2Error struct {
+	// Error OAuth2 code. It is not known which of them the server returns.
+	Error string `json:"error"`
 
-	// CodigoUnidadeConsumidora 15 dígitos, com dígito verificador (algoritmo não documentado).
-	CodigoUnidadeConsumidora string `json:"codigoUnidadeConsumidora"`
-
-	// Comentario Opcional.
-	Comentario              string `json:"comentario,omitempty"`
-	DataDenuncia            string `json:"dataDenuncia"`
-	EmailUnidadeConsumidora string `json:"emailUnidadeConsumidora"`
-
-	// MesReferencia Mês no formato AAAA-MM.
-	MesReferencia string `json:"mesReferencia"`
-
-	// NumeroDocumento Sem `pattern` de dígitos, porque o CNPJ passa a ter letras a partir de julho de 2026.
-	NumeroDocumento string                    `json:"numeroDocumento"`
-	TipoDocumento   NovaMigracaoTipoDocumento `json:"tipoDocumento"`
+	// ErrorDescription Human-readable text.
+	ErrorDescription string `json:"error_description,omitempty"`
 }
 
-// NovaMigracaoTipoDocumento defines model for NovaMigracao.TipoDocumento.
-type NovaMigracaoTipoDocumento string
-
-// Solicitacao defines model for Solicitacao.
-type Solicitacao struct {
-	CodigoAgenteConcessionaria int    `json:"codigoAgenteConcessionaria,omitempty"`
-	CodigoAgenteVarejistaAtual int    `json:"codigoAgenteVarejistaAtual,omitempty"`
-	CodigoAgenteVarejistaNovo  int    `json:"codigoAgenteVarejistaNovo,omitempty"`
-	CodigoPerfilVarejistaAtual int    `json:"codigoPerfilVarejistaAtual,omitempty"`
-	CodigoPerfilVarejistaNovo  int    `json:"codigoPerfilVarejistaNovo,omitempty"`
-	CodigoUnidadeConsumidora   string `json:"codigoUnidadeConsumidora,omitempty"`
-	DataAtraso                 string `json:"dataAtraso,omitempty"`
-
-	// DataNotificacao Só a data.
-	DataNotificacao string `json:"dataNotificacao,omitempty"`
-
-	// DataSolicitacao Só a data.
-	DataSolicitacao        string `json:"dataSolicitacao,omitempty"`
-	DescricaoJustificativa string `json:"descricaoJustificativa,omitempty"`
-	IdCelebracaoCER        string `json:"idCelebracaoCER,omitempty"`
-	IdMigracaoAlterada     string `json:"idMigracaoAlterada,omitempty"`
-	IdSolicitacaoAlteracao string `json:"idSolicitacaoAlteracao"`
-	IndicadorAntecedencia  string `json:"indicadorAntecedencia,omitempty"`
-	MesReferencia          string `json:"mesReferencia,omitempty"`
-	SituacaoAlteracao      string `json:"situacaoAlteracao,omitempty"`
-	TipoSolicitacao        string `json:"tipoSolicitacao,omitempty"`
+// RepresentativeChangeRequest Body of the change of representative. The response uses `codigoAgente*` names (D13).
+type RepresentativeChangeRequest struct {
+	CodigoConcessionaria      int                                        `json:"codigoConcessionaria"`
+	CodigoPerfilVarejistaNovo int                                        `json:"codigoPerfilVarejistaNovo"`
+	CodigoUnidadeConsumidora  string                                     `json:"codigoUnidadeConsumidora"`
+	CodigoVarejistaNovo       int                                        `json:"codigoVarejistaNovo"`
+	MesReferencia             string                                     `json:"mesReferencia"`
+	TipoSolicitacao           RepresentativeChangeRequestTipoSolicitacao `json:"tipoSolicitacao"`
 }
 
-// SolicitacaoRepresentante Corpo da troca de representante. A resposta usa nomes `codigoAgente*` (D13).
-type SolicitacaoRepresentante struct {
-	CodigoConcessionaria      int                                     `json:"codigoConcessionaria"`
-	CodigoPerfilVarejistaNovo int                                     `json:"codigoPerfilVarejistaNovo"`
-	CodigoUnidadeConsumidora  string                                  `json:"codigoUnidadeConsumidora"`
-	CodigoVarejistaNovo       int                                     `json:"codigoVarejistaNovo"`
-	MesReferencia             string                                  `json:"mesReferencia"`
-	TipoSolicitacao           SolicitacaoRepresentanteTipoSolicitacao `json:"tipoSolicitacao"`
+// RepresentativeChangeRequestTipoSolicitacao defines model for RepresentativeChangeRequest.TipoSolicitacao.
+type RepresentativeChangeRequestTipoSolicitacao string
+
+// SupplySuspensionRequest Body of the supply suspension.
+type SupplySuspensionRequest struct {
+	CodigoConcessionaria     int                                    `json:"codigoConcessionaria"`
+	CodigoUnidadeConsumidora string                                 `json:"codigoUnidadeConsumidora"`
+	DataNotificacao          string                                 `json:"dataNotificacao"`
+	TipoSolicitacao          SupplySuspensionRequestTipoSolicitacao `json:"tipoSolicitacao"`
 }
 
-// SolicitacaoRepresentanteTipoSolicitacao defines model for SolicitacaoRepresentante.TipoSolicitacao.
-type SolicitacaoRepresentanteTipoSolicitacao string
-
-// SolicitacaoSuspensao Corpo da suspensão de fornecimento.
-type SolicitacaoSuspensao struct {
-	CodigoConcessionaria     int                                 `json:"codigoConcessionaria"`
-	CodigoUnidadeConsumidora string                              `json:"codigoUnidadeConsumidora"`
-	DataNotificacao          string                              `json:"dataNotificacao"`
-	TipoSolicitacao          SolicitacaoSuspensaoTipoSolicitacao `json:"tipoSolicitacao"`
-}
-
-// SolicitacaoSuspensaoTipoSolicitacao defines model for SolicitacaoSuspensao.TipoSolicitacao.
-type SolicitacaoSuspensaoTipoSolicitacao string
-
-// StatusMigracao Status da migração. A lista pode crescer.
-type StatusMigracao = string
+// SupplySuspensionRequestTipoSolicitacao defines model for SupplySuspensionRequest.TipoSolicitacao.
+type SupplySuspensionRequestTipoSolicitacao string
 
 // Token defines model for Token.
 type Token struct {
 	AccessToken string `json:"access_token,omitempty"`
 
-	// ExpiresIn Validade em segundos. Observado 300, sempre com três dígitos (confirmado em 01/11/2026); a documentação pública mostra 298.
+	// ExpiresIn Validity in seconds. 300 observed, always with three digits (confirmed on 2026-11-01); the public documentation shows 298.
 	ExpiresIn       int `json:"expires_in,omitempty"`
 	NotBeforePolicy int `json:"not-before-policy,omitempty"`
 
-	// RefreshExpiresIn Sempre 0 no sandbox; não há token de renovação.
+	// RefreshExpiresIn Always 0 in the sandbox; there is no refresh token.
 	RefreshExpiresIn int    `json:"refresh_expires_in,omitempty"`
 	Scope            string `json:"scope,omitempty"`
 	TokenType        string `json:"token_type,omitempty"`
 }
 
-// TokenRequisicao Só `client_id` e `client_secret`. Um formulário com `grant_type` foi
-// recusado com 400 (corpo de erro OAuth2) em 01/11/2026.
-type TokenRequisicao struct {
-	// ClientId Identificador do cliente.
+// TokenRequest Only `client_id` and `client_secret`. A form with `grant_type` was rejected
+// with 400 (OAuth2 error body) on 2026-11-01.
+type TokenRequest struct {
+	// ClientId Client identifier.
 	ClientId string `json:"client_id"`
 
-	// ClientSecret Segredo do cliente. Nunca registre em log.
+	// ClientSecret Client secret. Never write it to a log.
 	ClientSecret string `json:"client_secret"`
 }
 
-// CodigoAgente defines model for CodigoAgente.
-type CodigoAgente = int
+// AgentCode defines model for AgentCode.
+type AgentCode = int
 
-// CodigoAgenteConcessionariaQuery defines model for CodigoAgenteConcessionariaQuery.
-type CodigoAgenteConcessionariaQuery = int
+// ChangeRequestID defines model for ChangeRequestID.
+type ChangeRequestID = string
 
-// CodigoPerfil defines model for CodigoPerfil.
-type CodigoPerfil = int
+// ChangeRequestStatusQuery defines model for ChangeRequestStatusQuery.
+type ChangeRequestStatusQuery string
 
-// CodigoPerfilVarejistaQuery defines model for CodigoPerfilVarejistaQuery.
-type CodigoPerfilVarejistaQuery = int
+// ChangeRequestTypeQuery defines model for ChangeRequestTypeQuery.
+type ChangeRequestTypeQuery string
 
-// CodigoUnidadeConsumidoraMedicaoQuery defines model for CodigoUnidadeConsumidoraMedicaoQuery.
-type CodigoUnidadeConsumidoraMedicaoQuery = string
+// ConsumerUnitCodeMeasurementQuery defines model for ConsumerUnitCodeMeasurementQuery.
+type ConsumerUnitCodeMeasurementQuery = string
 
-// CodigoUnidadeConsumidoraQuery defines model for CodigoUnidadeConsumidoraQuery.
-type CodigoUnidadeConsumidoraQuery = string
+// ConsumerUnitCodeQuery defines model for ConsumerUnitCodeQuery.
+type ConsumerUnitCodeQuery = string
 
-// DataFim defines model for DataFim.
-type DataFim = string
+// DistributorAgentCodeQuery defines model for DistributorAgentCodeQuery.
+type DistributorAgentCodeQuery = int
 
-// DataInicio defines model for DataInicio.
-type DataInicio = string
+// EndDate defines model for EndDate.
+type EndDate = string
 
-// DataSolicitacaoFinal defines model for DataSolicitacaoFinal.
-type DataSolicitacaoFinal = string
+// MeasurementStatusQuery defines model for MeasurementStatusQuery.
+type MeasurementStatusQuery string
 
-// DataSolicitacaoInicial defines model for DataSolicitacaoInicial.
-type DataSolicitacaoInicial = string
+// MigrationID defines model for MigrationID.
+type MigrationID = string
 
-// IdMigracao defines model for IdMigracao.
-type IdMigracao = string
+// MigrationStatusQuery Migration status. The list may grow.
+type MigrationStatusQuery = MigrationStatus
 
-// IdSolicitacaoAlteracao defines model for IdSolicitacaoAlteracao.
-type IdSolicitacaoAlteracao = string
+// NextPageIndex defines model for NextPageIndex.
+type NextPageIndex = string
 
-// IndexProximaPagina defines model for IndexProximaPagina.
-type IndexProximaPagina = string
+// ProfileCode defines model for ProfileCode.
+type ProfileCode = int
 
-// MesReferenciaFinal defines model for MesReferenciaFinal.
-type MesReferenciaFinal = string
+// ReferenceMonthEnd defines model for ReferenceMonthEnd.
+type ReferenceMonthEnd = string
 
-// MesReferenciaFinalObrigatorio defines model for MesReferenciaFinalObrigatorio.
-type MesReferenciaFinalObrigatorio = string
+// ReferenceMonthEndRequired defines model for ReferenceMonthEndRequired.
+type ReferenceMonthEndRequired = string
 
-// MesReferenciaInicial defines model for MesReferenciaInicial.
-type MesReferenciaInicial = string
+// ReferenceMonthStart defines model for ReferenceMonthStart.
+type ReferenceMonthStart = string
 
-// MesReferenciaInicialObrigatorio defines model for MesReferenciaInicialObrigatorio.
-type MesReferenciaInicialObrigatorio = string
+// ReferenceMonthStartRequired defines model for ReferenceMonthStartRequired.
+type ReferenceMonthStartRequired = string
 
-// SituacaoAlteracaoQuery defines model for SituacaoAlteracaoQuery.
-type SituacaoAlteracaoQuery string
+// RequestDateEnd defines model for RequestDateEnd.
+type RequestDateEnd = string
 
-// SituacaoMedicaoQuery defines model for SituacaoMedicaoQuery.
-type SituacaoMedicaoQuery string
+// RequestDateStart defines model for RequestDateStart.
+type RequestDateStart = string
 
-// StatusMigracaoQuery Status da migração. A lista pode crescer.
-type StatusMigracaoQuery = StatusMigracao
+// RetailerProfileCodeQuery defines model for RetailerProfileCodeQuery.
+type RetailerProfileCodeQuery = int
 
-// TipoSolicitacaoQuery defines model for TipoSolicitacaoQuery.
-type TipoSolicitacaoQuery string
+// StartDate defines model for StartDate.
+type StartDate = string
 
-// Acesso403 Corpo de erro do backend e do autorizador, com os mesmos quatro campos,
-// em `application/json` (não em `application/problem+json`). O SDK Go
-// entrega o mesmo erro como Problem Details da RFC 9457; o catálogo
-// explica cada código e cada situação sem código.
+// BadRequest400 Error body of the backend and of the authorizer, with the same four fields,
+// as `application/json` (not `application/problem+json`). The Go SDK delivers
+// the same error as an RFC 9457 Problem Details object; the catalog explains
+// each code and each situation without a code.
 //
-// Códigos conhecidos:
+// Known codes:
 //
-// - `ERR_CREDENCIAL_INVALIDA`: 403. Token, agente ou perfil recusados.
-// - `ERR_VALIDACAO_CAMPOS`: 400. Um campo foi recusado; a validação para no primeiro.
-// - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. A consulta não trouxe o perfil.
-// - `ERR_MIGRACAO_SOLICITADA`: 400. Já existe migração ativa para a UC e a concessionária.
-// - `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`: 400. A listagem de migrações não trouxe o intervalo de meses ([catálogo](docs/erros.md#faixa-de-meses-obrigatoria)).
-// - `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`: 400. O intervalo de meses é largo demais ([catálogo](docs/erros.md#faixa-de-meses-larga-demais)).
-type Acesso403 = Erro
+// - `ERR_CREDENCIAL_INVALIDA`: 403. Token, agent or profile refused.
+// - `ERR_VALIDACAO_CAMPOS`: 400. A field was refused; validation stops at the first one.
+// - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. The query did not carry the profile.
+// - `ERR_MIGRACAO_SOLICITADA`: 400. There is already an active migration for the UC and the distributor.
+// - `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`: 400. The migration list did not carry the month range ([catalog](docs/errors.md#month-range-required)).
+// - `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`: 400. The month range is too wide ([catalog](docs/errors.md#month-range-too-wide)).
+type BadRequest400 = Error
 
-// Interno500 Corpo de erro do backend e do autorizador, com os mesmos quatro campos,
-// em `application/json` (não em `application/problem+json`). O SDK Go
-// entrega o mesmo erro como Problem Details da RFC 9457; o catálogo
-// explica cada código e cada situação sem código.
+// ChangeRequestCreated200 defines model for ChangeRequestCreated200.
+type ChangeRequestCreated200 = ChangeRequest
+
+// Forbidden403 Error body of the backend and of the authorizer, with the same four fields,
+// as `application/json` (not `application/problem+json`). The Go SDK delivers
+// the same error as an RFC 9457 Problem Details object; the catalog explains
+// each code and each situation without a code.
 //
-// Códigos conhecidos:
+// Known codes:
 //
-// - `ERR_CREDENCIAL_INVALIDA`: 403. Token, agente ou perfil recusados.
-// - `ERR_VALIDACAO_CAMPOS`: 400. Um campo foi recusado; a validação para no primeiro.
-// - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. A consulta não trouxe o perfil.
-// - `ERR_MIGRACAO_SOLICITADA`: 400. Já existe migração ativa para a UC e a concessionária.
-// - `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`: 400. A listagem de migrações não trouxe o intervalo de meses ([catálogo](docs/erros.md#faixa-de-meses-obrigatoria)).
-// - `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`: 400. O intervalo de meses é largo demais ([catálogo](docs/erros.md#faixa-de-meses-larga-demais)).
-type Interno500 = Erro
+// - `ERR_CREDENCIAL_INVALIDA`: 403. Token, agent or profile refused.
+// - `ERR_VALIDACAO_CAMPOS`: 400. A field was refused; validation stops at the first one.
+// - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. The query did not carry the profile.
+// - `ERR_MIGRACAO_SOLICITADA`: 400. There is already an active migration for the UC and the distributor.
+// - `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`: 400. The migration list did not carry the month range ([catalog](docs/errors.md#month-range-required)).
+// - `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`: 400. The month range is too wide ([catalog](docs/errors.md#month-range-too-wide)).
+type Forbidden403 = Error
 
-// Limite429 Corpo de erro do backend e do autorizador, com os mesmos quatro campos,
-// em `application/json` (não em `application/problem+json`). O SDK Go
-// entrega o mesmo erro como Problem Details da RFC 9457; o catálogo
-// explica cada código e cada situação sem código.
+// InternalError500 Error body of the backend and of the authorizer, with the same four fields,
+// as `application/json` (not `application/problem+json`). The Go SDK delivers
+// the same error as an RFC 9457 Problem Details object; the catalog explains
+// each code and each situation without a code.
 //
-// Códigos conhecidos:
+// Known codes:
 //
-// - `ERR_CREDENCIAL_INVALIDA`: 403. Token, agente ou perfil recusados.
-// - `ERR_VALIDACAO_CAMPOS`: 400. Um campo foi recusado; a validação para no primeiro.
-// - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. A consulta não trouxe o perfil.
-// - `ERR_MIGRACAO_SOLICITADA`: 400. Já existe migração ativa para a UC e a concessionária.
-// - `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`: 400. A listagem de migrações não trouxe o intervalo de meses ([catálogo](docs/erros.md#faixa-de-meses-obrigatoria)).
-// - `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`: 400. O intervalo de meses é largo demais ([catálogo](docs/erros.md#faixa-de-meses-larga-demais)).
-type Limite429 = Erro
+// - `ERR_CREDENCIAL_INVALIDA`: 403. Token, agent or profile refused.
+// - `ERR_VALIDACAO_CAMPOS`: 400. A field was refused; validation stops at the first one.
+// - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. The query did not carry the profile.
+// - `ERR_MIGRACAO_SOLICITADA`: 400. There is already an active migration for the UC and the distributor.
+// - `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`: 400. The migration list did not carry the month range ([catalog](docs/errors.md#month-range-required)).
+// - `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`: 400. The month range is too wide ([catalog](docs/errors.md#month-range-too-wide)).
+type InternalError500 = Error
 
-// Requisicao400 Corpo de erro do backend e do autorizador, com os mesmos quatro campos,
-// em `application/json` (não em `application/problem+json`). O SDK Go
-// entrega o mesmo erro como Problem Details da RFC 9457; o catálogo
-// explica cada código e cada situação sem código.
+// TooManyRequests429 Error body of the backend and of the authorizer, with the same four fields,
+// as `application/json` (not `application/problem+json`). The Go SDK delivers
+// the same error as an RFC 9457 Problem Details object; the catalog explains
+// each code and each situation without a code.
 //
-// Códigos conhecidos:
+// Known codes:
 //
-// - `ERR_CREDENCIAL_INVALIDA`: 403. Token, agente ou perfil recusados.
-// - `ERR_VALIDACAO_CAMPOS`: 400. Um campo foi recusado; a validação para no primeiro.
-// - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. A consulta não trouxe o perfil.
-// - `ERR_MIGRACAO_SOLICITADA`: 400. Já existe migração ativa para a UC e a concessionária.
-// - `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`: 400. A listagem de migrações não trouxe o intervalo de meses ([catálogo](docs/erros.md#faixa-de-meses-obrigatoria)).
-// - `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`: 400. O intervalo de meses é largo demais ([catálogo](docs/erros.md#faixa-de-meses-larga-demais)).
-type Requisicao400 = Erro
+// - `ERR_CREDENCIAL_INVALIDA`: 403. Token, agent or profile refused.
+// - `ERR_VALIDACAO_CAMPOS`: 400. A field was refused; validation stops at the first one.
+// - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. The query did not carry the profile.
+// - `ERR_MIGRACAO_SOLICITADA`: 400. There is already an active migration for the UC and the distributor.
+// - `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`: 400. The migration list did not carry the month range ([catalog](docs/errors.md#month-range-required)).
+// - `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`: 400. The month range is too wide ([catalog](docs/errors.md#month-range-too-wide)).
+type TooManyRequests429 = Error
 
-// SolicitacaoCriada200 defines model for SolicitacaoCriada200.
-type SolicitacaoCriada200 = Solicitacao
+// ListMigrationsParams defines parameters for ListMigrations.
+type ListMigrationsParams struct {
+	// CodigoPerfilVarejista Retailer profile. Required in the query, in addition to the `codigoPerfil` header.
+	CodigoPerfilVarejista RetailerProfileCodeQuery `form:"codigoPerfilVarejista" json:"codigoPerfilVarejista"`
 
-// ListarMigracoesParams defines parameters for ListarMigracoes.
-type ListarMigracoesParams struct {
-	// CodigoPerfilVarejista Perfil do varejista. Obrigatório na consulta, além do cabeçalho `codigoPerfil`.
-	CodigoPerfilVarejista CodigoPerfilVarejistaQuery `form:"codigoPerfilVarejista" json:"codigoPerfilVarejista"`
+	// MesReferenciaInicial First month of the range, in YYYY-MM format. Required on the migration list:
+	// without it the sandbox answers 400
+	// `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`. A range that is too wide returns
+	// 400 `ERR_MES_REFERENCIA_INICIAL_DIFERENCA` (12 months passed; 24, 48 and 96 did not; the ceiling is between 12 and 24, D22).
+	MesReferenciaInicial ReferenceMonthStartRequired `form:"mesReferenciaInicial" json:"mesReferenciaInicial"`
 
-	// MesReferenciaInicial Primeiro mês do intervalo, no formato AAAA-MM. Obrigatório na listagem de
-	// migrações: sem ele o sandbox responde 400
-	// `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`. Um intervalo largo demais volta
-	// 400 `ERR_MES_REFERENCIA_INICIAL_DIFERENCA` (12 meses passaram; 24, 48 e 96 não; o teto fica entre 12 e 24, D22).
-	MesReferenciaInicial MesReferenciaInicialObrigatorio `form:"mesReferenciaInicial" json:"mesReferenciaInicial"`
-
-	// MesReferenciaFinal Último mês do intervalo, no formato AAAA-MM. Obrigatório na listagem de
-	// migrações, junto com o mês inicial. A distância máxima entre os dois fica
-	// entre 12 e 24 meses: 12 foram aceitos e 24, 48 e 96 recusados
+	// MesReferenciaFinal Last month of the range, in YYYY-MM format. Required on the migration list,
+	// together with the start month. The maximum distance between the two is
+	// between 12 and 24 months: 12 were accepted and 24, 48 and 96 rejected
 	// (`ERR_MES_REFERENCIA_INICIAL_DIFERENCA`, D22).
-	MesReferenciaFinal MesReferenciaFinalObrigatorio `form:"mesReferenciaFinal" json:"mesReferenciaFinal"`
+	MesReferenciaFinal ReferenceMonthEndRequired `form:"mesReferenciaFinal" json:"mesReferenciaFinal"`
 
-	// CodigoUnidadeConsumidora Código da unidade consumidora. Sem validação de formato no filtro.
-	CodigoUnidadeConsumidora CodigoUnidadeConsumidoraQuery `form:"codigoUnidadeConsumidora,omitempty" json:"codigoUnidadeConsumidora,omitempty"`
+	// CodigoUnidadeConsumidora Consumer unit code. No format validation on the filter.
+	CodigoUnidadeConsumidora ConsumerUnitCodeQuery `form:"codigoUnidadeConsumidora,omitempty" json:"codigoUnidadeConsumidora,omitempty"`
 
-	// StatusMigracao Filtra pelo status da migração.
-	StatusMigracao StatusMigracaoQuery `form:"statusMigracao,omitempty" json:"statusMigracao,omitempty"`
+	// StatusMigracao Filters by migration status.
+	StatusMigracao MigrationStatusQuery `form:"statusMigracao,omitempty" json:"statusMigracao,omitempty"`
 
-	// IndexProximaPagina Cursor devolvido pela página anterior. Nenhuma resposta observada trouxe cursor preenchido.
-	IndexProximaPagina IndexProximaPagina `form:"indexProximaPagina,omitempty" json:"indexProximaPagina,omitempty"`
+	// IndexProximaPagina Cursor returned by the previous page. No observed response carried a filled-in cursor.
+	IndexProximaPagina NextPageIndex `form:"indexProximaPagina,omitempty" json:"indexProximaPagina,omitempty"`
 
-	// CodigoAgente Código do agente que faz a chamada (a documentação pública diz "código da concessionária").
-	CodigoAgente CodigoAgente `json:"codigoAgente"`
+	// CodigoAgente Code of the agent making the call (the public documentation says "distributor code").
+	CodigoAgente AgentCode `json:"codigoAgente"`
 
-	// CodigoPerfil Código do perfil do agente.
-	CodigoPerfil CodigoPerfil `json:"codigoPerfil"`
+	// CodigoPerfil Code of the agent's profile.
+	CodigoPerfil ProfileCode `json:"codigoPerfil"`
 }
 
-// CriarMigracaoParams defines parameters for CriarMigracao.
-type CriarMigracaoParams struct {
-	// CodigoAgente Código do agente que faz a chamada (a documentação pública diz "código da concessionária").
-	CodigoAgente CodigoAgente `json:"codigoAgente"`
+// CreateMigrationParams defines parameters for CreateMigration.
+type CreateMigrationParams struct {
+	// CodigoAgente Code of the agent making the call (the public documentation says "distributor code").
+	CodigoAgente AgentCode `json:"codigoAgente"`
 
-	// CodigoPerfil Código do perfil do agente.
-	CodigoPerfil CodigoPerfil `json:"codigoPerfil"`
+	// CodigoPerfil Code of the agent's profile.
+	CodigoPerfil ProfileCode `json:"codigoPerfil"`
 }
 
-// ObterMigracaoParams defines parameters for ObterMigracao.
-type ObterMigracaoParams struct {
-	// CodigoAgente Código do agente que faz a chamada (a documentação pública diz "código da concessionária").
-	CodigoAgente CodigoAgente `json:"codigoAgente"`
+// GetMigrationParams defines parameters for GetMigration.
+type GetMigrationParams struct {
+	// CodigoAgente Code of the agent making the call (the public documentation says "distributor code").
+	CodigoAgente AgentCode `json:"codigoAgente"`
 
-	// CodigoPerfil Código do perfil do agente.
-	CodigoPerfil CodigoPerfil `json:"codigoPerfil"`
+	// CodigoPerfil Code of the agent's profile.
+	CodigoPerfil ProfileCode `json:"codigoPerfil"`
 }
 
-// ListarSolicitacoesParams defines parameters for ListarSolicitacoes.
-type ListarSolicitacoesParams struct {
-	// TipoSolicitacao Tipo da solicitação. Obrigatório de fato, embora a documentação pública o marque como opcional.
-	TipoSolicitacao ListarSolicitacoesParamsTipoSolicitacao `form:"tipoSolicitacao" json:"tipoSolicitacao"`
+// ListChangeRequestsParams defines parameters for ListChangeRequests.
+type ListChangeRequestsParams struct {
+	// TipoSolicitacao Type of the request. Actually required, although the public documentation marks it as optional.
+	TipoSolicitacao ListChangeRequestsParamsTipoSolicitacao `form:"tipoSolicitacao" json:"tipoSolicitacao"`
 
-	// SituacaoAlteracao Filtra pela situação da solicitação. A documentação pública a marca como obrigatória, mas ela é opcional.
-	SituacaoAlteracao ListarSolicitacoesParamsSituacaoAlteracao `form:"situacaoAlteracao,omitempty" json:"situacaoAlteracao,omitempty"`
+	// SituacaoAlteracao Filters by request status. The public documentation marks it as required, but it is optional.
+	SituacaoAlteracao ListChangeRequestsParamsSituacaoAlteracao `form:"situacaoAlteracao,omitempty" json:"situacaoAlteracao,omitempty"`
 
-	// MesReferenciaInicial Primeiro mês do intervalo, no formato AAAA-MM.
-	MesReferenciaInicial MesReferenciaInicial `form:"mesReferenciaInicial,omitempty" json:"mesReferenciaInicial,omitempty"`
+	// MesReferenciaInicial First month of the range, in YYYY-MM format.
+	MesReferenciaInicial ReferenceMonthStart `form:"mesReferenciaInicial,omitempty" json:"mesReferenciaInicial,omitempty"`
 
-	// MesReferenciaFinal Último mês do intervalo, no formato AAAA-MM.
-	MesReferenciaFinal MesReferenciaFinal `form:"mesReferenciaFinal,omitempty" json:"mesReferenciaFinal,omitempty"`
+	// MesReferenciaFinal Last month of the range, in YYYY-MM format.
+	MesReferenciaFinal ReferenceMonthEnd `form:"mesReferenciaFinal,omitempty" json:"mesReferenciaFinal,omitempty"`
 
-	// DataSolicitacaoInicial Primeiro dia do intervalo da data de solicitação. O formato não foi testado e a coleção pública se contradiz (texto com `DD-MM-AAAA`, URL de exemplo com `AAAA-MM-DD`); a spec segue a URL.
-	DataSolicitacaoInicial DataSolicitacaoInicial `form:"dataSolicitacaoInicial,omitempty" json:"dataSolicitacaoInicial,omitempty"`
+	// DataSolicitacaoInicial First day of the request date range. The format was not tested and the public collection contradicts itself (text with `DD-MM-YYYY`, example URL with `YYYY-MM-DD`); the spec follows the URL.
+	DataSolicitacaoInicial RequestDateStart `form:"dataSolicitacaoInicial,omitempty" json:"dataSolicitacaoInicial,omitempty"`
 
-	// DataSolicitacaoFinal Último dia do intervalo da data de solicitação. O formato não foi testado e a coleção pública se contradiz (texto com `DD-MM-AAAA`, URL de exemplo com `AAAA-MM-DD`); a spec segue a URL.
-	DataSolicitacaoFinal DataSolicitacaoFinal `form:"dataSolicitacaoFinal,omitempty" json:"dataSolicitacaoFinal,omitempty"`
+	// DataSolicitacaoFinal Last day of the request date range. The format was not tested and the public collection contradicts itself (text with `DD-MM-YYYY`, example URL with `YYYY-MM-DD`); the spec follows the URL.
+	DataSolicitacaoFinal RequestDateEnd `form:"dataSolicitacaoFinal,omitempty" json:"dataSolicitacaoFinal,omitempty"`
 
-	// CodigoUnidadeConsumidora Código da unidade consumidora. Sem validação de formato no filtro.
-	CodigoUnidadeConsumidora CodigoUnidadeConsumidoraQuery `form:"codigoUnidadeConsumidora,omitempty" json:"codigoUnidadeConsumidora,omitempty"`
+	// CodigoUnidadeConsumidora Consumer unit code. No format validation on the filter.
+	CodigoUnidadeConsumidora ConsumerUnitCodeQuery `form:"codigoUnidadeConsumidora,omitempty" json:"codigoUnidadeConsumidora,omitempty"`
 
-	// IndexProximaPagina Cursor devolvido pela página anterior. Nenhuma resposta observada trouxe cursor preenchido.
-	IndexProximaPagina IndexProximaPagina `form:"indexProximaPagina,omitempty" json:"indexProximaPagina,omitempty"`
+	// IndexProximaPagina Cursor returned by the previous page. No observed response carried a filled-in cursor.
+	IndexProximaPagina NextPageIndex `form:"indexProximaPagina,omitempty" json:"indexProximaPagina,omitempty"`
 
-	// CodigoAgente Código do agente que faz a chamada (a documentação pública diz "código da concessionária").
-	CodigoAgente CodigoAgente `json:"codigoAgente"`
+	// CodigoAgente Code of the agent making the call (the public documentation says "distributor code").
+	CodigoAgente AgentCode `json:"codigoAgente"`
 
-	// CodigoPerfil Código do perfil do agente.
-	CodigoPerfil CodigoPerfil `json:"codigoPerfil"`
+	// CodigoPerfil Code of the agent's profile.
+	CodigoPerfil ProfileCode `json:"codigoPerfil"`
 }
 
-// ListarSolicitacoesParamsTipoSolicitacao defines parameters for ListarSolicitacoes.
-type ListarSolicitacoesParamsTipoSolicitacao string
+// ListChangeRequestsParamsTipoSolicitacao defines parameters for ListChangeRequests.
+type ListChangeRequestsParamsTipoSolicitacao string
 
-// ListarSolicitacoesParamsSituacaoAlteracao defines parameters for ListarSolicitacoes.
-type ListarSolicitacoesParamsSituacaoAlteracao string
+// ListChangeRequestsParamsSituacaoAlteracao defines parameters for ListChangeRequests.
+type ListChangeRequestsParamsSituacaoAlteracao string
 
-// SolicitarTrocaRepresentanteParams defines parameters for SolicitarTrocaRepresentante.
-type SolicitarTrocaRepresentanteParams struct {
-	// CodigoAgente Código do agente que faz a chamada (a documentação pública diz "código da concessionária").
-	CodigoAgente CodigoAgente `json:"codigoAgente"`
+// RequestRepresentativeChangeParams defines parameters for RequestRepresentativeChange.
+type RequestRepresentativeChangeParams struct {
+	// CodigoAgente Code of the agent making the call (the public documentation says "distributor code").
+	CodigoAgente AgentCode `json:"codigoAgente"`
 
-	// CodigoPerfil Código do perfil do agente.
-	CodigoPerfil CodigoPerfil `json:"codigoPerfil"`
+	// CodigoPerfil Code of the agent's profile.
+	CodigoPerfil ProfileCode `json:"codigoPerfil"`
 }
 
-// SolicitarSuspensaoFornecimentoParams defines parameters for SolicitarSuspensaoFornecimento.
-type SolicitarSuspensaoFornecimentoParams struct {
-	// CodigoAgente Código do agente que faz a chamada (a documentação pública diz "código da concessionária").
-	CodigoAgente CodigoAgente `json:"codigoAgente"`
+// RequestSupplySuspensionParams defines parameters for RequestSupplySuspension.
+type RequestSupplySuspensionParams struct {
+	// CodigoAgente Code of the agent making the call (the public documentation says "distributor code").
+	CodigoAgente AgentCode `json:"codigoAgente"`
 
-	// CodigoPerfil Código do perfil do agente.
-	CodigoPerfil CodigoPerfil `json:"codigoPerfil"`
+	// CodigoPerfil Code of the agent's profile.
+	CodigoPerfil ProfileCode `json:"codigoPerfil"`
 }
 
-// DecidirSolicitacaoParams defines parameters for DecidirSolicitacao.
-type DecidirSolicitacaoParams struct {
-	// CodigoAgente Código do agente que faz a chamada (a documentação pública diz "código da concessionária").
-	CodigoAgente CodigoAgente `json:"codigoAgente"`
+// DecideChangeRequestParams defines parameters for DecideChangeRequest.
+type DecideChangeRequestParams struct {
+	// CodigoAgente Code of the agent making the call (the public documentation says "distributor code").
+	CodigoAgente AgentCode `json:"codigoAgente"`
 
-	// CodigoPerfil Código do perfil do agente.
-	CodigoPerfil CodigoPerfil `json:"codigoPerfil"`
+	// CodigoPerfil Code of the agent's profile.
+	CodigoPerfil ProfileCode `json:"codigoPerfil"`
 }
 
-// ListarMedicoesParams defines parameters for ListarMedicoes.
-type ListarMedicoesParams struct {
-	// CodigoUnidadeConsumidora Código da unidade consumidora. Sem `pattern`, porque as medições da v1 aceitaram UC de 10 dígitos.
-	CodigoUnidadeConsumidora CodigoUnidadeConsumidoraMedicaoQuery `form:"codigoUnidadeConsumidora" json:"codigoUnidadeConsumidora"`
+// ListMeasurementsParams defines parameters for ListMeasurements.
+type ListMeasurementsParams struct {
+	// CodigoUnidadeConsumidora Consumer unit code. No `pattern`, because the v1 measurements accepted a 10-digit UC.
+	CodigoUnidadeConsumidora ConsumerUnitCodeMeasurementQuery `form:"codigoUnidadeConsumidora" json:"codigoUnidadeConsumidora"`
 
-	// CodigoAgenteConcessionaria Código da concessionária da UC.
-	CodigoAgenteConcessionaria CodigoAgenteConcessionariaQuery `form:"codigoAgenteConcessionaria" json:"codigoAgenteConcessionaria"`
+	// CodigoAgenteConcessionaria Code of the UC's distributor.
+	CodigoAgenteConcessionaria DistributorAgentCodeQuery `form:"codigoAgenteConcessionaria" json:"codigoAgenteConcessionaria"`
 
-	// DataInicio Início do intervalo, com data, hora e deslocamento.
-	DataInicio DataInicio `form:"dataInicio" json:"dataInicio"`
+	// DataInicio Start of the range, with date, time and offset.
+	DataInicio StartDate `form:"dataInicio" json:"dataInicio"`
 
-	// DataFim Fim do intervalo, com data, hora e deslocamento.
-	DataFim DataFim `form:"dataFim" json:"dataFim"`
+	// DataFim End of the range, with date, time and offset.
+	DataFim EndDate `form:"dataFim" json:"dataFim"`
 
-	// SituacaoMedicao Filtra pela situação da medição.
-	SituacaoMedicao ListarMedicoesParamsSituacaoMedicao `form:"situacaoMedicao,omitempty" json:"situacaoMedicao,omitempty"`
+	// SituacaoMedicao Filters by measurement status.
+	SituacaoMedicao ListMeasurementsParamsSituacaoMedicao `form:"situacaoMedicao,omitempty" json:"situacaoMedicao,omitempty"`
 
-	// IndexProximaPagina Cursor devolvido pela página anterior. Nenhuma resposta observada trouxe cursor preenchido.
-	IndexProximaPagina IndexProximaPagina `form:"indexProximaPagina,omitempty" json:"indexProximaPagina,omitempty"`
+	// IndexProximaPagina Cursor returned by the previous page. No observed response carried a filled-in cursor.
+	IndexProximaPagina NextPageIndex `form:"indexProximaPagina,omitempty" json:"indexProximaPagina,omitempty"`
 
-	// CodigoAgente Código do agente que faz a chamada (a documentação pública diz "código da concessionária").
-	CodigoAgente CodigoAgente `json:"codigoAgente"`
+	// CodigoAgente Code of the agent making the call (the public documentation says "distributor code").
+	CodigoAgente AgentCode `json:"codigoAgente"`
 
-	// CodigoPerfil Código do perfil do agente.
-	CodigoPerfil CodigoPerfil `json:"codigoPerfil"`
+	// CodigoPerfil Code of the agent's profile.
+	CodigoPerfil ProfileCode `json:"codigoPerfil"`
 }
 
-// ListarMedicoesParamsSituacaoMedicao defines parameters for ListarMedicoes.
-type ListarMedicoesParamsSituacaoMedicao string
+// ListMeasurementsParamsSituacaoMedicao defines parameters for ListMeasurements.
+type ListMeasurementsParamsSituacaoMedicao string
 
-// EditarMigracaoParams defines parameters for EditarMigracao.
-type EditarMigracaoParams struct {
-	// CodigoAgente Código do agente que faz a chamada (a documentação pública diz "código da concessionária").
-	CodigoAgente CodigoAgente `json:"codigoAgente"`
+// EditMigrationParams defines parameters for EditMigration.
+type EditMigrationParams struct {
+	// CodigoAgente Code of the agent making the call (the public documentation says "distributor code").
+	CodigoAgente AgentCode `json:"codigoAgente"`
 
-	// CodigoPerfil Código do perfil do agente.
-	CodigoPerfil CodigoPerfil `json:"codigoPerfil"`
+	// CodigoPerfil Code of the agent's profile.
+	CodigoPerfil ProfileCode `json:"codigoPerfil"`
 }
 
-// ObterTokenFormdataRequestBody defines body for ObterToken for application/x-www-form-urlencoded ContentType.
-type ObterTokenFormdataRequestBody = TokenRequisicao
+// GetTokenFormdataRequestBody defines body for GetToken for application/x-www-form-urlencoded ContentType.
+type GetTokenFormdataRequestBody = TokenRequest
 
-// CriarMigracaoJSONRequestBody defines body for CriarMigracao for application/json ContentType.
-type CriarMigracaoJSONRequestBody = NovaMigracao
+// CreateMigrationJSONRequestBody defines body for CreateMigration for application/json ContentType.
+type CreateMigrationJSONRequestBody = MigrationRequest
 
-// SolicitarTrocaRepresentanteJSONRequestBody defines body for SolicitarTrocaRepresentante for application/json ContentType.
-type SolicitarTrocaRepresentanteJSONRequestBody = SolicitacaoRepresentante
+// RequestRepresentativeChangeJSONRequestBody defines body for RequestRepresentativeChange for application/json ContentType.
+type RequestRepresentativeChangeJSONRequestBody = RepresentativeChangeRequest
 
-// SolicitarSuspensaoFornecimentoJSONRequestBody defines body for SolicitarSuspensaoFornecimento for application/json ContentType.
-type SolicitarSuspensaoFornecimentoJSONRequestBody = SolicitacaoSuspensao
+// RequestSupplySuspensionJSONRequestBody defines body for RequestSupplySuspension for application/json ContentType.
+type RequestSupplySuspensionJSONRequestBody = SupplySuspensionRequest
 
-// DecidirSolicitacaoJSONRequestBody defines body for DecidirSolicitacao for application/json ContentType.
-type DecidirSolicitacaoJSONRequestBody = DecisaoSolicitacao
+// DecideChangeRequestJSONRequestBody defines body for DecideChangeRequest for application/json ContentType.
+type DecideChangeRequestJSONRequestBody = ChangeRequestDecision
 
-// EditarMigracaoJSONRequestBody defines body for EditarMigracao for application/json ContentType.
-type EditarMigracaoJSONRequestBody = EdicaoMigracao
+// EditMigrationJSONRequestBody defines body for EditMigration for application/json ContentType.
+type EditMigrationJSONRequestBody = MigrationEdit

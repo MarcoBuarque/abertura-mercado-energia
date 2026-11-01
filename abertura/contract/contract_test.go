@@ -412,7 +412,7 @@ func TestContract(t *testing.T) {
 				finding(t, "Create: ErrFieldValidation with the consumer unit and document from the environment; check the values and the month. The write step was skipped")
 				t.Skip("Create refused by field validation (finding recorded)")
 			case errors.As(err, &uncertain):
-				// The result is uncertain: check below, as the catalogue says.
+				// The result is uncertain: check below, as the catalog says.
 				finding(t, "Create: uncertain result (%s); checking with CheckCreated", describe(err))
 			default:
 				finding(t, "Create: %s", describe(err))

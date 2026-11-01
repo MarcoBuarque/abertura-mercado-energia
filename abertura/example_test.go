@@ -196,10 +196,10 @@ func ExampleClient_Do() {
 	c := exampleClient(env)
 
 	var list struct {
-		Solicitacao []struct {
+		ChangeRequests []struct {
 			ID     string `json:"idSolicitacaoAlteracao"`
 			Status string `json:"situacaoAlteracao"`
-			Tipo   string `json:"tipoSolicitacao"`
+			Type   string `json:"tipoSolicitacao"`
 		} `json:"solicitacao"`
 	}
 	err := c.Do(context.Background(), http.MethodGet,
@@ -207,8 +207,8 @@ func ExampleClient_Do() {
 	if err != nil {
 		log.Fatalf("Do: %v", err)
 	}
-	for _, s := range list.Solicitacao {
-		fmt.Println(s.ID, s.Status, s.Tipo)
+	for _, s := range list.ChangeRequests {
+		fmt.Println(s.ID, s.Status, s.Type)
 	}
 	// Output:
 	// 00000000-0000-4000-8000-0000000000b1 CRIADA SUSPENSAO_FORNECIMENTO_RESILICAO

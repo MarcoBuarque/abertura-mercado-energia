@@ -58,7 +58,7 @@ echo "$banner" > "$tmp/banner.html"
 
 docker run --rm -v "$root":/work -w /work "$PANDOC_IMAGE" \
   --from gfm --to html5 --standalone \
-  --metadata lang=en --metadata pagetitle="Error catalogue (unofficial description)" \
+  --metadata lang=en --metadata pagetitle="Error catalog (unofficial description)" \
   --include-in-header "$tmp/header.html" --include-before-body "$tmp/banner.html" \
   --output "$output/index.html" "$tmp/errors.md"
 
@@ -73,7 +73,7 @@ cat > "$legacy/index.html" <<'HTML'
 <title>Moved to /errors/</title>
 </head>
 <body>
-<p>This page moved to <a href="../errors/">the error catalogue</a>.</p>
+<p>This page moved to <a href="../errors/">the error catalog</a>.</p>
 <script>location.replace("../errors/" + location.hash);</script>
 </body>
 </html>

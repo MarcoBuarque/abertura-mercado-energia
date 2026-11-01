@@ -315,7 +315,7 @@ backend and is not retried. The retry happens once per call.
 The API returns errors with four fields (`timestamp`, `status`, `error`,
 `message`) and the spec describes exactly that. The Go SDK delivers the same
 error as RFC 9457 Problem Details; in a Python client, the conversion fits in
-one function, backed by the [error catalogue](errors.md). Save it as
+one function, backed by the [error catalog](errors.md). Save it as
 `problem.py`, start the mock (`make mock`) and run `python3 -I problem.py`:
 
 ```python
@@ -369,7 +369,7 @@ def to_problem(status, body, headers, operation):
         "title": title,
         "status": status,
         # Never copy the API's "message": it may mention a consumer unit, document or e-mail.
-        "detail": f"Operation {operation}: see the catalogue.",
+        "detail": f"Operation {operation}: see the catalog.",
         "operation": operation,
     }
     if code:
@@ -403,7 +403,7 @@ Expected output (run against the mock on 30/10/2026):
   "type": "https://marcobuarque.github.io/abertura-mercado-energia/errors#migration-already-requested",
   "title": "Migration already requested",
   "status": 400,
-  "detail": "Operation createMigration: see the catalogue.",
+  "detail": "Operation createMigration: see the catalog.",
   "operation": "createMigration",
   "code": "ERR_MIGRACAO_SOLICITADA"
 }
@@ -412,7 +412,7 @@ Expected output (run against the mock on 30/10/2026):
 Three precautions, the same as the SDK's: the `detail` is your own text and
 does **not** copy the API's `message` (it may mention a consumer unit,
 document or e-mail); the `code` is only included if it has the `ERR_` form
-and upper case; and the 403 `ERR_CREDENCIAL_INVALIDA` has two catalogue
+and upper case; and the 403 `ERR_CREDENCIAL_INVALIDA` has two catalog
 entries, depending on whether it comes with the `x-amzn-ErrorType` header.
 To hand the result to whoever calls your service, use the media type
 `application/problem+json`.

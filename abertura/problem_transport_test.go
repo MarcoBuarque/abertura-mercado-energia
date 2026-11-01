@@ -12,7 +12,7 @@ import (
 
 // TestProblemFrom_WhenTransportFailure_ClassifiesByType proves that real
 // transport failures (untrusted TLS, connection closed without a response,
-// invalid JSON in a 200) reach the catalogue, and that Retryable and Uncertain
+// invalid JSON in a 200) reach the catalog, and that Retryable and Uncertain
 // come from decide.
 func TestProblemFrom_WhenTransportFailure_ClassifiesByType(t *testing.T) {
 	t.Parallel()

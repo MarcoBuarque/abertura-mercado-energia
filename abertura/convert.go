@@ -12,6 +12,8 @@ import (
 
 // brasiliaZone is the API's fixed -03:00 offset. It is fixed and needs no
 // tzdata: the API dates always come with that offset.
+//
+//nolint:gochecknoglobals // read-only table, never written after initialization
 var brasiliaZone = time.FixedZone("-03:00", -3*60*60)
 
 const (
@@ -136,7 +138,7 @@ func (c migrationFields) convert() (Migration, error) {
 }
 
 // migrationFromSummary converts a migration in the list format (v1.1).
-func migrationFromSummary(r gen.MigracaoResumo) (Migration, error) {
+func migrationFromSummary(r gen.MigrationSummary) (Migration, error) {
 	return migrationFields{
 		id: r.IdMigracao, consumerUnit: r.CodigoUnidadeConsumidora,
 		distributor: r.CodigoAgenteConcessionaria, supplier: r.CodigoAgenteSupridora,
@@ -153,7 +155,7 @@ func migrationFromSummary(r gen.MigracaoResumo) (Migration, error) {
 
 // migrationFromDetail converts a migration in the detail format (POST, GET by
 // id and PUT).
-func migrationFromDetail(d gen.MigracaoDetalhe) (Migration, error) {
+func migrationFromDetail(d gen.MigrationDetail) (Migration, error) {
 	return migrationFields{
 		id: d.IdMigracao, consumerUnit: d.CodigoUnidadeConsumidora,
 		distributor: d.CodigoAgenteConcessionaria, supplier: d.CodigoSupridora,
@@ -169,7 +171,7 @@ func migrationFromDetail(d gen.MigracaoDetalhe) (Migration, error) {
 }
 
 // measurementFrom converts a measurement.
-func measurementFrom(m gen.Medicao) (Measurement, error) {
+func measurementFrom(m gen.Measurement) (Measurement, error) {
 	out := Measurement{
 		ID: m.IdentificadorMedicaoConsumo, ConsumerUnit: m.CodigoUnidadeConsumidora,
 		ConsumptionType: m.TipoConsumo, Status: MeasurementStatus(m.SituacaoMedicao),
@@ -212,8 +214,8 @@ func instantString(t time.Time) string {
 // migrationRequestToGen converts the public request into the POST body. A
 // Document serializes masked, so the body carries Number(), which is possible
 // because the generated type is internal.
-func migrationRequestToGen(n MigrationRequest, agent, profile int) gen.NovaMigracao {
-	return gen.NovaMigracao{
+func migrationRequestToGen(n MigrationRequest, agent, profile int) gen.MigrationRequest {
+	return gen.MigrationRequest{
 		CodigoAgenteConcessionaria: n.Distributor,
 		CodigoAgenteVarejista:      agent,
 		CodigoPerfilVarejista:      profile,
@@ -223,18 +225,18 @@ func migrationRequestToGen(n MigrationRequest, agent, profile int) gen.NovaMigra
 		EmailUnidadeConsumidora:    n.Email,
 		MesReferencia:              n.Month.String(),
 		NumeroDocumento:            n.Document.Number(),
-		TipoDocumento:              gen.NovaMigracaoTipoDocumento(n.Document.Type()),
+		TipoDocumento:              gen.MigrationRequestTipoDocumento(n.Document.Type()),
 	}
 }
 
 // editToGen converts the public edit into the PUT body.
-func editToGen(e MigrationEdit) gen.EdicaoMigracao {
-	return gen.EdicaoMigracao{
+func editToGen(e MigrationEdit) gen.MigrationEdit {
+	return gen.MigrationEdit{
 		CodigoPerfilVarejista:   e.Profile,
 		EmailUnidadeConsumidora: e.Email,
 		MesReferencia:           e.Month.String(),
 		NumeroDocumento:         e.Document.Number(),
 		StatusMigracao:          string(e.Status),
-		TipoDocumento:           gen.EdicaoMigracaoTipoDocumento(e.Document.Type()),
+		TipoDocumento:           gen.MigrationEditTipoDocumento(e.Document.Type()),
 	}
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Checks the published error catalogue page against its sources:
+# Checks the published error catalog page against its sources:
 #   - every `ERR_*` code declared in openapi/abertura.yaml appears in
 #     docs/errors.md;
 #   - every entry of docs/errors.md (the `<a id="slug"></a>` anchors, which are
@@ -25,7 +25,7 @@ slugs="$(sed -n 's/^<a id="\([a-z0-9-]*\)"><\/a>$/\1/p' "$source_md")"
 failed=0
 total=0
 
-# 1. Spec error codes documented in the catalogue.
+# 1. Spec error codes documented in the catalog.
 codes="$(grep -oE 'ERR_[A-Z0-9_]+' "$spec" | sort -u || true)"
 for c in $codes; do
   if ! grep -q "$c" "$source_md"; then
@@ -34,7 +34,7 @@ for c in $codes; do
   fi
 done
 
-# 2. Every catalogue anchor exists as an id in the HTML.
+# 2. Every catalog anchor exists as an id in the HTML.
 for s in $slugs; do
   total=$((total + 1))
   if ! grep -Eq "id=\"$s\"" "$html"; then

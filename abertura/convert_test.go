@@ -43,8 +43,8 @@ var mappings = map[string]struct {
 	mapping
 	convert func(t *testing.T, v any) reflect.Value
 }{
-	"gen.MigracaoResumo": {
-		fresh: func() any { return &gen.MigracaoResumo{} },
+	"gen.MigrationSummary": {
+		fresh: func() any { return &gen.MigrationSummary{} },
 		mapping: mapping{
 			mapped: map[string]string{
 				"idMigracao":                 "ID",
@@ -83,7 +83,7 @@ var mappings = map[string]struct {
 		},
 		convert: func(t *testing.T, v any) reflect.Value {
 			t.Helper()
-			g, ok := v.(*gen.MigracaoResumo)
+			g, ok := v.(*gen.MigrationSummary)
 			if !ok {
 				t.Fatalf("type %T", v)
 			}
@@ -94,8 +94,8 @@ var mappings = map[string]struct {
 			return reflect.ValueOf(m)
 		},
 	},
-	"gen.MigracaoDetalhe": {
-		fresh: func() any { return &gen.MigracaoDetalhe{} },
+	"gen.MigrationDetail": {
+		fresh: func() any { return &gen.MigrationDetail{} },
 		mapping: mapping{
 			mapped: map[string]string{
 				"idMigracao":                 "ID",
@@ -134,7 +134,7 @@ var mappings = map[string]struct {
 		},
 		convert: func(t *testing.T, v any) reflect.Value {
 			t.Helper()
-			g, ok := v.(*gen.MigracaoDetalhe)
+			g, ok := v.(*gen.MigrationDetail)
 			if !ok {
 				t.Fatalf("type %T", v)
 			}
@@ -145,8 +145,8 @@ var mappings = map[string]struct {
 			return reflect.ValueOf(m)
 		},
 	},
-	"gen.Medicao": {
-		fresh: func() any { return &gen.Medicao{} },
+	"gen.Measurement": {
+		fresh: func() any { return &gen.Measurement{} },
 		mapping: mapping{
 			mapped: map[string]string{
 				"identificadorMedicaoConsumo": "ID",
@@ -166,7 +166,7 @@ var mappings = map[string]struct {
 		},
 		convert: func(t *testing.T, v any) reflect.Value {
 			t.Helper()
-			g, ok := v.(*gen.Medicao)
+			g, ok := v.(*gen.Measurement)
 			if !ok {
 				t.Fatalf("type %T", v)
 			}
@@ -256,37 +256,37 @@ func TestMigrationFromSummary_WhenVariedFields_Converts(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name string
-		in   gen.MigracaoResumo
+		in   gen.MigrationSummary
 		want Migration
 	}{
 		{
 			name: "date-time month becomes YearMonth",
-			in:   gen.MigracaoResumo{IdMigracao: "i", MesReferencia: "2027-03-01T00:00:00-03:00"},
+			in:   gen.MigrationSummary{IdMigracao: "i", MesReferencia: "2027-03-01T00:00:00-03:00"},
 			want: Migration{ID: "i", Month: NewYearMonth(2027, time.March)},
 		},
 		{
 			name: "MM-YYYY month becomes YearMonth",
-			in:   gen.MigracaoResumo{IdMigracao: "i", MesReferencia: "12-2026"},
+			in:   gen.MigrationSummary{IdMigracao: "i", MesReferencia: "12-2026"},
 			want: Migration{ID: "i", Month: NewYearMonth(2026, time.December)},
 		},
 		{
 			name: "supplier comes from codigoAgenteSupridora",
-			in:   gen.MigracaoResumo{IdMigracao: "i", CodigoAgenteSupridora: 900004},
+			in:   gen.MigrationSummary{IdMigracao: "i", CodigoAgenteSupridora: 900004},
 			want: Migration{ID: "i", Supplier: 900004},
 		},
 		{
 			name: "absent or null fields stay at the zero value",
-			in:   gen.MigracaoResumo{IdMigracao: "i"},
+			in:   gen.MigrationSummary{IdMigracao: "i"},
 			want: Migration{ID: "i"},
 		},
 		{
 			name: "status and yes/no pass through as received, even when unknown",
-			in:   gen.MigracaoResumo{IdMigracao: "i", StatusMigracao: "STATUS_NOVO", PagamentoMulta: "TALVEZ"},
+			in:   gen.MigrationSummary{IdMigracao: "i", StatusMigracao: "STATUS_NOVO", PagamentoMulta: "TALVEZ"},
 			want: Migration{ID: "i", Status: "STATUS_NOVO", PenaltyPayment: "TALVEZ"},
 		},
 		{
 			name: "day dates become midnight at -03:00",
-			in:   gen.MigracaoResumo{IdMigracao: "i", DataDenuncia: "2027-01-15", DataSolicitacao: "2027-01-10", DataValidacao: "2027-02-20"},
+			in:   gen.MigrationSummary{IdMigracao: "i", DataDenuncia: "2027-01-15", DataSolicitacao: "2027-01-10", DataValidacao: "2027-02-20"},
 			want: Migration{
 				ID:                    "i",
 				TerminationNoticeDate: time.Date(2027, 1, 15, 0, 0, 0, 0, brasilia),
@@ -296,17 +296,17 @@ func TestMigrationFromSummary_WhenVariedFields_Converts(t *testing.T) {
 		},
 		{
 			name: "CNPJ becomes a Document without punctuation",
-			in:   gen.MigracaoResumo{IdMigracao: "i", TipoDocumento: "CNPJ", NumeroDocumento: "11.111.111/1111-11"},
+			in:   gen.MigrationSummary{IdMigracao: "i", TipoDocumento: "CNPJ", NumeroDocumento: "11.111.111/1111-11"},
 			want: Migration{ID: "i", Document: CNPJ("11111111111111")},
 		},
 		{
 			name: "CPF becomes a Document",
-			in:   gen.MigracaoResumo{IdMigracao: "i", TipoDocumento: "CPF", NumeroDocumento: "22222222222"},
+			in:   gen.MigrationSummary{IdMigracao: "i", TipoDocumento: "CPF", NumeroDocumento: "22222222222"},
 			want: Migration{ID: "i", Document: CPF("22222222222")},
 		},
 		{
 			name: "decimal values keep their precision",
-			in:   gen.MigracaoResumo{IdMigracao: "i", ValorDHC: "12.50", ValorMusd: "3.25"},
+			in:   gen.MigrationSummary{IdMigracao: "i", ValorDHC: "12.50", ValorMusd: "3.25"},
 			want: Migration{ID: "i", DHCAmount: testDecimal(t, "12.5"), MUSDAmount: testDecimal(t, "3.25")},
 		},
 	}
@@ -326,32 +326,32 @@ func TestMigrationFromDetail_WhenVariedFields_Converts(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name string
-		in   gen.MigracaoDetalhe
+		in   gen.MigrationDetail
 		want Migration
 	}{
 		{
 			name: "dataReferencia becomes the same YearMonth as mesReferencia",
-			in:   gen.MigracaoDetalhe{IdMigracao: "i", DataReferencia: "2027-03-01T00:00:00-03:00"},
+			in:   gen.MigrationDetail{IdMigracao: "i", DataReferencia: "2027-03-01T00:00:00-03:00"},
 			want: Migration{ID: "i", Month: NewYearMonth(2027, time.March)},
 		},
 		{
 			name: "dataReferencia with only YYYY-MM is also valid",
-			in:   gen.MigracaoDetalhe{IdMigracao: "i", DataReferencia: "2027-03"},
+			in:   gen.MigrationDetail{IdMigracao: "i", DataReferencia: "2027-03"},
 			want: Migration{ID: "i", Month: NewYearMonth(2027, time.March)},
 		},
 		{
 			name: "supplier comes from codigoSupridora",
-			in:   gen.MigracaoDetalhe{IdMigracao: "i", CodigoSupridora: 900004},
+			in:   gen.MigrationDetail{IdMigracao: "i", CodigoSupridora: 900004},
 			want: Migration{ID: "i", Supplier: 900004},
 		},
 		{
 			name: "connection type exists only in the detail",
-			in:   gen.MigracaoDetalhe{IdMigracao: "i", TipoConectado: "tc"},
+			in:   gen.MigrationDetail{IdMigracao: "i", TipoConectado: "tc"},
 			want: Migration{ID: "i", ConnectionType: "tc"},
 		},
 		{
 			name: "absent fields stay at the zero value",
-			in:   gen.MigracaoDetalhe{IdMigracao: "i"},
+			in:   gen.MigrationDetail{IdMigracao: "i"},
 			want: Migration{ID: "i"},
 		},
 	}
@@ -377,37 +377,40 @@ func TestConverters_WhenInvalidValue_ReturnsErrorWithoutQuotingIt(t *testing.T) 
 	}{
 		{
 			name:      "invalid month in the list",
-			convert:   func() error { _, err := migrationFromSummary(gen.MigracaoResumo{MesReferencia: marker}); return err },
+			convert:   func() error { _, err := migrationFromSummary(gen.MigrationSummary{MesReferencia: marker}); return err },
 			wantField: "mesReferencia",
 		},
 		{
 			name:      "invalid month in the detail",
-			convert:   func() error { _, err := migrationFromDetail(gen.MigracaoDetalhe{DataReferencia: marker}); return err },
+			convert:   func() error { _, err := migrationFromDetail(gen.MigrationDetail{DataReferencia: marker}); return err },
 			wantField: "dataReferencia",
 		},
 		{
 			name:      "invalid date",
-			convert:   func() error { _, err := migrationFromSummary(gen.MigracaoResumo{DataDenuncia: marker}); return err },
+			convert:   func() error { _, err := migrationFromSummary(gen.MigrationSummary{DataDenuncia: marker}); return err },
 			wantField: "dataDenuncia",
 		},
 		{
 			name:      "invalid decimal",
-			convert:   func() error { _, err := migrationFromSummary(gen.MigracaoResumo{ValorDHC: marker}); return err },
+			convert:   func() error { _, err := migrationFromSummary(gen.MigrationSummary{ValorDHC: marker}); return err },
 			wantField: "valorDHC",
 		},
 		{
 			name:      "invalid consumption",
-			convert:   func() error { _, err := measurementFrom(gen.Medicao{Consumo: marker}); return err },
+			convert:   func() error { _, err := measurementFrom(gen.Measurement{Consumo: marker}); return err },
 			wantField: "consumo",
 		},
 		{
-			name:      "invalid measurement distributor",
-			convert:   func() error { _, err := measurementFrom(gen.Medicao{CodigoAgenteConcessionaria: marker}); return err },
+			name: "invalid measurement distributor",
+			convert: func() error {
+				_, err := measurementFrom(gen.Measurement{CodigoAgenteConcessionaria: marker})
+				return err
+			},
 			wantField: "codigoAgenteConcessionaria",
 		},
 		{
 			name:      "invalid measurement date",
-			convert:   func() error { _, err := measurementFrom(gen.Medicao{DataAtualizacao: marker}); return err },
+			convert:   func() error { _, err := measurementFrom(gen.Measurement{DataAtualizacao: marker}); return err },
 			wantField: "dataAtualizacao",
 		},
 	}
@@ -432,27 +435,27 @@ func TestMeasurementFrom_WhenVariedFields_Converts(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name string
-		in   gen.Medicao
+		in   gen.Measurement
 		want Measurement
 	}{
 		{
 			name: "consumption as string",
-			in:   gen.Medicao{IdentificadorMedicaoConsumo: "m", Consumo: "12.345"},
+			in:   gen.Measurement{IdentificadorMedicaoConsumo: "m", Consumo: "12.345"},
 			want: Measurement{ID: "m", Consumption: testDecimal(t, "12.345")},
 		},
 		{
 			name: "consumption as number",
-			in:   gen.Medicao{IdentificadorMedicaoConsumo: "m", Consumo: "0.5"},
+			in:   gen.Measurement{IdentificadorMedicaoConsumo: "m", Consumo: "0.5"},
 			want: Measurement{ID: "m", Consumption: testDecimal(t, "0.5")},
 		},
 		{
 			name: "distributor as string or number",
-			in:   gen.Medicao{IdentificadorMedicaoConsumo: "m", CodigoAgenteConcessionaria: "900001"},
+			in:   gen.Measurement{IdentificadorMedicaoConsumo: "m", CodigoAgenteConcessionaria: "900001"},
 			want: Measurement{ID: "m", Distributor: 900001},
 		},
 		{
 			name: "day and instants at -03:00",
-			in: gen.Medicao{
+			in: gen.Measurement{
 				IdentificadorMedicaoConsumo: "m", DiaReferencia: "2027-02-01",
 				DataReferenciaConsumo: "2027-02-01T00:15:00-03:00", DataAtualizacao: "2027-02-02T08:00:00-03:00",
 			},
@@ -465,12 +468,12 @@ func TestMeasurementFrom_WhenVariedFields_Converts(t *testing.T) {
 		},
 		{
 			name: "unknown status passes through as received",
-			in:   gen.Medicao{IdentificadorMedicaoConsumo: "m", SituacaoMedicao: "NOVA"},
+			in:   gen.Measurement{IdentificadorMedicaoConsumo: "m", SituacaoMedicao: "NOVA"},
 			want: Measurement{ID: "m", Status: "NOVA"},
 		},
 		{
 			name: "everything absent stays zero",
-			in:   gen.Medicao{},
+			in:   gen.Measurement{},
 			want: Measurement{},
 		},
 	}

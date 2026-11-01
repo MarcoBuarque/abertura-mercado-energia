@@ -59,12 +59,16 @@ type Route struct {
 const fakeRequestID = "00000000-0000-4000-8000-0000000000f1"
 
 // defaultHeaders applies to every response.
+//
+//nolint:gochecknoglobals // read-only table, never written after initialization
 var defaultHeaders = map[string]string{
 	"x-amzn-RequestId": fakeRequestID,
 }
 
 // statusHeaders applies to responses with the given status: the gateway
 // authorizer marks the 403 with x-amzn-ErrorType.
+//
+//nolint:gochecknoglobals // read-only table, never written after initialization
 var statusHeaders = map[int]map[string]string{
 	http.StatusForbidden: {"x-amzn-ErrorType": "AccessDeniedException"},
 }

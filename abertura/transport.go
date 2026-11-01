@@ -380,7 +380,7 @@ func (c *Client) tryOnce(ctx context.Context, proto *http.Request, body []byte, 
 
 	start := time.Now()
 	t := attempt{}
-	resp, err := c.http.Do(req)
+	resp, err := c.http.Do(req) //nolint:gosec // the URL is the environment the caller chose; calling it is the SDK's purpose
 	if err != nil {
 		t.err = err
 	} else {

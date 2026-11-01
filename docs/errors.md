@@ -1,6 +1,6 @@
-# Error catalogue
+# Error catalog
 
-> **Unofficial description.** This project is independent: it is not affiliated with, sponsored or endorsed by the API operator. The catalogue describes what the API returned in sandbox tests and what the Go SDK does with each error. The examples are invented.
+> **Unofficial description.** This project is independent: it is not affiliated with, sponsored or endorsed by the API operator. The catalog describes what the API returned in sandbox tests and what the Go SDK does with each error. The examples are invented.
 
 This is the teaching source for every error you may see when using the API, the Go SDK (`abertura/`) or a client generated from `openapi/abertura.yaml`. Each entry has a stable anchor, such as `#migration-already-requested`; the `type` field of the SDK's Problem Details points to it.
 
@@ -8,7 +8,7 @@ This is the teaching source for every error you may see when using the API, the 
 
 The API returns errors with **four fields**: `timestamp`, `status`, `error` (a textual code such as `ERR_MIGRACAO_SOLICITADA`) and `message` (text in Portuguese, for humans), with `Content-Type: application/json`. The spec describes that format as it is, and the mock repeats it; that is why the spec does not declare `application/problem+json` in any response.
 
-The Go SDK delivers the same error as **Problem Details** from [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) (`application/problem+json`): `type` points to an entry of this catalogue, `title` and `detail` are our own text, and `code`, `operation`, `requestId`, `retryable` and `uncertain` are extensions. The `detail` never repeats the API's `message`, which may mention a consumer unit, document or e-mail; it stays in `APIError.Message` for whoever wants it.
+The Go SDK delivers the same error as **Problem Details** from [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) (`application/problem+json`): `type` points to an entry of this catalog, `title` and `detail` are our own text, and `code`, `operation`, `requestId`, `retryable` and `uncertain` are extensions. The `detail` never repeats the API's `message`, which may mention a consumer unit, document or e-mail; it stays in `APIError.Message` for whoever wants it.
 
 As the API returns it (invented values):
 
@@ -49,7 +49,7 @@ This page is published on GitHub Pages at every final `openapi/vX.Y.Z` tag, only
 | [Repeated pagination cursor](#repeated-cursor) | none | no HTTP error | no | not applicable |
 | [Token request failed](#token-request-failed) | may come from the endpoint | from the endpoint | you may, on 429 and 5xx (the SDK does not retry) | same |
 | [Invalid argument](#invalid-argument) | none | no request | no | no |
-| [Error outside the catalogue](#not-in-catalog) | none | no response | depends | depends |
+| [Error outside the catalog](#not-in-catalog) | none | no response | depends | depends |
 
 "Retry" follows the SDK's retry table (the same rule as [`clients.md`](clients.md), section 5): the SDK retries up to 2 times on its own what is marked safe, and shows the error only afterwards. `retryable` in the Problem says whether retrying **now** is safe; `uncertain` says the write may have been applied.
 
@@ -140,7 +140,7 @@ Confidence: **seen in the sandbox** means observed on 30/10/2026 (four codes) or
 - **API code:** an `ERR_*` the SDK does not know yet.
 - **Status:** whatever the API returned.
 - **When it happens:** the API gained a new code. The SDK does not break: the error stays an `*APIError` with `Code`, `Message` and `StatusCode`, and the Problem uses this entry, with the code in `code`. Codes outside the form `ERR_` followed by upper-case letters, digits and underscores are dropped from the Problem and fall into [refusal without code](#refusal-without-code).
-- **What to do:** handle it by `status` and `code`; the `message` is in `APIError.Message`. Open an issue so the code enters the catalogue.
+- **What to do:** handle it by `status` and `code`; the `message` is in `APIError.Message`. Open an issue so the code enters the catalog.
 - **Retry:** follows the status: 429 and 5xx as in their entries; the rest, no.
 - **Go sentinel:** none; compare `APIError.Code`.
 - **Confidence:** SDK.
@@ -295,7 +295,7 @@ Confidence: **seen in the sandbox** means observed on 30/10/2026 (four codes) or
 - **Confidence:** SDK.
 
 <a id="not-in-catalog"></a>
-## Error outside the catalogue
+## Error outside the catalog
 
 - **API code:** none.
 - **Status:** none.

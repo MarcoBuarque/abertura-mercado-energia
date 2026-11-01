@@ -15,7 +15,7 @@ Status: **0.x**. The spec and the SDK may still change in incompatible ways betw
 - **Read it in the browser:** the [Redoc page](https://marcobuarque.github.io/abertura-mercado-energia/) is published with every final `openapi/v*` tag; `make docs` builds it locally at `out/docs/index.html`.
 - **Try it without credentials:** `make mock` starts a mock at `http://localhost:4010` with the spec's examples, all invented. To stop it: `docker compose -f mock/compose.yaml down`.
 - **Generate a client** in Python, TypeScript or Java, and what it does not do on its own (retry rules, uncertain results): [`docs/clients.md`](docs/clients.md).
-- **Errors:** the teaching [error catalogue](https://marcobuarque.github.io/abertura-mercado-energia/errors/), with what to do and when to retry, lives in [`docs/errors.md`](docs/errors.md). The Go SDK also delivers every error as Problem Details (RFC 9457).
+- **Errors:** the teaching [error catalog](https://marcobuarque.github.io/abertura-mercado-energia/errors/), with what to do and when to retry, lives in [`docs/errors.md`](docs/errors.md). The Go SDK also delivers every error as Problem Details (RFC 9457).
 
 ## Go SDK
 
@@ -79,7 +79,7 @@ v0.2 covers v1.1 of the retail APIs: migrations (list, get, create, edit), measu
 
 ## Documentation
 
-- [Redoc page](https://marcobuarque.github.io/abertura-mercado-energia/) and [error catalogue](https://marcobuarque.github.io/abertura-mercado-energia/errors/) (the old `/erros/` address redirects there).
+- [Redoc page](https://marcobuarque.github.io/abertura-mercado-energia/) and [error catalog](https://marcobuarque.github.io/abertura-mercado-energia/errors/) (the old `/erros/` address redirects there).
 - [`docs/clients.md`](docs/clients.md): client generation and retry rules.
 - [`openapi/SOURCES.md`](openapi/SOURCES.md): sources, confidence and divergences.
 - Changelogs: [`openapi/CHANGELOG.md`](openapi/CHANGELOG.md) and [`abertura/CHANGELOG.md`](abertura/CHANGELOG.md).

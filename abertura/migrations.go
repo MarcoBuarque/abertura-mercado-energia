@@ -70,7 +70,7 @@ func (m *Migrations) ListPage(ctx context.Context, f MigrationFilter, cursor str
 	if err != nil {
 		return Page[Migration]{}, err
 	}
-	var list gen.ListaMigracoes
+	var list gen.MigrationList
 	if err := decodeOutput(body, &list); err != nil {
 		return Page[Migration]{}, fmt.Errorf("%s: %w", id, err)
 	}
@@ -119,7 +119,7 @@ func (m *Migrations) Get(ctx context.Context, id string, opts ...CallOption) (Mi
 		return Migration{}, fmt.Errorf("%s: %w", op, err)
 	}
 	if len(items) >= 1 {
-		items = slices.DeleteFunc(items, func(d gen.MigracaoDetalhe) bool {
+		items = slices.DeleteFunc(items, func(d gen.MigrationDetail) bool {
 			return strings.TrimSpace(d.IdMigracao) != id
 		})
 	}
@@ -144,14 +144,14 @@ func (m *Migrations) Get(ctx context.Context, id string, opts ...CallOption) (Mi
 // once decoded, the first wins. If only dataReferencia differs, the most
 // recent month wins (the first one, on a tie). If anything else differs, or
 // some month cannot be read, it returns false.
-func currentEntry(items []gen.MigracaoDetalhe) (gen.MigracaoDetalhe, bool) {
+func currentEntry(items []gen.MigrationDetail) (gen.MigrationDetail, bool) {
 	base := items[0]
 	base.DataReferencia = ""
 	for _, d := range items[1:] {
 		other := d
 		other.DataReferencia = ""
 		if !reflect.DeepEqual(base, other) {
-			return gen.MigracaoDetalhe{}, false
+			return gen.MigrationDetail{}, false
 		}
 	}
 	allEqual := true
@@ -168,7 +168,7 @@ func currentEntry(items []gen.MigracaoDetalhe) (gen.MigracaoDetalhe, bool) {
 	for i, d := range items {
 		m, err := ParseYearMonth(d.DataReferencia)
 		if err != nil {
-			return gen.MigracaoDetalhe{}, false
+			return gen.MigrationDetail{}, false
 		}
 		if i == 0 || m.Year > bestMonth.Year || m.Year == bestMonth.Year && m.Month > bestMonth.Month {
 			best, bestMonth = d, m
@@ -331,9 +331,9 @@ func validateID(op, id string) (string, error) {
 
 // detailsFrom reads the body of a detail response, which the API sends as a
 // list or as an object.
-func detailsFrom(body []byte) ([]gen.MigracaoDetalhe, error) {
+func detailsFrom(body []byte) ([]gen.MigrationDetail, error) {
 	t := bytes.TrimSpace(body)
-	var items []gen.MigracaoDetalhe
+	var items []gen.MigrationDetail
 	if len(t) > 0 && t[0] == '[' {
 		if err := decodeOutput(t, &items); err != nil {
 			return nil, err
@@ -343,11 +343,11 @@ func detailsFrom(body []byte) ([]gen.MigracaoDetalhe, error) {
 	if len(t) == 0 || bytes.Equal(t, []byte("null")) {
 		return nil, unreadableResponse(errors.New("empty response"))
 	}
-	var single gen.MigracaoDetalhe
+	var single gen.MigrationDetail
 	if err := decodeOutput(t, &single); err != nil {
 		return nil, err
 	}
-	return []gen.MigracaoDetalhe{single}, nil
+	return []gen.MigrationDetail{single}, nil
 }
 
 // writtenMigration reads the response of a POST or PUT: a single detail.

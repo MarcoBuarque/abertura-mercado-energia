@@ -13,18 +13,18 @@ import (
 // JSONPath of an action stops matching, the generator stays silent and the
 // type changes back; these lines then stop compiling.
 var (
-	_ json.Number = gen.MigracaoResumo{}.ValorDHC
-	_ json.Number = gen.MigracaoResumo{}.ValorMusd
-	_ json.Number = gen.MigracaoDetalhe{}.ValorDHC
-	_ json.Number = gen.MigracaoDetalhe{}.ValorMusd
-	_ json.Number = gen.Medicao{}.Consumo
-	_ json.Number = gen.Medicao{}.CodigoAgenteConcessionaria
+	_ json.Number = gen.MigrationSummary{}.ValorDHC
+	_ json.Number = gen.MigrationSummary{}.ValorMusd
+	_ json.Number = gen.MigrationDetail{}.ValorDHC
+	_ json.Number = gen.MigrationDetail{}.ValorMusd
+	_ json.Number = gen.Measurement{}.Consumo
+	_ json.Number = gen.Measurement{}.CodigoAgenteConcessionaria
 	_ int         = gen.Token{}.NotBeforePolicy
 	// Dates and e-mails of the request body become strings (no openapi_types).
-	_ string = gen.NovaMigracao{}.DataDenuncia
-	_ string = gen.NovaMigracao{}.EmailUnidadeConsumidora
-	_ string = gen.SolicitacaoSuspensao{}.DataNotificacao
-	_ string = gen.EdicaoMigracao{}.EmailUnidadeConsumidora
+	_ string = gen.MigrationRequest{}.DataDenuncia
+	_ string = gen.MigrationRequest{}.EmailUnidadeConsumidora
+	_ string = gen.SupplySuspensionRequest{}.DataNotificacao
+	_ string = gen.MigrationEdit{}.EmailUnidadeConsumidora
 )
 
 func readFixture(t *testing.T, name string) []byte {
@@ -47,7 +47,7 @@ func readFixture(t *testing.T, name string) []byte {
 
 func TestListaMigracoes_WhenTolerantFixture_DecodesWithoutError(t *testing.T) {
 	t.Parallel()
-	var l gen.ListaMigracoes
+	var l gen.MigrationList
 	if err := json.Unmarshal(readFixture(t, "migrations_tolerance.json"), &l); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
@@ -84,7 +84,7 @@ func TestMedicao_WhenConsumoIsStringOrNumber_DecodesBoth(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			var l gen.ListaMedicoes
+			var l gen.MeasurementList
 			if err := json.Unmarshal(readFixture(t, tc.fixture), &l); err != nil {
 				t.Fatalf("decode: %v", err)
 			}
@@ -109,7 +109,7 @@ func TestMigracaoDetalhe_WhenArrayOrObject_Decodes(t *testing.T) {
 	t.Parallel()
 	t.Run("array with one item", func(t *testing.T) {
 		t.Parallel()
-		var items []gen.MigracaoDetalhe
+		var items []gen.MigrationDetail
 		if err := json.Unmarshal(readFixture(t, "migration_detail_array.json"), &items); err != nil {
 			t.Fatalf("decode: %v", err)
 		}
@@ -119,7 +119,7 @@ func TestMigracaoDetalhe_WhenArrayOrObject_Decodes(t *testing.T) {
 	})
 	t.Run("empty list", func(t *testing.T) {
 		t.Parallel()
-		var items []gen.MigracaoDetalhe
+		var items []gen.MigrationDetail
 		if err := json.Unmarshal(readFixture(t, "migration_detail_empty.json"), &items); err != nil {
 			t.Fatalf("decode: %v", err)
 		}
@@ -129,7 +129,7 @@ func TestMigracaoDetalhe_WhenArrayOrObject_Decodes(t *testing.T) {
 	})
 	t.Run("object", func(t *testing.T) {
 		t.Parallel()
-		var m gen.MigracaoDetalhe
+		var m gen.MigrationDetail
 		if err := json.Unmarshal(readFixture(t, "migration_detail_object.json"), &m); err != nil {
 			t.Fatalf("decode: %v", err)
 		}
@@ -154,7 +154,7 @@ func TestErro_WhenErrorFixtures_Decode(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			var e gen.Erro
+			var e gen.Error
 			if err := json.Unmarshal(readFixture(t, tc.fixture), &e); err != nil {
 				t.Fatalf("decode: %v", err)
 			}

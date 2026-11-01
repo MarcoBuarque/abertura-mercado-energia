@@ -8,7 +8,7 @@ Two artifacts, two tag prefixes: `openapi/vX.Y.Z` (spec, Redoc page, mock image)
 2. `make ci` green locally and the `go` and `openapi` workflows green on GitHub for the commit you will tag.
 3. CHANGELOG: the version section exists with the date; renamed or removed exported identifiers are under `### Breaking` (SDK) and schema/operationId renames under `### Breaking` (spec). `make check-tag` verifies the entry.
 4. `README.md` and `README.pt-BR.md` show the same install line and the same example names.
-5. Pages: catalogue slugs in `docs/errors.md` match `ErrorCatalogURL` fragments (`make verify-errors`).
+5. Pages: catalog slugs in `docs/errors.md` match `ErrorCatalogURL` fragments (`make verify-errors`).
 
 ## Order
 

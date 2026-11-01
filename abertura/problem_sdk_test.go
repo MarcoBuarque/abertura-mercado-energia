@@ -20,7 +20,7 @@ func TestProblemFrom_WhenUnclassifiedError_UsesNotInCatalog(t *testing.T) {
 	if want := ErrorCatalogURL + "#not-in-catalog"; p.Type != want {
 		t.Errorf("Type = %q, want %q", p.Type, want)
 	}
-	if p.Title != "Error outside the catalogue" {
+	if p.Title != "Error outside the catalog" {
 		t.Errorf("Title = %q", p.Title)
 	}
 	if strings.Contains(p.Detail, "something else") {
@@ -45,7 +45,7 @@ func TestProblem_MarshalJSON_WhenEmptyTypeOrAboutBlank_FollowsRFC(t *testing.T) 
 		{name: "empty type with status uses the status phrase", p: Problem{Status: 404, Title: "Other"}, wantTitle: "Not Found"},
 		{name: "about:blank with status uses the status phrase", p: Problem{Type: "about:blank", Status: 503, Title: "Other"}, wantType: "about:blank", wantTitle: "Service Unavailable"},
 		{name: "about:blank without status omits the title", p: Problem{Type: "about:blank", Title: "Other"}, wantType: "about:blank"},
-		{name: "catalogue type keeps the title", p: Problem{Type: ErrorCatalogURL + "#not-found", Status: 404, Title: "Resource not found"}, wantType: ErrorCatalogURL + "#not-found", wantTitle: "Resource not found"},
+		{name: "catalog type keeps the title", p: Problem{Type: ErrorCatalogURL + "#not-found", Status: 404, Title: "Resource not found"}, wantType: ErrorCatalogURL + "#not-found", wantTitle: "Resource not found"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

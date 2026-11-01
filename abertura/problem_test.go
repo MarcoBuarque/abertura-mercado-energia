@@ -337,7 +337,7 @@ func TestCatalog_WhenComparedWithDocs_AnchorsMatchTable(t *testing.T) {
 
 // TestCatalog_WhenComparedWithDocs_TitlesMatchTable proves that the title of
 // each table entry is the same as the heading right below the anchor and the
-// link in the index of docs/errors.md: the Problem and the catalogue say the
+// link in the index of docs/errors.md: the Problem and the catalog say the
 // same thing.
 func TestCatalog_WhenComparedWithDocs_TitlesMatchTable(t *testing.T) {
 	t.Parallel()
@@ -392,7 +392,7 @@ func TestCatalog_WhenSentinelExported_HasEntry(t *testing.T) {
 	for name, err := range covered {
 		p := ProblemFrom(fmt.Errorf("layer: %w", err))
 		if !strings.HasPrefix(p.Type, ErrorCatalogURL+"#") {
-			t.Errorf("%s: Type = %q, expected a catalogue entry", name, p.Type)
+			t.Errorf("%s: Type = %q, expected a catalog entry", name, p.Type)
 			continue
 		}
 		slug := strings.TrimPrefix(p.Type, ErrorCatalogURL+"#")

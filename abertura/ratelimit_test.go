@@ -48,7 +48,7 @@ func TestLimiter_WhenCtxEndsDuringWait_ReturnsCtxError(t *testing.T) {
 		{
 			name: "a deadline shorter than the wait returns DeadlineExceeded without waiting",
 			ctx: func() (context.Context, context.CancelFunc) {
-				return context.WithTimeout(context.Background(), 30*time.Millisecond)
+				return context.WithTimeout(context.Background(), 30*time.Millisecond) //nolint:gosec // the test calls cancel
 			},
 			wantErr: context.DeadlineExceeded,
 		},
@@ -89,7 +89,7 @@ func TestLimiter_MeasurementsBucket(t *testing.T) {
 	t.Parallel()
 
 	short := func() (context.Context, context.CancelFunc) {
-		return context.WithTimeout(context.Background(), 30*time.Millisecond)
+		return context.WithTimeout(context.Background(), 30*time.Millisecond) //nolint:gosec // the test calls cancel
 	}
 	oncePerHour := RateLimit{Requests: 1, Per: time.Hour}
 	tests := []struct {

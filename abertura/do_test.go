@@ -239,7 +239,7 @@ func TestDo_WhenRoute_PicksLimiterGroup(t *testing.T) {
 
 func TestDecodeOutput_WhenValueMismatches_DoesNotLeakValue(t *testing.T) {
 	t.Parallel()
-	type saida struct {
+	type output struct {
 		Consumption json.Number `json:"consumo"`
 		Name        string      `json:"name"`
 	}
@@ -265,7 +265,7 @@ func TestDecodeOutput_WhenValueMismatches_DoesNotLeakValue(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			var out saida
+			var out output
 			err := decodeOutput([]byte(tc.body), &out)
 			if err == nil {
 				t.Fatal("want an error")
