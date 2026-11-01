@@ -1,30 +1,30 @@
 openapi: 3.0.3
 info:
-  title: Exemplo mínimo (descrição não oficial)
+  title: Minimal example (unofficial description)
   version: 0.0.0
-  description: Especificação mínima que passa em todas as regras próprias.
+  description: Minimal specification that passes all the project rules.
   contact:
-    name: Projeto independente
+    name: Independent project
   license:
     name: Apache-2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
 servers:
   - url: http://localhost:4010
 tags:
-  - name: Teste
-    description: Operações de teste.
+  - name: Test
+    description: Test operations.
 paths:
   /token:
     post:
-      operationId: obterToken
-      tags: [Teste]
-      summary: Obtém o token
-      description: Operação que não leva cabeçalhos de agente.
-      x-confianca: alta
-      x-verificado-em: "30/10/2026"
+      operationId: getToken
+      tags: [Test]
+      summary: Gets the token
+      description: Operation that takes no agent headers.
+      x-confidence: high
+      x-verified-at: "10/30/2026"
       responses:
         "200":
-          description: Token emitido.
+          description: Token issued.
           content:
             application/json:
               schema:
@@ -34,17 +34,17 @@ paths:
                     type: string
   /itens:
     get:
-      operationId: listarItens
-      tags: [Teste]
-      summary: Lista itens
-      description: Operação que leva os cabeçalhos de agente.
-      x-confianca: media
+      operationId: listItems
+      tags: [Test]
+      summary: Lists items
+      description: Operation that takes the agent headers.
+      x-confidence: medium
       parameters:
         - $ref: "#/components/parameters/CodigoAgente"
         - $ref: "#/components/parameters/CodigoPerfil"
       responses:
         "200":
-          description: Lista de itens.
+          description: List of items.
           content:
             application/json:
               schema:
@@ -54,8 +54,8 @@ paths:
                     type: string
                     example: pessoa@example.org
               examples:
-                inventado:
-                  summary: "Inventado: item de teste"
+                invented:
+                  summary: "Invented: test item"
                   value:
                     emailUnidadeConsumidora: pessoa@example.org
 components:
@@ -64,13 +64,13 @@ components:
       name: codigoAgente
       in: header
       required: true
-      description: Código do agente.
+      description: Agent code.
       schema:
         type: integer
     CodigoPerfil:
       name: codigoPerfil
       in: header
       required: true
-      description: Código do perfil.
+      description: Profile code.
       schema:
         type: integer
