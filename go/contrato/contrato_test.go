@@ -169,13 +169,13 @@ func TestContrato(t *testing.T) {
 		pag, err := c.Migracoes.ListarPagina(ctx, abertura.FiltroMigracoes{De: mes, Ate: mes}, "")
 		var api *abertura.APIError
 		if errors.As(err, &api) && api.Operation == "obterToken" {
-			achado(t, "token: o endpoint recusou o pedido do SDK (grant_type extra provavelmente); %s. Plano B: TokenSource próprio", descreve(err))
+			achado(t, "token: o endpoint recusou o pedido do SDK; %s", descreve(err))
 			t.Fatalf("sem token não há contrato")
 		}
 		if err != nil {
 			t.Fatalf("ListarPagina: %s", descreve(err))
 		}
-		achado(t, "token: aceito com o grant_type que o SDK envia (client_credentials)")
+		achado(t, "token: aceito só com client_id e client_secret no formulário (sem grant_type)")
 		fora := 0
 		for _, m := range pag.Itens {
 			if m.Mes != mes {

@@ -95,6 +95,9 @@ func (o *orcamento) RoundTrip(req *http.Request) (*http.Response, error) {
 	if code := codigoDoErro(corpo); code != "" {
 		linha += "; code: " + code
 	}
+	if dica := dicaDaDescricao(corpo); dica != "" {
+		linha += "; " + dica
+	}
 	o.anotar("%s", linha)
 	if problema != "" {
 		o.mu.Lock()
@@ -196,12 +199,40 @@ func nomesDeCampos(corpo []byte) string {
 // reCodigoDaAPI é a forma de um código de erro da API.
 var reCodigoDaAPI = regexp.MustCompile(`^ERR_[A-Z0-9_]{1,80}$`)
 
+// codigosOAuth2 são os seis códigos fixos de erro da RFC 6749, seção 5.2. O
+// endpoint de token responde com eles; é por eles que se sabe qual falhou.
+var codigosOAuth2 = map[string]bool{
+	"invalid_request": true, "invalid_client": true, "invalid_grant": true,
+	"unauthorized_client": true, "unsupported_grant_type": true, "invalid_scope": true,
+}
+
+// descricoesOAuth2 são as únicas descrições de erro do Keycloak que podem ser
+// impressas, por serem texto fixo e conhecido. Qualquer outra é ignorada.
+var descricoesOAuth2 = map[string]bool{
+	"duplicated parameter":               true,
+	"Missing form parameter: grant_type": true,
+}
+
+// dicaDaDescricao devolve "oauth2_error_description: <texto>" só quando
+// error_description é exatamente uma das descrições fixas; senão, vazio, sem
+// nada sobre o texto recebido (nem o tamanho).
+func dicaDaDescricao(corpo []byte) string {
+	var e struct {
+		Descricao string `json:"error_description"`
+	}
+	if json.Unmarshal(bytes.TrimSpace(corpo), &e) != nil || !descricoesOAuth2[e.Descricao] {
+		return ""
+	}
+	return "oauth2_error_description: " + e.Descricao
+}
+
 // codigoSeguro devolve o código se tiver a forma ERR_ seguida de maiúsculas,
-// dígitos e sublinhados; senão, "código fora do padrão". O campo vem do
+// dígitos e sublinhados, ou se for um dos seis códigos fixos da RFC 6749;
+// senão, "código fora do padrão". O campo vem do
 // servidor e pode levar texto livre (com dado pessoal) ao log. Vazio continua
 // vazio.
 func codigoSeguro(code string) string {
-	if code == "" || reCodigoDaAPI.MatchString(code) {
+	if code == "" || reCodigoDaAPI.MatchString(code) || codigosOAuth2[code] {
 		return code
 	}
 	return "código fora do padrão"

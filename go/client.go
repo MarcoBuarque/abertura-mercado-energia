@@ -138,7 +138,7 @@ func NewClient(env Environment, opts ...Option) (*Client, error) {
 	} else {
 		c.fonte = novoCacheToken(configToken{
 			tokenURL: env.TokenURL, clientID: cfg.clientID, clientSecret: cfg.clientSecret,
-			httpClient: clienteDeToken(cfg.httpClient, c.limites),
+			httpClient: clienteDeToken(cfg.httpClient, c.limites), userAgent: c.userAgnt,
 		})
 	}
 	if c.http == nil {
