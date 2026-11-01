@@ -1,82 +1,86 @@
 openapi: 3.0.3
 info:
-  title: API de Abertura de Mercado (descrição não oficial)
-  version: 0.1.0
+  title: Market Opening API (unofficial description)
+  version: 0.2.0
   description: |
-    Descrição não oficial, escrita à mão, de parte das APIs de varejo da abertura
-    do mercado de energia. Este projeto é independente: não é afiliado,
-    patrocinado nem endossado pela Câmara de Comercialização de Energia Elétrica
-    (CCEE), e nada aqui substitui a documentação do operador.
+    Unofficial, hand-written description of part of the retail APIs of the Brazilian
+    energy market opening. This project is independent: it is not affiliated with,
+    sponsored or endorsed by the Câmara de Comercialização de Energia Elétrica
+    (CCEE), and nothing here replaces the operator's documentation.
 
-    A spec descreve o que a API devolve de fato, conforme testes no ambiente
-    sandbox, e não só o que a documentação pública informa. Cada operação traz
-    `x-confianca` (`alta`, `media` ou `baixa`) e, quando `alta`,
-    `x-verificado-em` com a data da última conferência. As divergências entre a
-    documentação e o observado estão em `FONTES.md`, numeradas de D1 a D23 e
-    citadas em `x-divergencias`.
+    The spec describes what the API actually returns, according to tests in the
+    sandbox environment, and not only what the public documentation says. Every
+    operation carries `x-confidence` (`high`, `medium` or `low`) and, when `high`,
+    `x-verified-at` with the date of the last check. The divergences between the
+    documentation and what was observed are in `SOURCES.md`, numbered D1 to D23 and
+    cited in `x-divergences`.
 
-    Todos os exemplos são inventados: UC com zeros à frente, códigos de agente,
-    perfil e concessionária na faixa 900000, documentos com dígitos repetidos e
-    e-mails em `example.org`.
+    All examples are invented: consumer units (UC) with leading zeros, agent,
+    profile and distributor codes in the 900000 range, documents with repeated
+    digits and e-mails at `example.org`.
   contact:
-    name: Projeto abertura-mercado-energia
+    name: abertura-mercado-energia project
+    url: https://github.com/MarcoBuarque/abertura-mercado-energia
   license:
     name: Apache-2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
-  x-fonte:
-    colecao: https://documenter.getpostman.com/view/30322966/2sAXqqchhJ
-    extraida-em: "2026-10-30T10:52:36-03:00"
-    teste-no-sandbox-em: "2026-10-30T11:56:47-03:00"
+  x-source:
+    collection: https://documenter.getpostman.com/view/30322966/2sAXqqchhJ
+    extracted-at: "2026-10-30T10:52:36-03:00"
+    sandbox-tested-at: "2026-10-30T11:56:47-03:00"
+externalDocs:
+  description: Documentation site, with the error catalog and client guides.
+  url: https://marcobuarque.github.io/abertura-mercado-energia/
 servers:
   - url: https://sandbox-api-abm.ccee.org.br
-    description: Sandbox, com agentes fictícios.
+    description: Sandbox, with fictitious agents.
   - url: http://localhost:4010
-    description: Mock local (Prism) com os exemplos desta spec.
+    description: Local mock (Prism) serving the examples of this spec.
   - url: https://api-abm.ccee.org.br
-    description: Produção.
+    description: Production.
 security:
   - oauth2: []
 tags:
-  - name: Autenticacao
-    x-displayName: Autenticação
-    description: Emissão do token de acesso.
-  - name: Migracoes
-    x-displayName: Migrações
-    description: Migrações de unidades consumidoras para o mercado livre, lado do varejista.
-  - name: Medicoes
-    x-displayName: Medições
-    description: Medições de consumo das unidades consumidoras.
-  - name: Solicitacoes
-    x-displayName: Solicitações
-    description: Solicitações de alteração (troca de representante, suspensão, retorno ao cativo).
+  - name: Authentication
+    x-displayName: Authentication
+    description: Issuing the access token.
+  - name: Migrations
+    x-displayName: Migrations
+    description: Migrations of consumer units to the free market, retailer side.
+  - name: Measurements
+    x-displayName: Measurements
+    description: Consumption measurements of the consumer units.
+  - name: Change requests
+    x-displayName: Change requests
+    description: Change requests (change of representative, supply suspension, return to the captive market).
 paths:
   /sso/oauth/token:
     post:
-      operationId: obterToken
-      tags: [Autenticacao]
-      summary: Obtém o token de acesso
+      operationId: getToken
+      tags: [Authentication]
+      summary: Gets the access token
       description: |
-        Troca as credenciais do cliente por um token de acesso (fluxo
-        `client_credentials`). Envie só `client_id` e `client_secret`: o
-        formulário com `grant_type` foi recusado com 400 em 01/11/2026. O token
-        vale cerca de cinco minutos e não há token de renovação: peça outro
-        antes de vencer. O corpo do 400 desta rota é um objeto de erro OAuth2,
-        não o `Erro` das demais rotas.
+        Exchanges the client credentials for an access token (the
+        `client_credentials` flow). Send only `client_id` and `client_secret`: the
+        form with `grant_type` was rejected with 400 on 2026-11-01. The token is valid
+        for about five minutes and there is no refresh token: request another one
+        before it expires. The body of this route's 400 is an OAuth2 error object,
+        not the `Error` of the other routes.
       security: []
-      x-confianca: alta
-      x-verificado-em: "2026-11-01"
-      x-fonte: Coleção, seção Autenticação; testes no sandbox em 30/10/2026 e 01/11/2026.
-      x-divergencias: [15, 17]
+      x-confidence: high
+      x-verified-at: "2026-11-01"
+      x-source: Collection, Authentication section; sandbox tests on 2026-10-30 and 2026-11-01.
+      x-divergences: [15, 17]
       requestBody:
-        description: Credenciais do cliente, em formulário.
+        description: Client credentials, as a form.
         required: true
         content:
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/TokenRequisicao"
+              $ref: "#/components/schemas/TokenRequest"
       responses:
         "200":
-          description: Token emitido.
+          description: Token issued.
           headers:
             x-amzn-RequestId:
               $ref: "#/components/headers/RequestId"
@@ -86,82 +90,81 @@ paths:
                 $ref: "#/components/schemas/Token"
               examples:
                 token:
-                  summary: "Inventado: token emitido"
+                  summary: "Invented: token issued"
                   value:
-                    access_token: token-inventado-sem-formato-jwt
+                    access_token: invented-token-not-in-jwt-format
                     expires_in: 300
                     refresh_expires_in: 0
                     token_type: Bearer
                     not-before-policy: 0
-                    scope: escopo-inventado
+                    scope: invented-scope
         "400":
           description: |
-            Formulário recusado (por exemplo, com `grant_type`). O corpo segue o
-            formato de erro OAuth2 (RFC 6749, seção 5.2), não o `Erro`.
+            Form rejected (for example, with `grant_type`). The body follows the
+            OAuth2 error format (RFC 6749, section 5.2), not the `Error` schema.
           headers:
             x-amzn-RequestId:
               $ref: "#/components/headers/RequestId"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErroOAuth2"
+                $ref: "#/components/schemas/OAuth2Error"
               examples:
-                formularioRecusado:
-                  summary: "Inventado: formulário recusado"
+                rejectedForm:
+                  summary: "Invented: form rejected"
                   value:
                     error: invalid_request
-                    error_description: descricao-inventada
+                    error_description: invented-description
         "403":
-          $ref: "#/components/responses/Acesso403"
+          $ref: "#/components/responses/Forbidden403"
         "429":
-          $ref: "#/components/responses/Limite429"
+          $ref: "#/components/responses/TooManyRequests429"
         "500":
-          $ref: "#/components/responses/Interno500"
+          $ref: "#/components/responses/InternalError500"
 
   /v1.1/varejista/migracoes:
     get:
-      operationId: listarMigracoes
-      tags: [Migracoes]
-      summary: Lista migrações do varejista
+      operationId: listMigrations
+      tags: [Migrations]
+      summary: Lists the retailer's migrations
       description: |
-        Devolve as migrações do perfil informado, uma página por vez. O perfil
-        é exigido na consulta e também no cabeçalho, assim como o intervalo de
-        meses (`mesReferenciaInicial` e `mesReferenciaFinal`). Quando `indexProximaPagina`
-        vem preenchido, envie-o de volta para ler a página seguinte.
+        Returns the migrations of the given profile, one page at a time. The profile
+        is required in the query and also in the header, as is the month range
+        (`mesReferenciaInicial` and `mesReferenciaFinal`). When `indexProximaPagina`
+        is filled in, send it back to read the next page.
 
-        A distância entre os dois meses tem teto: em 01/11/2026 o sandbox
-        aceitou 12 meses e recusou 24, 48 e 96 (400
-        `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`); o teto está entre 12 e 24,
-        provavelmente 12 (D22). Uma faixa de 12 meses devolveu 71 e, uma hora
-        depois, 92 itens numa só página, com `indexProximaPagina` presente e
-        sem cursor: a página tem ao menos 92 itens e o cursor ainda não foi
-        visto.
-      x-confianca: alta
-      x-verificado-em: "2026-11-01"
-      x-fonte: Coleção, seção APIs do varejista, migrações v1.1; testes no sandbox em 30/10/2026 e 01/11/2026.
-      x-divergencias: [2, 8, 10, 14, 18, 19, 21, 22]
+        The distance between the two months has a ceiling: on 2026-11-01 the sandbox
+        accepted 12 months and rejected 24, 48 and 96 (400
+        `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`); the ceiling is between 12 and 24,
+        probably 12 (D22). A 12-month range returned 71 items and, one hour later, 92
+        items in a single page, with `indexProximaPagina` present and no cursor: the
+        page holds at least 92 items and the cursor has not been seen yet.
+      x-confidence: high
+      x-verified-at: "2026-11-01"
+      x-source: Collection, retailer APIs section, migrations v1.1; sandbox tests on 2026-10-30 and 2026-11-01.
+      x-divergences: [2, 8, 10, 14, 18, 19, 21, 22]
       parameters:
-        - $ref: "#/components/parameters/CodigoAgente"
-        - $ref: "#/components/parameters/CodigoPerfil"
-        - $ref: "#/components/parameters/CodigoPerfilVarejistaQuery"
-        - $ref: "#/components/parameters/MesReferenciaInicialObrigatorio"
-        - $ref: "#/components/parameters/MesReferenciaFinalObrigatorio"
-        - $ref: "#/components/parameters/CodigoUnidadeConsumidoraQuery"
-        - $ref: "#/components/parameters/StatusMigracaoQuery"
-        - $ref: "#/components/parameters/IndexProximaPagina"
+        - $ref: "#/components/parameters/AgentCode"
+        - $ref: "#/components/parameters/ProfileCode"
+        - $ref: "#/components/parameters/RetailerProfileCodeQuery"
+        - $ref: "#/components/parameters/ReferenceMonthStartRequired"
+        - $ref: "#/components/parameters/ReferenceMonthEndRequired"
+        - $ref: "#/components/parameters/ConsumerUnitCodeQuery"
+        - $ref: "#/components/parameters/MigrationStatusQuery"
+        - $ref: "#/components/parameters/NextPageIndex"
       responses:
         "200":
-          description: Página de migrações.
+          description: Page of migrations.
           headers:
             x-amzn-RequestId:
               $ref: "#/components/headers/RequestId"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListaMigracoes"
+                $ref: "#/components/schemas/MigrationList"
               examples:
-                pagina-1:
-                  summary: "Inventado: primeira página, com cursor"
+                page-1:
+                  summary: "Invented: first page, with cursor"
                   value:
                     migracao:
                       - idMigracao: 00000000-0000-4000-8000-000000000001
@@ -184,12 +187,12 @@ paths:
                         justificativa: null
                         dataValidacao: null
                         emailUnidadeConsumidora: contato@example.org
-                        comentario: "Inventado: exemplo de comentário"
+                        comentario: "Invented: example comment"
                         idCelebracaoCER: null
                         indicadorProcessoSiga: null
-                    indexProximaPagina: cursor-inventado-2
-                pagina-2:
-                  summary: "Inventado: última página, sem cursor"
+                    indexProximaPagina: invented-cursor-2
+                page-2:
+                  summary: "Invented: last page, no cursor"
                   value:
                     migracao:
                       - idMigracao: 00000000-0000-4000-8000-000000000002
@@ -217,55 +220,55 @@ paths:
                         indicadorProcessoSiga: null
                     indexProximaPagina: null
         "400":
-          description: Parâmetro ausente ou inválido.
+          description: Missing or invalid parameter.
           headers:
             x-amzn-RequestId:
               $ref: "#/components/headers/RequestId"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Erro"
+                $ref: "#/components/schemas/Error"
               examples:
-                perfil-obrigatorio:
-                  $ref: "#/components/examples/ErroPerfilObrigatorio"
-                validacao-campos:
-                  $ref: "#/components/examples/ErroValidacaoCampos"
-                faixa-obrigatoria:
-                  $ref: "#/components/examples/ErroFaixaObrigatoria"
-                faixa-larga-demais:
-                  $ref: "#/components/examples/ErroFaixaLargaDemais"
+                profile-required:
+                  $ref: "#/components/examples/RetailerProfileRequiredError"
+                field-validation:
+                  $ref: "#/components/examples/FieldValidationError"
+                range-required:
+                  $ref: "#/components/examples/MonthRangeRequiredError"
+                range-too-wide:
+                  $ref: "#/components/examples/MonthRangeTooWideError"
         "403":
-          $ref: "#/components/responses/Acesso403"
+          $ref: "#/components/responses/Forbidden403"
         "429":
-          $ref: "#/components/responses/Limite429"
+          $ref: "#/components/responses/TooManyRequests429"
         "500":
-          $ref: "#/components/responses/Interno500"
+          $ref: "#/components/responses/InternalError500"
     post:
-      operationId: criarMigracao
-      tags: [Migracoes]
-      summary: Cria uma migração
+      operationId: createMigration
+      tags: [Migrations]
+      summary: Creates a migration
       description: |
-        Registra a migração de uma unidade consumidora para o varejista. A UC
-        tem 15 dígitos, com dígito verificador. Repetir a requisição enquanto
-        houver migração ativa para a mesma UC e concessionária devolve 400
+        Registers the migration of a consumer unit to the retailer. The UC has 15
+        digits, with a check digit. Repeating the request while there is an active
+        migration for the same UC and distributor returns 400
         `ERR_MIGRACAO_SOLICITADA`.
-      x-confianca: alta
-      x-verificado-em: "2026-10-30"
-      x-fonte: Coleção, seção APIs do varejista, migrações v1.1; teste no sandbox em 30/10/2026.
-      x-divergencias: [2, 12, 14, 10]
+      x-confidence: high
+      x-verified-at: "2026-10-30"
+      x-source: Collection, retailer APIs section, migrations v1.1; sandbox test on 2026-10-30.
+      x-divergences: [2, 12, 14, 10]
       parameters:
-        - $ref: "#/components/parameters/CodigoAgente"
-        - $ref: "#/components/parameters/CodigoPerfil"
+        - $ref: "#/components/parameters/AgentCode"
+        - $ref: "#/components/parameters/ProfileCode"
       requestBody:
-        description: Dados da nova migração.
+        description: Data of the new migration.
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/NovaMigracao"
+              $ref: "#/components/schemas/MigrationRequest"
             examples:
-              nova:
-                summary: "Inventado: nova migração"
+              new:
+                summary: "Invented: new migration"
                 value:
                   codigoAgenteConcessionaria: 900001
                   codigoAgenteVarejista: 900002
@@ -276,64 +279,64 @@ paths:
                   mesReferencia: "2027-03"
                   tipoDocumento: CNPJ
                   numeroDocumento: "11111111111111"
-                  comentario: "Inventado: exemplo de comentário"
+                  comentario: "Invented: example comment"
       responses:
         "200":
-          description: Migração criada.
+          description: Migration created.
           headers:
             x-amzn-RequestId:
               $ref: "#/components/headers/RequestId"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MigracaoDetalhe"
+                $ref: "#/components/schemas/MigrationDetail"
               examples:
-                criada:
-                  $ref: "#/components/examples/MigracaoDetalheCriada"
+                created:
+                  $ref: "#/components/examples/MigrationDetailCreated"
         "400":
-          description: Corpo inválido ou migração já solicitada.
+          description: Invalid body or migration already requested.
           headers:
             x-amzn-RequestId:
               $ref: "#/components/headers/RequestId"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Erro"
+                $ref: "#/components/schemas/Error"
               examples:
-                uc-invalida:
-                  $ref: "#/components/examples/ErroUcInvalida"
-                migracao-solicitada:
-                  $ref: "#/components/examples/ErroMigracaoSolicitada"
+                invalid-consumer-unit:
+                  $ref: "#/components/examples/InvalidConsumerUnitError"
+                migration-already-requested:
+                  $ref: "#/components/examples/MigrationAlreadyRequestedError"
         "403":
-          $ref: "#/components/responses/Acesso403"
+          $ref: "#/components/responses/Forbidden403"
         "429":
-          $ref: "#/components/responses/Limite429"
+          $ref: "#/components/responses/TooManyRequests429"
         "500":
-          $ref: "#/components/responses/Interno500"
+          $ref: "#/components/responses/InternalError500"
 
   /v1.1/varejista/migracoes/{idMigracao}:
     get:
-      operationId: obterMigracao
-      tags: [Migracoes]
-      summary: Obtém uma migração
+      operationId: getMigration
+      tags: [Migrations]
+      summary: Gets a migration
       description: |
-        Devolve a migração pelo identificador. A resposta é uma lista, no
-        formato do detalhe, que difere do formato da listagem, com uma entrada
-        por mês de referência da migração (observado em 01/11/2026: duas
-        entradas com o mesmo `idMigracao`, diferentes só em `dataReferencia`,
-        D23). Em 30/10/2026 a lista tinha um item. A API não documenta qual
-        mês é o vigente; o SDK escolhe a entrada de mês mais recente.
-      x-confianca: alta
-      x-verificado-em: "2026-11-01"
-      x-fonte: Coleção, seção APIs do varejista, migrações v1.1; testes no sandbox em 30/10/2026 e 01/11/2026.
-      x-divergencias: [2, 10, 14, 20, 21, 23]
+        Returns the migration by its identifier. The response is a list, in the
+        detail format, which differs from the list format, with one entry per
+        reference month of the migration (observed on 2026-11-01: two entries with the
+        same `idMigracao`, differing only in `dataReferencia`, D23). On 2026-10-30
+        the list had one item. The API does not document which month is the current
+        one; the SDK picks the entry with the most recent month.
+      x-confidence: high
+      x-verified-at: "2026-11-01"
+      x-source: Collection, retailer APIs section, migrations v1.1; sandbox tests on 2026-10-30 and 2026-11-01.
+      x-divergences: [2, 10, 14, 20, 21, 23]
       parameters:
-        - $ref: "#/components/parameters/CodigoAgente"
-        - $ref: "#/components/parameters/CodigoPerfil"
-        - $ref: "#/components/parameters/IdMigracao"
+        - $ref: "#/components/parameters/AgentCode"
+        - $ref: "#/components/parameters/ProfileCode"
+        - $ref: "#/components/parameters/MigrationID"
       responses:
         "200":
-          description: Lista com a migração pedida, uma entrada por mês de referência. O sandbox devolveu duas entradas com o mesmo `idMigracao` em 01/11/2026, diferentes só em `dataReferencia` (D23).
+          description: List with the requested migration, one entry per reference month. On 2026-11-01 the sandbox returned two entries with the same `idMigracao`, differing only in `dataReferencia` (D23).
           headers:
             x-amzn-RequestId:
               $ref: "#/components/headers/RequestId"
@@ -342,10 +345,10 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/MigracaoDetalhe"
+                  $ref: "#/components/schemas/MigrationDetail"
               examples:
-                migracao:
-                  summary: "Inventado: migração em lista de um item"
+                migration:
+                  summary: "Invented: migration in a one-item list"
                   value:
                     - idMigracao: 00000000-0000-4000-8000-000000000001
                       codigoUnidadeConsumidora: "000000000000001"
@@ -367,44 +370,44 @@ paths:
                       justificativa: null
                       dataValidacao: null
                       emailUnidadeConsumidora: contato@example.org
-                      comentario: "Inventado: exemplo de comentário"
+                      comentario: "Invented: example comment"
                       indicadorProcessoSiga: null
                       tipoConectado: null
         "400":
-          $ref: "#/components/responses/Requisicao400"
+          $ref: "#/components/responses/BadRequest400"
         "403":
-          $ref: "#/components/responses/Acesso403"
+          $ref: "#/components/responses/Forbidden403"
         "429":
-          $ref: "#/components/responses/Limite429"
+          $ref: "#/components/responses/TooManyRequests429"
         "500":
-          $ref: "#/components/responses/Interno500"
+          $ref: "#/components/responses/InternalError500"
 
   /v1/varejista/migracoes/{idMigracao}:
     put:
-      operationId: editarMigracao
-      tags: [Migracoes]
-      summary: Edita dados cadastrais de uma migração
+      operationId: editMigration
+      tags: [Migrations]
+      summary: Edits the registration data of a migration
       description: |
-        Altera dados cadastrais da migração. Não se sabe se o PUT é parcial ou
-        total: o SDK envia o objeto inteiro. Esta operação não foi exercitada
-        no sandbox.
-      x-confianca: media
-      x-fonte: Coleção, seção APIs do varejista, edição cadastral.
-      x-divergencias: [10, 14]
+        Changes registration data of the migration. It is not known whether the PUT
+        is partial or total: the SDK sends the whole object. This operation was not
+        exercised in the sandbox.
+      x-confidence: medium
+      x-source: Collection, retailer APIs section, registration edit.
+      x-divergences: [10, 14]
       parameters:
-        - $ref: "#/components/parameters/CodigoAgente"
-        - $ref: "#/components/parameters/CodigoPerfil"
-        - $ref: "#/components/parameters/IdMigracao"
+        - $ref: "#/components/parameters/AgentCode"
+        - $ref: "#/components/parameters/ProfileCode"
+        - $ref: "#/components/parameters/MigrationID"
       requestBody:
-        description: Dados cadastrais a alterar.
+        description: Registration data to change.
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/EdicaoMigracao"
+              $ref: "#/components/schemas/MigrationEdit"
             examples:
-              edicao:
-                summary: "Inventado: troca de e-mail e perfil"
+              edit:
+                summary: "Invented: e-mail and profile change"
                 value:
                   mesReferencia: "2027-04"
                   codigoPerfilVarejista: 900003
@@ -414,61 +417,61 @@ paths:
                   statusMigracao: CRIADA
       responses:
         "200":
-          description: Migração editada.
+          description: Migration edited.
           headers:
             x-amzn-RequestId:
               $ref: "#/components/headers/RequestId"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MigracaoDetalhe"
+                $ref: "#/components/schemas/MigrationDetail"
               examples:
-                editada:
-                  $ref: "#/components/examples/MigracaoDetalheCriada"
+                edited:
+                  $ref: "#/components/examples/MigrationDetailCreated"
         "400":
-          $ref: "#/components/responses/Requisicao400"
+          $ref: "#/components/responses/BadRequest400"
         "403":
-          $ref: "#/components/responses/Acesso403"
+          $ref: "#/components/responses/Forbidden403"
         "429":
-          $ref: "#/components/responses/Limite429"
+          $ref: "#/components/responses/TooManyRequests429"
         "500":
-          $ref: "#/components/responses/Interno500"
+          $ref: "#/components/responses/InternalError500"
 
   /v1/varejista/consumo/medicoes:
     get:
-      operationId: listarMedicoes
-      tags: [Medicoes]
-      summary: Lista medições de consumo
+      operationId: listMeasurements
+      tags: [Measurements]
+      summary: Lists consumption measurements
       description: |
-        Devolve as medições de uma UC em um intervalo, uma página por vez. O
-        sandbox respondeu lista vazia nos testes: os campos do item vêm só da
-        documentação pública e têm confiança baixa.
-      x-confianca: media
-      x-verificado-em: "2026-11-01"
-      x-fonte: Coleção, seção APIs do varejista, consumo; testes no sandbox em 30/10/2026 e 01/11/2026 (lista vazia nas duas).
-      x-divergencias: [12, 14, 16]
+        Returns the measurements of a UC within a range, one page at a time. The
+        sandbox answered with an empty list in the tests: the item fields come only
+        from the public documentation and have low confidence.
+      x-confidence: medium
+      x-verified-at: "2026-11-01"
+      x-source: Collection, retailer APIs section, consumption; sandbox tests on 2026-10-30 and 2026-11-01 (empty list in both).
+      x-divergences: [12, 14, 16]
       parameters:
-        - $ref: "#/components/parameters/CodigoAgente"
-        - $ref: "#/components/parameters/CodigoPerfil"
-        - $ref: "#/components/parameters/CodigoUnidadeConsumidoraMedicaoQuery"
-        - $ref: "#/components/parameters/CodigoAgenteConcessionariaQuery"
-        - $ref: "#/components/parameters/DataInicio"
-        - $ref: "#/components/parameters/DataFim"
-        - $ref: "#/components/parameters/SituacaoMedicaoQuery"
-        - $ref: "#/components/parameters/IndexProximaPagina"
+        - $ref: "#/components/parameters/AgentCode"
+        - $ref: "#/components/parameters/ProfileCode"
+        - $ref: "#/components/parameters/ConsumerUnitCodeMeasurementQuery"
+        - $ref: "#/components/parameters/DistributorAgentCodeQuery"
+        - $ref: "#/components/parameters/StartDate"
+        - $ref: "#/components/parameters/EndDate"
+        - $ref: "#/components/parameters/MeasurementStatusQuery"
+        - $ref: "#/components/parameters/NextPageIndex"
       responses:
         "200":
-          description: Página de medições.
+          description: Page of measurements.
           headers:
             x-amzn-RequestId:
               $ref: "#/components/headers/RequestId"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListaMedicoes"
+                $ref: "#/components/schemas/MeasurementList"
               examples:
-                pagina-1:
-                  summary: "Inventado: primeira página, consumo como string"
+                page-1:
+                  summary: "Invented: first page, consumption as a string"
                   value:
                     medicoes:
                       - identificadorMedicaoConsumo: 00000000-0000-4000-8000-0000000000a1
@@ -477,12 +480,12 @@ paths:
                         diaReferencia: "2027-02-01"
                         dataReferenciaConsumo: "2027-02-01T00:15:00-03:00"
                         consumo: "12.345"
-                        tipoConsumo: "Inventado: tipo"
+                        tipoConsumo: "Invented: type"
                         dataAtualizacao: "2027-02-02T08:00:00-03:00"
                         situacaoMedicao: CONSISTIDA
-                    indexProximaPagina: cursor-inventado-2
-                pagina-2:
-                  summary: "Inventado: última página, consumo como número"
+                    indexProximaPagina: invented-cursor-2
+                page-2:
+                  summary: "Invented: last page, consumption as a number"
                   value:
                     medicoes:
                       - identificadorMedicaoConsumo: 00000000-0000-4000-8000-0000000000a2
@@ -491,56 +494,56 @@ paths:
                         diaReferencia: "2027-02-01"
                         dataReferenciaConsumo: "2027-02-01T00:30:00-03:00"
                         consumo: 12.5
-                        tipoConsumo: "Inventado: tipo"
+                        tipoConsumo: "Invented: type"
                         dataAtualizacao: "2027-02-02T08:00:00-03:00"
                         situacaoMedicao: CONSISTIDA
                     indexProximaPagina: null
         "400":
-          $ref: "#/components/responses/Requisicao400"
+          $ref: "#/components/responses/BadRequest400"
         "403":
-          $ref: "#/components/responses/Acesso403"
+          $ref: "#/components/responses/Forbidden403"
         "429":
-          $ref: "#/components/responses/Limite429"
+          $ref: "#/components/responses/TooManyRequests429"
         "500":
-          $ref: "#/components/responses/Interno500"
+          $ref: "#/components/responses/InternalError500"
 
   /v1/solicitacoes:
     get:
-      operationId: listarSolicitacoes
-      tags: [Solicitacoes]
-      summary: Lista solicitações de alteração
+      operationId: listChangeRequests
+      tags: [Change requests]
+      summary: Lists change requests
       description: |
-        Devolve as solicitações de um tipo. A resposta é um objeto com a lista em
-        `solicitacao`, e o tipo é obrigatório mesmo marcado como opcional na
-        documentação pública.
-      x-confianca: alta
-      x-verificado-em: "2026-10-30"
-      x-fonte: Coleção, seção Solicitações; teste no sandbox em 30/10/2026.
-      x-divergencias: [3, 5, 11, 14]
+        Returns the requests of a given type. The response is an object with the list
+        in `solicitacao`, and the type is required even though the public documentation
+        marks it as optional.
+      x-confidence: high
+      x-verified-at: "2026-10-30"
+      x-source: Collection, Requests section; sandbox test on 2026-10-30.
+      x-divergences: [3, 5, 11, 14]
       parameters:
-        - $ref: "#/components/parameters/CodigoAgente"
-        - $ref: "#/components/parameters/CodigoPerfil"
-        - $ref: "#/components/parameters/TipoSolicitacaoQuery"
-        - $ref: "#/components/parameters/SituacaoAlteracaoQuery"
-        - $ref: "#/components/parameters/MesReferenciaInicial"
-        - $ref: "#/components/parameters/MesReferenciaFinal"
-        - $ref: "#/components/parameters/DataSolicitacaoInicial"
-        - $ref: "#/components/parameters/DataSolicitacaoFinal"
-        - $ref: "#/components/parameters/CodigoUnidadeConsumidoraQuery"
-        - $ref: "#/components/parameters/IndexProximaPagina"
+        - $ref: "#/components/parameters/AgentCode"
+        - $ref: "#/components/parameters/ProfileCode"
+        - $ref: "#/components/parameters/ChangeRequestTypeQuery"
+        - $ref: "#/components/parameters/ChangeRequestStatusQuery"
+        - $ref: "#/components/parameters/ReferenceMonthStart"
+        - $ref: "#/components/parameters/ReferenceMonthEnd"
+        - $ref: "#/components/parameters/RequestDateStart"
+        - $ref: "#/components/parameters/RequestDateEnd"
+        - $ref: "#/components/parameters/ConsumerUnitCodeQuery"
+        - $ref: "#/components/parameters/NextPageIndex"
       responses:
         "200":
-          description: Lista de solicitações.
+          description: List of change requests.
           headers:
             x-amzn-RequestId:
               $ref: "#/components/headers/RequestId"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListaSolicitacoes"
+                $ref: "#/components/schemas/ChangeRequestList"
               examples:
-                lista:
-                  summary: "Inventado: uma solicitação"
+                list:
+                  summary: "Invented: one change request"
                   value:
                     solicitacao:
                       - idSolicitacaoAlteracao: 00000000-0000-4000-8000-0000000000b1
@@ -555,59 +558,59 @@ paths:
                         codigoPerfilVarejistaNovo: null
                         codigoAgenteVarejistaAtual: 900002
                         codigoPerfilVarejistaAtual: 900003
-                        descricaoJustificativa: "Inventado: exemplo de justificativa"
+                        descricaoJustificativa: "Invented: example justification"
                         dataAtraso: null
                         dataNotificacao: "2027-02-01"
                         dataSolicitacao: "2027-02-02"
                         idCelebracaoCER: null
                     indexProximaPagina: null
         "400":
-          description: Parâmetro ausente ou inválido.
+          description: Missing or invalid parameter.
           headers:
             x-amzn-RequestId:
               $ref: "#/components/headers/RequestId"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Erro"
+                $ref: "#/components/schemas/Error"
               examples:
-                validacao-campos:
-                  $ref: "#/components/examples/ErroValidacaoCampos"
+                field-validation:
+                  $ref: "#/components/examples/FieldValidationError"
         "403":
-          $ref: "#/components/responses/Acesso403"
+          $ref: "#/components/responses/Forbidden403"
         "429":
-          $ref: "#/components/responses/Limite429"
+          $ref: "#/components/responses/TooManyRequests429"
         "500":
-          $ref: "#/components/responses/Interno500"
+          $ref: "#/components/responses/InternalError500"
 
   /v1/solicitacoes/representante:
     post:
-      operationId: solicitarTrocaRepresentante
-      tags: [Solicitacoes]
-      summary: Solicita troca de representante
+      operationId: requestRepresentativeChange
+      tags: [Change requests]
+      summary: Requests a change of representative
       description: |
-        O novo varejista pede para representar uma UC a partir de um mês, e o
-        varejista atual responde por `decidirSolicitacao`. Pelo Procedimento de
-        Comercialização (item 3.37.3), a falta de resposta leva à transferência
-        compulsória no mês pretendido. A coleção descreve outra regra, de
-        aprovação automática conforme a antecedência; a divergência está na D5
-        de `FONTES.md`. Esta operação não foi exercitada no sandbox.
-      x-confianca: media
-      x-fonte: Coleção, seção Solicitações, troca de representante.
-      x-divergencias: [4, 5, 13, 14]
+        The new retailer asks to represent a UC from a given month, and the current
+        retailer answers through `decideChangeRequest`. Under the Procedimentos de
+        Comercialização (Commercialization Procedures, item 3.37.3), a missing answer
+        leads to a compulsory transfer in the intended month. The collection describes
+        another rule, automatic approval depending on the notice period; the divergence
+        is D5 in `SOURCES.md`. This operation was not exercised in the sandbox.
+      x-confidence: medium
+      x-source: Collection, Requests section, change of representative.
+      x-divergences: [4, 5, 13, 14]
       parameters:
-        - $ref: "#/components/parameters/CodigoAgente"
-        - $ref: "#/components/parameters/CodigoPerfil"
+        - $ref: "#/components/parameters/AgentCode"
+        - $ref: "#/components/parameters/ProfileCode"
       requestBody:
-        description: Dados da troca de representante.
+        description: Data of the change of representative.
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SolicitacaoRepresentante"
+              $ref: "#/components/schemas/RepresentativeChangeRequest"
             examples:
-              troca:
-                summary: "Inventado: troca de representante"
+              change:
+                summary: "Invented: change of representative"
                 value:
                   codigoUnidadeConsumidora: "000000000000001"
                   codigoConcessionaria: 900001
@@ -617,40 +620,40 @@ paths:
                   tipoSolicitacao: ALTERACAO_ALFA_VAREJISTA_RESILICAO
       responses:
         "200":
-          $ref: "#/components/responses/SolicitacaoCriada200"
+          $ref: "#/components/responses/ChangeRequestCreated200"
         "400":
-          $ref: "#/components/responses/Requisicao400"
+          $ref: "#/components/responses/BadRequest400"
         "403":
-          $ref: "#/components/responses/Acesso403"
+          $ref: "#/components/responses/Forbidden403"
         "429":
-          $ref: "#/components/responses/Limite429"
+          $ref: "#/components/responses/TooManyRequests429"
         "500":
-          $ref: "#/components/responses/Interno500"
+          $ref: "#/components/responses/InternalError500"
 
   /v1/solicitacoes/suspensao-fornecimento-varejista:
     post:
-      operationId: solicitarSuspensaoFornecimento
-      tags: [Solicitacoes]
-      summary: Solicita suspensão de fornecimento
+      operationId: requestSupplySuspension
+      tags: [Change requests]
+      summary: Requests a supply suspension
       description: |
-        O varejista notifica a suspensão do fornecimento de uma UC. Esta
-        operação não foi exercitada no sandbox.
-      x-confianca: media
-      x-fonte: Coleção, seção Solicitações, suspensão de fornecimento.
-      x-divergencias: [13, 14]
+        The retailer notifies the suspension of supply to a UC. This operation was
+        not exercised in the sandbox.
+      x-confidence: medium
+      x-source: Collection, Requests section, supply suspension.
+      x-divergences: [13, 14]
       parameters:
-        - $ref: "#/components/parameters/CodigoAgente"
-        - $ref: "#/components/parameters/CodigoPerfil"
+        - $ref: "#/components/parameters/AgentCode"
+        - $ref: "#/components/parameters/ProfileCode"
       requestBody:
-        description: Dados da suspensão de fornecimento.
+        description: Data of the supply suspension.
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SolicitacaoSuspensao"
+              $ref: "#/components/schemas/SupplySuspensionRequest"
             examples:
-              suspensao:
-                summary: "Inventado: suspensão de fornecimento"
+              suspension:
+                summary: "Invented: supply suspension"
                 value:
                   codigoUnidadeConsumidora: "000000000000001"
                   codigoConcessionaria: 900001
@@ -658,63 +661,63 @@ paths:
                   dataNotificacao: "2027-02-01"
       responses:
         "200":
-          $ref: "#/components/responses/SolicitacaoCriada200"
+          $ref: "#/components/responses/ChangeRequestCreated200"
         "400":
-          $ref: "#/components/responses/Requisicao400"
+          $ref: "#/components/responses/BadRequest400"
         "403":
-          $ref: "#/components/responses/Acesso403"
+          $ref: "#/components/responses/Forbidden403"
         "429":
-          $ref: "#/components/responses/Limite429"
+          $ref: "#/components/responses/TooManyRequests429"
         "500":
-          $ref: "#/components/responses/Interno500"
+          $ref: "#/components/responses/InternalError500"
 
   /v1/solicitacoes/{idSolicitacaoAlteracao}:
     post:
-      operationId: decidirSolicitacao
-      tags: [Solicitacoes]
-      summary: Aprova ou reprova uma solicitação
+      operationId: decideChangeRequest
+      tags: [Change requests]
+      summary: Approves or rejects a change request
       description: |
-        Registra a decisão sobre uma solicitação de troca de representante,
-        retorno ao cativo ou suspensão de fornecimento. Esta operação não foi
-        exercitada no sandbox.
-      x-confianca: media
-      x-fonte: Coleção, seção Solicitações, aprovação e reprovação.
-      x-divergencias: [14]
+        Records the decision on a request to change representative, return to the
+        captive market or suspend supply. This operation was not exercised in the
+        sandbox.
+      x-confidence: medium
+      x-source: Collection, Requests section, approval and rejection.
+      x-divergences: [14]
       parameters:
-        - $ref: "#/components/parameters/CodigoAgente"
-        - $ref: "#/components/parameters/CodigoPerfil"
-        - $ref: "#/components/parameters/IdSolicitacaoAlteracao"
+        - $ref: "#/components/parameters/AgentCode"
+        - $ref: "#/components/parameters/ProfileCode"
+        - $ref: "#/components/parameters/ChangeRequestID"
       requestBody:
-        description: Decisão sobre a solicitação.
+        description: Decision on the change request.
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DecisaoSolicitacao"
+              $ref: "#/components/schemas/ChangeRequestDecision"
             examples:
-              decisao:
-                summary: "Inventado: aprovação"
+              decision:
+                summary: "Invented: approval"
                 value:
                   situacaoAlteracao: CONCLUIDA
-                  descricaoJustificativa: "Inventado: aprovada sem ressalvas"
+                  descricaoJustificativa: "Invented: approved without reservations"
                   tipoSolicitacao: SUSPENSAO_FORNECIMENTO_RESILICAO
       responses:
         "200":
-          $ref: "#/components/responses/SolicitacaoCriada200"
+          $ref: "#/components/responses/ChangeRequestCreated200"
         "400":
-          $ref: "#/components/responses/Requisicao400"
+          $ref: "#/components/responses/BadRequest400"
         "403":
-          $ref: "#/components/responses/Acesso403"
+          $ref: "#/components/responses/Forbidden403"
         "429":
-          $ref: "#/components/responses/Limite429"
+          $ref: "#/components/responses/TooManyRequests429"
         "500":
-          $ref: "#/components/responses/Interno500"
+          $ref: "#/components/responses/InternalError500"
 
 components:
   securitySchemes:
     oauth2:
       type: oauth2
-      description: Fluxo `client_credentials`. O token vale cerca de cinco minutos.
+      description: The `client_credentials` flow. The token is valid for about five minutes.
       flows:
         clientCredentials:
           tokenUrl: https://sandbox-api-abm.ccee.org.br/sso/oauth/token
@@ -722,168 +725,168 @@ components:
 
   headers:
     RequestId:
-      description: Identificador da requisição no gateway. Útil para suporte e logs.
+      description: Request identifier at the gateway. Useful for support and logs.
       schema:
         type: string
       example: 00000000-0000-4000-8000-0000000000f1
 
   parameters:
-    CodigoAgente:
+    AgentCode:
       name: codigoAgente
       in: header
       required: true
-      description: Código do agente que faz a chamada (a documentação pública diz "código da concessionária").
+      description: Code of the agent making the call (the public documentation says "distributor code").
       schema:
         type: integer
       example: 900002
-      x-divergencias: [7]
-    CodigoPerfil:
+      x-divergences: [7]
+    ProfileCode:
       name: codigoPerfil
       in: header
       required: true
-      description: Código do perfil do agente.
+      description: Code of the agent's profile.
       schema:
         type: integer
       example: 900003
-    IdMigracao:
+    MigrationID:
       name: idMigracao
       in: path
       required: true
-      description: Identificador da migração.
+      description: Identifier of the migration.
       schema:
         type: string
       example: 00000000-0000-4000-8000-000000000001
-    IdSolicitacaoAlteracao:
+    ChangeRequestID:
       name: idSolicitacaoAlteracao
       in: path
       required: true
-      description: Identificador da solicitação de alteração.
+      description: Identifier of the change request.
       schema:
         type: string
       example: 00000000-0000-4000-8000-0000000000b1
-    CodigoPerfilVarejistaQuery:
+    RetailerProfileCodeQuery:
       name: codigoPerfilVarejista
       in: query
       required: true
-      description: Perfil do varejista. Obrigatório na consulta, além do cabeçalho `codigoPerfil`.
+      description: Retailer profile. Required in the query, in addition to the `codigoPerfil` header.
       schema:
         type: integer
       example: 900003
-      x-divergencias: [8]
-    MesReferenciaInicial:
+      x-divergences: [8]
+    ReferenceMonthStart:
       name: mesReferenciaInicial
       in: query
       required: false
-      description: Primeiro mês do intervalo, no formato AAAA-MM.
+      description: First month of the range, in YYYY-MM format.
       schema:
         type: string
         pattern: ^[0-9]{4}-[0-9]{2}$
       example: 2027-01
-      x-divergencias: [2]
-    MesReferenciaFinal:
+      x-divergences: [2]
+    ReferenceMonthEnd:
       name: mesReferenciaFinal
       in: query
       required: false
-      description: Último mês do intervalo, no formato AAAA-MM.
+      description: Last month of the range, in YYYY-MM format.
       schema:
         type: string
         pattern: ^[0-9]{4}-[0-9]{2}$
       example: 2027-12
-      x-divergencias: [2]
-    MesReferenciaInicialObrigatorio:
+      x-divergences: [2]
+    ReferenceMonthStartRequired:
       name: mesReferenciaInicial
       in: query
       required: true
       description: |
-        Primeiro mês do intervalo, no formato AAAA-MM. Obrigatório na listagem de
-        migrações: sem ele o sandbox responde 400
-        `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`. Um intervalo largo demais volta
-        400 `ERR_MES_REFERENCIA_INICIAL_DIFERENCA` (12 meses passaram; 24, 48 e 96 não; o teto fica entre 12 e 24, D22).
+        First month of the range, in YYYY-MM format. Required on the migration list:
+        without it the sandbox answers 400
+        `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`. A range that is too wide returns
+        400 `ERR_MES_REFERENCIA_INICIAL_DIFERENCA` (12 months passed; 24, 48 and 96 did not; the ceiling is between 12 and 24, D22).
       schema:
         type: string
         pattern: ^[0-9]{4}-[0-9]{2}$
       example: 2027-01
-      x-divergencias: [2, 18, 19]
-    MesReferenciaFinalObrigatorio:
+      x-divergences: [2, 18, 19]
+    ReferenceMonthEndRequired:
       name: mesReferenciaFinal
       in: query
       required: true
       description: |
-        Último mês do intervalo, no formato AAAA-MM. Obrigatório na listagem de
-        migrações, junto com o mês inicial. A distância máxima entre os dois fica
-        entre 12 e 24 meses: 12 foram aceitos e 24, 48 e 96 recusados
+        Last month of the range, in YYYY-MM format. Required on the migration list,
+        together with the start month. The maximum distance between the two is
+        between 12 and 24 months: 12 were accepted and 24, 48 and 96 rejected
         (`ERR_MES_REFERENCIA_INICIAL_DIFERENCA`, D22).
       schema:
         type: string
         pattern: ^[0-9]{4}-[0-9]{2}$
       example: 2027-01
-      x-divergencias: [2, 18, 19]
-    CodigoUnidadeConsumidoraQuery:
+      x-divergences: [2, 18, 19]
+    ConsumerUnitCodeQuery:
       name: codigoUnidadeConsumidora
       in: query
       required: false
-      description: Código da unidade consumidora. Sem validação de formato no filtro.
+      description: Consumer unit code. No format validation on the filter.
       schema:
         type: string
       example: "000000000000001"
-    CodigoUnidadeConsumidoraMedicaoQuery:
+    ConsumerUnitCodeMeasurementQuery:
       name: codigoUnidadeConsumidora
       in: query
       required: true
-      description: Código da unidade consumidora. Sem `pattern`, porque as medições da v1 aceitaram UC de 10 dígitos.
+      description: Consumer unit code. No `pattern`, because the v1 measurements accepted a 10-digit UC.
       schema:
         type: string
       example: "000000000000001"
-      x-divergencias: [12]
-    CodigoAgenteConcessionariaQuery:
+      x-divergences: [12]
+    DistributorAgentCodeQuery:
       name: codigoAgenteConcessionaria
       in: query
       required: true
-      description: Código da concessionária da UC.
+      description: Code of the UC's distributor.
       schema:
         type: integer
       example: 900001
-      x-divergencias: [11, 14]
-    StatusMigracaoQuery:
+      x-divergences: [11, 14]
+    MigrationStatusQuery:
       name: statusMigracao
       in: query
       required: false
-      description: Filtra pelo status da migração.
+      description: Filters by migration status.
       schema:
-        $ref: "#/components/schemas/StatusMigracao"
-    DataInicio:
+        $ref: "#/components/schemas/MigrationStatus"
+    StartDate:
       name: dataInicio
       in: query
       required: true
-      description: Início do intervalo, com data, hora e deslocamento.
+      description: Start of the range, with date, time and offset.
       schema:
         type: string
         format: date-time
       example: "2027-02-01T00:00:00-03:00"
-    DataFim:
+    EndDate:
       name: dataFim
       in: query
       required: true
-      description: Fim do intervalo, com data, hora e deslocamento.
+      description: End of the range, with date, time and offset.
       schema:
         type: string
         format: date-time
       example: "2027-02-28T23:45:00-03:00"
-    SituacaoMedicaoQuery:
+    MeasurementStatusQuery:
       name: situacaoMedicao
       in: query
       required: false
-      description: Filtra pela situação da medição.
+      description: Filters by measurement status.
       schema:
         type: string
         enum: [CONSISTIDA, REJEITADA]
       example: CONSISTIDA
-      x-confianca: baixa
-    TipoSolicitacaoQuery:
+      x-confidence: low
+    ChangeRequestTypeQuery:
       name: tipoSolicitacao
       in: query
       required: true
-      description: Tipo da solicitação. Obrigatório de fato, embora a documentação pública o marque como opcional.
+      description: Type of the request. Actually required, although the public documentation marks it as optional.
       schema:
         type: string
         enum:
@@ -898,115 +901,115 @@ components:
           - SUSPENSAO_FORNECIMENTO_DESLIGAMENTO
           - SUSPENSAO_FORNECIMENTO_RESOLUCAO_UC_CONCESSIONARIA
       example: SUSPENSAO_FORNECIMENTO_RESILICAO
-      x-divergencias: [11]
-    SituacaoAlteracaoQuery:
+      x-divergences: [11]
+    ChangeRequestStatusQuery:
       name: situacaoAlteracao
       in: query
       required: false
-      description: Filtra pela situação da solicitação. A documentação pública a marca como obrigatória, mas ela é opcional.
+      description: Filters by request status. The public documentation marks it as required, but it is optional.
       schema:
         type: string
         enum: [CRIADA, CONCLUIDA, REPROVADA, CANCELADA, EXPIRADA]
       example: CRIADA
-      x-divergencias: [11]
-    DataSolicitacaoInicial:
+      x-divergences: [11]
+    RequestDateStart:
       name: dataSolicitacaoInicial
       in: query
       required: false
-      description: Primeiro dia do intervalo da data de solicitação. O formato não foi testado e a coleção pública se contradiz (texto com `DD-MM-AAAA`, URL de exemplo com `AAAA-MM-DD`); a spec segue a URL.
+      description: First day of the request date range. The format was not tested and the public collection contradicts itself (text with `DD-MM-YYYY`, example URL with `YYYY-MM-DD`); the spec follows the URL.
       schema:
         type: string
         format: date
       example: "2027-02-01"
-      x-confianca: baixa
-      x-divergencias: [2]
-    DataSolicitacaoFinal:
+      x-confidence: low
+      x-divergences: [2]
+    RequestDateEnd:
       name: dataSolicitacaoFinal
       in: query
       required: false
-      description: Último dia do intervalo da data de solicitação. O formato não foi testado e a coleção pública se contradiz (texto com `DD-MM-AAAA`, URL de exemplo com `AAAA-MM-DD`); a spec segue a URL.
+      description: Last day of the request date range. The format was not tested and the public collection contradicts itself (text with `DD-MM-YYYY`, example URL with `YYYY-MM-DD`); the spec follows the URL.
       schema:
         type: string
         format: date
       example: "2027-02-28"
-      x-confianca: baixa
-      x-divergencias: [2]
-    IndexProximaPagina:
+      x-confidence: low
+      x-divergences: [2]
+    NextPageIndex:
       name: indexProximaPagina
       in: query
       required: false
-      description: Cursor devolvido pela página anterior. Nenhuma resposta observada trouxe cursor preenchido.
+      description: Cursor returned by the previous page. No observed response carried a filled-in cursor.
       schema:
         type: string
-      example: cursor-inventado-2
-      x-confianca: baixa
+      example: invented-cursor-2
+      x-confidence: low
 
   examples:
-    ErroValidacaoCampos:
-      summary: "Inventado: campo inválido"
+    FieldValidationError:
+      summary: "Invented: invalid field"
       value:
         timestamp: "2027-01-10T10:00:00.000-03:00"
         status: 400
         error: ERR_VALIDACAO_CAMPOS
-        message: "Inventado: o campo informado não é válido"
-    ErroPerfilObrigatorio:
-      summary: "Inventado: perfil ausente na consulta"
+        message: "Invented: the given field is not valid"
+    RetailerProfileRequiredError:
+      summary: "Invented: profile missing from the query"
       value:
         timestamp: "2027-01-10T10:00:00.000-03:00"
         status: 400
         error: ERR_PERFIL_VAREJISTA_OBRIGATORIO
-        message: "Inventado: informe o perfil do varejista"
-    ErroUcInvalida:
-      summary: "Inventado: UC fora do formato"
+        message: "Invented: provide the retailer profile"
+    InvalidConsumerUnitError:
+      summary: "Invented: UC in the wrong format"
       value:
         timestamp: "2027-01-10T10:00:00.000-03:00"
         status: 400
         error: ERR_VALIDACAO_CAMPOS
-        message: "Inventado: a unidade consumidora precisa ter 15 dígitos"
-    ErroMigracaoSolicitada:
-      summary: "Inventado: já existe migração ativa para a UC"
+        message: "Invented: the consumer unit must have 15 digits"
+    MigrationAlreadyRequestedError:
+      summary: "Invented: an active migration already exists for the UC"
       value:
         timestamp: "2027-01-10T10:00:00.000-03:00"
         status: 400
         error: ERR_MIGRACAO_SOLICITADA
-        message: "Inventado: já existe migração ativa para esta UC e concessionária"
-    ErroFaixaObrigatoria:
-      summary: "Inventado: faixa de meses ausente"
+        message: "Invented: an active migration already exists for this UC and distributor"
+    MonthRangeRequiredError:
+      summary: "Invented: month range missing"
       value:
         timestamp: "2027-01-10T10:00:00.000-03:00"
         status: 400
         error: ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO
-        message: "Inventado: informe o intervalo de meses de referência"
-    ErroFaixaLargaDemais:
-      summary: "Inventado: faixa de meses larga demais"
+        message: "Invented: provide the reference month range"
+    MonthRangeTooWideError:
+      summary: "Invented: month range too wide"
       value:
         timestamp: "2027-01-10T10:00:00.000-03:00"
         status: 400
         error: ERR_MES_REFERENCIA_INICIAL_DIFERENCA
-        message: "Inventado: o intervalo de meses é maior que o permitido"
-    ErroCredencialInvalida:
-      summary: "Inventado: credencial recusada"
+        message: "Invented: the month range is larger than allowed"
+    InvalidCredentialError:
+      summary: "Invented: credential refused"
       value:
         timestamp: "2027-01-10T10:00:00Z"
         status: 403
         error: ERR_CREDENCIAL_INVALIDA
-        message: "Inventado: token, agente ou perfil não aceitos"
-    ErroLimite:
-      summary: "Inventado: limite de requisições"
+        message: "Invented: token, agent or profile not accepted"
+    RateLimitError:
+      summary: "Invented: rate limit"
       value:
         timestamp: "2027-01-10T10:00:00Z"
         status: 429
-        error: Inventado
-        message: "Inventado: limite de requisições excedido"
-    ErroInterno:
-      summary: "Inventado: falha interna"
+        error: Invented
+        message: "Invented: rate limit exceeded"
+    InternalFailureError:
+      summary: "Invented: internal failure"
       value:
         timestamp: "2027-01-10T10:00:00Z"
         status: 500
-        error: Inventado
-        message: "Inventado: falha interna"
-    MigracaoDetalheCriada:
-      summary: "Inventado: migração no formato do detalhe"
+        error: Invented
+        message: "Invented: internal failure"
+    MigrationDetailCreated:
+      summary: "Invented: migration in the detail format"
       value:
         idMigracao: 00000000-0000-4000-8000-000000000001
         codigoUnidadeConsumidora: "000000000000001"
@@ -1028,11 +1031,11 @@ components:
         justificativa: null
         dataValidacao: null
         emailUnidadeConsumidora: contato@example.org
-        comentario: "Inventado: exemplo de comentário"
+        comentario: "Invented: example comment"
         indicadorProcessoSiga: null
         tipoConectado: null
-    SolicitacaoCriada:
-      summary: "Inventado: solicitação criada"
+    ChangeRequestCreated:
+      summary: "Invented: change request created"
       value:
         idSolicitacaoAlteracao: 00000000-0000-4000-8000-0000000000b1
         codigoUnidadeConsumidora: "000000000000001"
@@ -1046,132 +1049,135 @@ components:
         codigoPerfilVarejistaNovo: null
         codigoAgenteVarejistaAtual: 900002
         codigoPerfilVarejistaAtual: 900003
-        descricaoJustificativa: "Inventado: exemplo de justificativa"
+        descricaoJustificativa: "Invented: example justification"
         dataAtraso: null
         dataNotificacao: "2027-02-01"
         dataSolicitacao: "2027-02-02"
         idCelebracaoCER: null
 
   responses:
-    Requisicao400:
+    BadRequest400:
       description: |
-        Requisição inválida. O `error` diz o motivo (`ERR_VALIDACAO_CAMPOS`,
-        `ERR_PERFIL_VAREJISTA_OBRIGATORIO` ou `ERR_MIGRACAO_SOLICITADA`); a
-        validação para no primeiro campo com problema. Não repita sem corrigir.
-        Veja o [catálogo de erros](https://marcobuarque.github.io/abertura-mercado-energia/erros).
+        Invalid request. The `error` field gives the reason (`ERR_VALIDACAO_CAMPOS`,
+        `ERR_PERFIL_VAREJISTA_OBRIGATORIO` or `ERR_MIGRACAO_SOLICITADA`); validation
+        stops at the first field with a problem. Do not repeat the request without
+        fixing it.
+        See the [error catalog](https://marcobuarque.github.io/abertura-mercado-energia/errors).
       headers:
         x-amzn-RequestId:
           $ref: "#/components/headers/RequestId"
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Erro"
+            $ref: "#/components/schemas/Error"
           examples:
-            validacao-campos:
-              $ref: "#/components/examples/ErroValidacaoCampos"
-    Acesso403:
+            field-validation:
+              $ref: "#/components/examples/FieldValidationError"
+    Forbidden403:
       description: |
-        Autenticação ou autorização recusada. O gateway devolve 403 (nunca 401)
-        para token inválido e para agente ou perfil que não pertencem à credencial.
-        Os casos só se distinguem pela `message`. Com o cabeçalho
-        `x-amzn-ErrorType`, a recusa veio do autorizador, antes do backend.
-        Veja o [catálogo de erros](https://marcobuarque.github.io/abertura-mercado-energia/erros#credencial-invalida-autorizador).
+        Authentication or authorization refused. The gateway returns 403 (never 401)
+        for an invalid token and for an agent or profile that does not belong to the
+        credential. The cases can only be told apart by the `message`. When the
+        `x-amzn-ErrorType` header is present, the refusal came from the authorizer,
+        before the backend.
+        See the [error catalog](https://marcobuarque.github.io/abertura-mercado-energia/errors#invalid-credential-authorizer).
       headers:
         x-amzn-RequestId:
           $ref: "#/components/headers/RequestId"
         x-amzn-ErrorType:
-          description: Tipo de erro marcado pelo autorizador do gateway.
+          description: Error type set by the gateway authorizer.
           schema:
             type: string
           example: AccessDeniedException
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Erro"
+            $ref: "#/components/schemas/Error"
           examples:
-            credencial-invalida:
-              $ref: "#/components/examples/ErroCredencialInvalida"
-      x-divergencias: [9]
-    Limite429:
+            invalid-credential:
+              $ref: "#/components/examples/InvalidCredentialError"
+      x-divergences: [9]
+    TooManyRequests429:
       description: |
-        Limite de requisições excedido. Não observado; sem `Retry-After`
-        conhecido. Espere antes de repetir; numa escrita, só repita se a
-        resposta trouxer `x-amzn-ErrorType`. Veja o
-        [catálogo de erros](https://marcobuarque.github.io/abertura-mercado-energia/erros#limite-de-requisicoes).
+        Rate limit exceeded. Not observed; no known `Retry-After`. Wait before
+        repeating; on a write, repeat only if the response carries `x-amzn-ErrorType`.
+        See the
+        [error catalog](https://marcobuarque.github.io/abertura-mercado-energia/errors#rate-limited).
       headers:
         x-amzn-RequestId:
           $ref: "#/components/headers/RequestId"
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Erro"
+            $ref: "#/components/schemas/Error"
           examples:
-            limite:
-              $ref: "#/components/examples/ErroLimite"
-      x-confianca: baixa
-    Interno500:
+            rate-limit:
+              $ref: "#/components/examples/RateLimitError"
+      x-confidence: low
+    InternalError500:
       description: |
-        Falha interna. Não observada. Numa escrita, o resultado é incerto:
-        confira o estado antes de repetir. Veja o
-        [catálogo de erros](https://marcobuarque.github.io/abertura-mercado-energia/erros#erro-interno).
+        Internal failure. Not observed. On a write, the outcome is uncertain: check
+        the state before repeating.
+        See the
+        [error catalog](https://marcobuarque.github.io/abertura-mercado-energia/errors#internal-error).
       headers:
         x-amzn-RequestId:
           $ref: "#/components/headers/RequestId"
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Erro"
+            $ref: "#/components/schemas/Error"
           examples:
-            interno:
-              $ref: "#/components/examples/ErroInterno"
-      x-confianca: baixa
-    SolicitacaoCriada200:
-      description: Solicitação registrada ou atualizada.
+            internal:
+              $ref: "#/components/examples/InternalFailureError"
+      x-confidence: low
+    ChangeRequestCreated200:
+      description: Change request recorded or updated.
       headers:
         x-amzn-RequestId:
           $ref: "#/components/headers/RequestId"
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Solicitacao"
+            $ref: "#/components/schemas/ChangeRequest"
           examples:
-            solicitacao:
-              $ref: "#/components/examples/SolicitacaoCriada"
+            change-request:
+              $ref: "#/components/examples/ChangeRequestCreated"
 
   schemas:
-    Erro:
+    Error:
       type: object
       description: |
-        Corpo de erro do backend e do autorizador, com os mesmos quatro campos,
-        em `application/json` (não em `application/problem+json`). O SDK Go
-        entrega o mesmo erro como Problem Details da RFC 9457; o catálogo
-        explica cada código e cada situação sem código.
+        Error body of the backend and of the authorizer, with the same four fields,
+        as `application/json` (not `application/problem+json`). The Go SDK delivers
+        the same error as an RFC 9457 Problem Details object; the catalog explains
+        each code and each situation without a code.
 
-        Códigos conhecidos:
+        Known codes:
 
-        - `ERR_CREDENCIAL_INVALIDA`: 403. Token, agente ou perfil recusados.
-        - `ERR_VALIDACAO_CAMPOS`: 400. Um campo foi recusado; a validação para no primeiro.
-        - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. A consulta não trouxe o perfil.
-        - `ERR_MIGRACAO_SOLICITADA`: 400. Já existe migração ativa para a UC e a concessionária.
-        - `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`: 400. A listagem de migrações não trouxe o intervalo de meses ([catálogo](docs/erros.md#faixa-de-meses-obrigatoria)).
-        - `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`: 400. O intervalo de meses é largo demais ([catálogo](docs/erros.md#faixa-de-meses-larga-demais)).
+        - `ERR_CREDENCIAL_INVALIDA`: 403. Token, agent or profile refused.
+        - `ERR_VALIDACAO_CAMPOS`: 400. A field was refused; validation stops at the first one.
+        - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. The query did not carry the profile.
+        - `ERR_MIGRACAO_SOLICITADA`: 400. There is already an active migration for the UC and the distributor.
+        - `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`: 400. The migration list did not carry the month range ([catalog](docs/errors.md#month-range-required)).
+        - `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`: 400. The month range is too wide ([catalog](docs/errors.md#month-range-too-wide)).
       externalDocs:
-        description: Catálogo de erros, com o que fazer e quando repetir.
-        url: https://marcobuarque.github.io/abertura-mercado-energia/erros
+        description: Error catalog, with what to do and when to retry.
+        url: https://marcobuarque.github.io/abertura-mercado-energia/errors
       required: [error, message]
       properties:
         timestamp:
           type: string
           description: |
-            Instante do erro, em RFC 3339 com deslocamento. A fração de segundo
-            tem comprimento variável (2 ou 3 dígitos observados, com zeros à
-            direita cortados) ou não existe, como no autorizador (D21). Sem
-            `format`, para não rejeitar essas variações.
+            Instant of the error, in RFC 3339 with an offset. The fractional second has
+            a variable length (2 or 3 digits observed, with trailing zeros trimmed) or is
+            absent, as in the authorizer (D21). No `format`, so as not to reject these
+            variations.
         status:
           type: integer
         error:
           type: string
-          description: Código textual estável do erro.
+          description: Stable textual error code.
           x-extensible-enum:
             - ERR_VALIDACAO_CAMPOS
             - ERR_PERFIL_VAREJISTA_OBRIGATORIO
@@ -1181,20 +1187,20 @@ components:
             - ERR_CREDENCIAL_INVALIDA
         message:
           type: string
-          description: Texto para humanos, em português.
-      x-divergencias: [6]
+          description: Human-readable text, in Portuguese.
+      x-divergences: [6]
 
-    ErroOAuth2:
+    OAuth2Error:
       type: object
       description: |
-        Corpo do 400 de `POST /sso/oauth/token`, no formato de erro OAuth2 (RFC
-        6749, seção 5.2). Não tem `status` nem `timestamp`; não é o `Erro`.
+        Body of the 400 of `POST /sso/oauth/token`, in the OAuth2 error format (RFC
+        6749, section 5.2). It has no `status` or `timestamp`; it is not the `Error` schema.
       required: [error]
       properties:
         error:
           type: string
-          description: Código OAuth2. Não se viu qual deles o servidor devolve.
-          x-confianca: media
+          description: OAuth2 code. It is not known which of them the server returns.
+          x-confidence: medium
           x-extensible-enum:
             - invalid_request
             - invalid_client
@@ -1204,23 +1210,23 @@ components:
             - invalid_scope
         error_description:
           type: string
-          description: Texto para humanos.
-      x-divergencias: [17]
+          description: Human-readable text.
+      x-divergences: [17]
 
-    TokenRequisicao:
+    TokenRequest:
       type: object
       description: |
-        Só `client_id` e `client_secret`. Um formulário com `grant_type` foi
-        recusado com 400 (corpo de erro OAuth2) em 01/11/2026.
+        Only `client_id` and `client_secret`. A form with `grant_type` was rejected
+        with 400 (OAuth2 error body) on 2026-11-01.
       required: [client_id, client_secret]
       properties:
         client_id:
           type: string
-          description: Identificador do cliente.
+          description: Client identifier.
         client_secret:
           type: string
           format: password
-          description: Segredo do cliente. Nunca registre em log.
+          description: Client secret. Never write it to a log.
 
     Token:
       type: object
@@ -1229,10 +1235,10 @@ components:
           type: string
         expires_in:
           type: integer
-          description: Validade em segundos. Observado 300, sempre com três dígitos (confirmado em 01/11/2026); a documentação pública mostra 298.
+          description: Validity in seconds. 300 observed, always with three digits (confirmed on 2026-11-01); the public documentation shows 298.
         refresh_expires_in:
           type: integer
-          description: Sempre 0 no sandbox; não há token de renovação.
+          description: Always 0 in the sandbox; there is no refresh token.
         token_type:
           type: string
         not-before-policy:
@@ -1240,9 +1246,9 @@ components:
         scope:
           type: string
 
-    StatusMigracao:
+    MigrationStatus:
       type: string
-      description: Status da migração. A lista pode crescer.
+      description: Migration status. The list may grow.
       x-extensible-enum:
         - CRIADA
         - CONCLUIDA
@@ -1252,9 +1258,9 @@ components:
         - EXPIRADA
         - APROVADA_COM_PENDENCIA
 
-    MigracaoResumo:
+    MigrationSummary:
       type: object
-      description: Migração no formato da listagem (v1.1).
+      description: Migration in the list format (v1.1).
       required: [idMigracao]
       properties:
         idMigracao:
@@ -1265,7 +1271,7 @@ components:
         codigoAgenteConcessionariaUnidadeConsumidora:
           type: string
           nullable: true
-          description: Composição "<concessionária>_<UC>".
+          description: Composition "<distributor>_<UC>".
         codigoAgenteConcessionaria:
           type: integer
           nullable: true
@@ -1287,18 +1293,18 @@ components:
           format: date-time
           nullable: true
           description: |
-            Não é `AAAA-MM`: é data e hora RFC 3339 com deslocamento e sem
-            fração de segundo (por exemplo, o dia 1 do mês à meia-noite em
-            -03:00). Observado em 01/11/2026 (D21). O parâmetro de consulta
-            continua `AAAA-MM`.
+            Not `YYYY-MM`: it is an RFC 3339 date and time with an offset and no
+            fractional second (for example, day 1 of the month at midnight at
+            -03:00). Observed on 2026-11-01 (D21). The query parameter
+            remains `YYYY-MM`.
           example: "2027-03-01T00:00:00-03:00"
-          x-confianca: alta
-          x-verificado-em: "2026-11-01"
+          x-confidence: high
+          x-verified-at: "2026-11-01"
         dataDenuncia:
           type: string
           format: date-time
           nullable: true
-          description: RFC 3339 em UTC, com `Z` (D21).
+          description: RFC 3339 in UTC, with `Z` (D21).
           example: "2027-01-15T03:00:00Z"
         codigoPerfilVarejista:
           type: integer
@@ -1307,7 +1313,7 @@ components:
           type: string
           format: date-time
           nullable: true
-          description: RFC 3339 com três dígitos de fração e deslocamento (D21).
+          description: RFC 3339 with three fractional digits and an offset (D21).
           example: "2027-01-10T14:30:15.123-03:00"
         statusMigracao:
           type: string
@@ -1340,7 +1346,7 @@ components:
           type: string
           format: date-time
           nullable: true
-          description: RFC 3339 com deslocamento; a fração de segundo aparece em algumas respostas e em outras não (D21).
+          description: RFC 3339 with an offset; the fractional second appears in some responses and not in others (D21).
           example: "2027-02-20T09:00:00-03:00"
         emailUnidadeConsumidora:
           type: string
@@ -1354,28 +1360,28 @@ components:
         indicadorProcessoSiga:
           type: string
           nullable: true
-      x-divergencias: [2, 10, 14]
+      x-divergences: [2, 10, 14]
 
-    ListaMigracoes:
+    MigrationList:
       type: object
       required: [migracao]
       properties:
         migracao:
           type: array
           items:
-            $ref: "#/components/schemas/MigracaoResumo"
+            $ref: "#/components/schemas/MigrationSummary"
         indexProximaPagina:
           type: string
           nullable: true
-          description: Cursor da próxima página. Em todos os testes veio nulo.
-          x-confianca: baixa
+          description: Cursor of the next page. It was null in every test.
+          x-confidence: low
 
-    MigracaoDetalhe:
+    MigrationDetail:
       type: object
       description: |
-        Migração no formato do detalhe (POST, GET por identificador e PUT). Usa
-        `dataReferencia` e `codigoSupridora` onde a listagem usa `mesReferencia`
-        e `codigoAgenteSupridora`, acrescenta `tipoConectado` e não traz
+        Migration in the detail format (POST, GET by identifier and PUT). It uses
+        `dataReferencia` and `codigoSupridora` where the list uses `mesReferencia`
+        and `codigoAgenteSupridora`, adds `tipoConectado` and does not carry
         `idCelebracaoCER`.
       required: [idMigracao]
       properties:
@@ -1408,17 +1414,17 @@ components:
           format: date-time
           nullable: true
           description: |
-            Mês de referência como data e hora RFC 3339 com deslocamento e sem
-            fração de segundo (por exemplo, o dia 1 do mês à meia-noite em
-            -03:00). Observado em 01/11/2026 (D21); o SDK o lê sem problema.
+            Reference month as an RFC 3339 date and time with an offset and no
+            fractional second (for example, day 1 of the month at midnight at
+            -03:00). Observed on 2026-11-01 (D21); the SDK reads it without trouble.
           example: "2027-03-01T00:00:00-03:00"
-          x-confianca: alta
-          x-verificado-em: "2026-11-01"
+          x-confidence: high
+          x-verified-at: "2026-11-01"
         dataDenuncia:
           type: string
           format: date-time
           nullable: true
-          description: RFC 3339 em UTC, com `Z` (D21).
+          description: RFC 3339 in UTC, with `Z` (D21).
           example: "2027-01-15T03:00:00Z"
         codigoPerfilVarejista:
           type: integer
@@ -1427,7 +1433,7 @@ components:
           type: string
           format: date-time
           nullable: true
-          description: RFC 3339 com três dígitos de fração e deslocamento (D21).
+          description: RFC 3339 with three fractional digits and an offset (D21).
           example: "2027-01-10T14:30:15.123-03:00"
         statusMigracao:
           type: string
@@ -1460,7 +1466,7 @@ components:
           type: string
           format: date-time
           nullable: true
-          description: RFC 3339 com deslocamento; a fração de segundo aparece em algumas respostas e em outras não (D21).
+          description: RFC 3339 with an offset; the fractional second appears in some responses and not in others (D21).
           example: "2027-02-20T09:00:00-03:00"
         emailUnidadeConsumidora:
           type: string
@@ -1474,12 +1480,12 @@ components:
         tipoConectado:
           type: string
           nullable: true
-          x-confianca: media
-      x-divergencias: [2, 10, 14]
+          x-confidence: medium
+      x-divergences: [2, 10, 14]
 
-    NovaMigracao:
+    MigrationRequest:
       type: object
-      description: Corpo do POST de migração (v1.1).
+      description: Body of the migration POST (v1.1).
       required:
         - codigoAgenteConcessionaria
         - codigoAgenteVarejista
@@ -1493,18 +1499,18 @@ components:
       properties:
         codigoAgenteConcessionaria:
           type: integer
-          x-confianca: media
+          x-confidence: medium
         codigoAgenteVarejista:
           type: integer
-          x-confianca: media
+          x-confidence: medium
         codigoPerfilVarejista:
           type: integer
-          x-confianca: media
+          x-confidence: medium
         codigoUnidadeConsumidora:
           type: string
           pattern: ^[0-9]{15}$
-          description: 15 dígitos, com dígito verificador (algoritmo não documentado).
-          x-divergencias: [12]
+          description: 15 digits, with a check digit (algorithm not documented).
+          x-divergences: [12]
         dataDenuncia:
           type: string
           format: date
@@ -1514,22 +1520,22 @@ components:
         mesReferencia:
           type: string
           pattern: ^[0-9]{4}-[0-9]{2}$
-          description: Mês no formato AAAA-MM.
-          x-divergencias: [2]
+          description: Month in YYYY-MM format.
+          x-divergences: [2]
         tipoDocumento:
           type: string
           enum: [CPF, CNPJ]
         numeroDocumento:
           type: string
-          description: Sem `pattern` de dígitos, porque o CNPJ passa a ter letras a partir de julho de 2026.
+          description: No digit `pattern`, because the CNPJ gains letters from July 2026.
         comentario:
           type: string
-          description: Opcional.
+          description: Optional.
 
-    EdicaoMigracao:
+    MigrationEdit:
       type: object
-      description: Corpo do PUT de edição cadastral (v1). Não se sabe quais campos são obrigatórios.
-      x-confianca: media
+      description: Body of the registration-edit PUT (v1). It is not known which fields are required.
+      x-confidence: medium
       properties:
         mesReferencia:
           type: string
@@ -1547,25 +1553,25 @@ components:
         statusMigracao:
           type: string
 
-    Medicao:
+    Measurement:
       type: object
       description: |
-        Medição de consumo. Nenhum item foi observado no sandbox: todos os
-        campos vêm da documentação pública.
-      x-confianca: baixa
+        Consumption measurement. No item was observed in the sandbox: all the
+        fields come from the public documentation.
+      x-confidence: low
       properties:
         identificadorMedicaoConsumo:
           type: string
         codigoUnidadeConsumidora:
           type: string
         codigoAgenteConcessionaria:
-          description: O Postman mostra string; o tipo real não foi observado.
+          description: Postman shows a string; the real type was not observed.
         diaReferencia:
           type: string
         dataReferenciaConsumo:
           type: string
         consumo:
-          description: O Postman mostra string; o tipo real não foi observado. Unidade não declarada (D16).
+          description: Postman shows a string; the real type was not observed. Unit not declared (D16).
         tipoConsumo:
           type: string
         dataAtualizacao:
@@ -1573,22 +1579,22 @@ components:
         situacaoMedicao:
           type: string
           x-extensible-enum: [CONSISTIDA, REJEITADA]
-      x-divergencias: [14, 16]
+      x-divergences: [14, 16]
 
-    ListaMedicoes:
+    MeasurementList:
       type: object
       required: [medicoes]
       properties:
         medicoes:
           type: array
           items:
-            $ref: "#/components/schemas/Medicao"
+            $ref: "#/components/schemas/Measurement"
         indexProximaPagina:
           type: string
           nullable: true
-          x-confianca: baixa
+          x-confidence: low
 
-    Solicitacao:
+    ChangeRequest:
       type: object
       required: [idSolicitacaoAlteracao]
       properties:
@@ -1648,35 +1654,35 @@ components:
         dataNotificacao:
           type: string
           nullable: true
-          description: Só a data.
+          description: Date only.
         dataSolicitacao:
           type: string
           nullable: true
-          description: Só a data.
+          description: Date only.
         idCelebracaoCER:
           type: string
           nullable: true
-      x-divergencias: [13, 14]
+      x-divergences: [13, 14]
 
-    ListaSolicitacoes:
+    ChangeRequestList:
       type: object
       required: [solicitacao]
-      description: Objeto, não array. A lista fica em `solicitacao`, no singular.
+      description: An object, not an array. The list is in `solicitacao`, in the singular.
       properties:
         solicitacao:
           type: array
           items:
-            $ref: "#/components/schemas/Solicitacao"
+            $ref: "#/components/schemas/ChangeRequest"
         indexProximaPagina:
           type: string
           nullable: true
-          x-confianca: baixa
-      x-divergencias: [3]
+          x-confidence: low
+      x-divergences: [3]
 
-    SolicitacaoRepresentante:
+    RepresentativeChangeRequest:
       type: object
-      description: Corpo da troca de representante. A resposta usa nomes `codigoAgente*` (D13).
-      x-confianca: media
+      description: Body of the change of representative. The response uses `codigoAgente*` names (D13).
+      x-confidence: medium
       required:
         - codigoUnidadeConsumidora
         - codigoConcessionaria
@@ -1702,12 +1708,12 @@ components:
             - ALTERACAO_ALFA_VAREJISTA_RESILICAO
             - ALTERACAO_ALFA_VAREJISTA_RESOLUCAO
             - ALTERACAO_ALFA_VAREJISTA_DESLIGAMENTO
-      x-divergencias: [5, 13]
+      x-divergences: [5, 13]
 
-    SolicitacaoSuspensao:
+    SupplySuspensionRequest:
       type: object
-      description: Corpo da suspensão de fornecimento.
-      x-confianca: media
+      description: Body of the supply suspension.
+      x-confidence: medium
       required:
         - codigoUnidadeConsumidora
         - codigoConcessionaria
@@ -1727,12 +1733,12 @@ components:
         dataNotificacao:
           type: string
           format: date
-      x-divergencias: [13]
+      x-divergences: [13]
 
-    DecisaoSolicitacao:
+    ChangeRequestDecision:
       type: object
-      description: Corpo da decisão sobre uma solicitação.
-      x-confianca: media
+      description: Body of the decision on a change request.
+      x-confidence: medium
       required: [situacaoAlteracao, tipoSolicitacao]
       properties:
         situacaoAlteracao:

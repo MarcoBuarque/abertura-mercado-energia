@@ -1,10 +1,10 @@
-# Configuração do build da página (make docs). O Redoc 3 do redocly/cli fixado
-# no Makefile gera um HTML único (--inlineBundle), sem carregar script de CDN.
+# Page build configuration (make docs). The Redoc 3 from the redocly/cli pinned
+# in the Makefile generates a single HTML file (--inlineBundle), with no CDN script.
 openapi:
   expandResponses: "200"
   labels:
-    enum: Valores
-    enumSingleValue: Valor
-    default: Padrão
-    deprecated: Obsoleto
-    example: Exemplo
+    enum: Values
+    enumSingleValue: Value
+    default: Default
+    deprecated: Deprecated
+    example: Example
