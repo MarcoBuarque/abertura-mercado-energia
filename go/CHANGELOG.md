@@ -6,7 +6,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 
 ## [0.1.0]
 
-Primeira versão. Segue a spec `openapi/v0.1.0`; a pré-versão `go/v0.1.0-rc.1` segue a `openapi/v0.1.0-rc.2` (a spec foi remarcada por causa dos achados do sandbox de 01/11/2026), e não a `openapi/v0.1.0-rc.1`. Requer Go 1.26 ou mais novo.
+Primeira versão. Segue a spec `openapi/v0.1.0`; a pré-versão `go/v0.1.0-rc.1` segue a `openapi/v0.1.0-rc.2` e a `go/v0.1.0-rc.2` segue a `openapi/v0.1.0-rc.3` (a spec foi remarcada por causa dos achados do sandbox de 01/11/2026), e não a `openapi/v0.1.0-rc.1`. Requer Go 1.26 ou mais novo.
 
 ### Adicionado
 
@@ -28,16 +28,18 @@ Primeira versão. Segue a spec `openapi/v0.1.0`; a pré-versão `go/v0.1.0-rc.1`
 - O pedido de token leva só `client_id` e `client_secret` no formulário, sem `grant_type`: o endpoint recusou o `grant_type` com 400 em 01/11/2026 e aceitou o formulário reduzido. `expires_in` é lido como número ou texto, e o pedido de token não segue redirecionamento.
 - A faixa de meses de `Migracoes.Listar` e `ListarPagina` é obrigatória: a API responde 400 `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO` sem `mesReferenciaInicial` e `mesReferenciaFinal`. O SDK valida `FiltroMigracoes.De` e `Ate` antes de enviar: ausente ou `Ate` antes de `De` dá `ErrArgumentoInvalido`, sem requisição. `FiltroMedicoes` já exigia `Inicio` e `Fim`.
 - `ErrFaixaDeMesesObrigatoria` (`ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`, só alcançável por `Client.Do`) e `ErrFaixaDeMesesLargaDemais` (`ERR_MES_REFERENCIA_INICIAL_DIFERENCA`), com as entradas `#faixa-de-meses-obrigatoria` e `#faixa-de-meses-larga-demais` no catálogo. Os dois são 400 definitivos: nem leitura nem escrita repetem.
-- `ParseMes` aceita também a data `2026-12-01` e a data e hora sem deslocamento `2026-12-01T00:00:00` (com ou sem fração de segundo). É uma hipótese para a `dataReferencia` do detalhe da migração, cujo formato ainda não foi registrado (D20). Pela mesma hipótese, os campos de dia ou de data e hora (`dataSolicitacao`, `dataValidacao`, `dataDenuncia`) também aceitam a data e hora sem deslocamento (`2026-12-01T00:00:00`, com ou sem fração de segundo), lida em -03:00 como a data só de dia.
+- `ParseMes` aceita também a data `2026-12-01` e a data e hora sem deslocamento `2026-12-01T00:00:00` (com ou sem fração de segundo). Os dois formatos são tolerância: o sandbox devolveu a `dataReferencia` como RFC 3339 com deslocamento (D21), e a falha do `Obter` tem outra causa (D23); ficam por serem inofensivos. Pelo mesmo motivo, os campos de dia ou de data e hora (`dataSolicitacao`, `dataValidacao`, `dataDenuncia`) também aceitam a data e hora sem deslocamento (`2026-12-01T00:00:00`, com ou sem fração de segundo), lida em -03:00 como a data só de dia.
+- `Migracoes.Obter` escolhe o item pelo `IdMigracao` quando a API devolve mais de um (um casa: devolve; nenhum: `ErrNotFound`; vários: resposta ilegível). Hipótese D23 da rodada de 01/11/2026, a confirmar.
+- O teste de contrato (`go/contrato`) começa a busca da faixa em 12 meses e imprime a contagem de itens da raiz (`itens na raiz: N`) e o texto fixo dos erros do próprio SDK, sem valores.
 - Qualquer 5xx, menos o 501, segue a linha do 500: leitura repete, escrita fica incerta (`*UncertainResultError`). O 501 é erro definitivo.
 - `SituacaoRejeitada` (`REJEITADA`) entra entre as situações de medição conhecidas.
 - Uma página que aponta para o cursor que acabou de usar (o que o mock faz) encerra com `ErrCursorRepetido` sem entregar os itens dela, que repetiriam a página anterior. Uma página que aponta para um cursor visto antes (ciclo A, B, A) entrega os itens dela e só então devolve `ErrCursorRepetido`, sem buscar de novo.
 
 ### Limites conhecidos
 
-- A distância máxima entre `De` e `Ate` é desconhecida: 96 meses foram recusados (`ERR_MES_REFERENCIA_INICIAL_DIFERENCA`) e um mês foi aceito em 01/11/2026. Quem lista uma faixa ampla deve estar pronto para `ErrFaixaDeMesesLargaDemais` e dividir a consulta.
-- O formato da `dataReferencia` do detalhe da migração não está registrado: o `Obter` não conseguiu convertê-la em 01/11/2026 (erro de campo ilegível). Os dois formatos novos de `ParseMes` são uma hipótese, a confirmar na próxima rodada contra o sandbox.
-- A paginação por `indexProximaPagina` nunca foi vista funcionando (a rodada de 01/11/2026 não chegou a uma segunda página); um cursor repetido encerra a iteração com `ErrCursorRepetido`.
+- A distância máxima entre `De` e `Ate` fica entre 12 e 24 meses (provavelmente 12): 12 foram aceitos e 24, 48 e 96 recusados (`ERR_MES_REFERENCIA_INICIAL_DIFERENCA`) em 01/11/2026. Quem lista uma faixa ampla deve estar pronto para `ErrFaixaDeMesesLargaDemais` e dividir a consulta.
+- O `Obter` ainda falhou no sandbox em 01/11/2026, sem ser conversão de campo nem tipo JSON. A hipótese (D23) é que o GET por id devolva mais de um item; a próxima rodada confirma pela contagem de itens da raiz.
+- A paginação por `indexProximaPagina` nunca foi vista funcionando: uma faixa de 12 meses trouxe 71 itens numa só página (tamanho de página de pelo menos 71) e nenhum cursor; um cursor repetido encerra a iteração com `ErrCursorRepetido`.
 - Não se sabe se o PUT de edição é parcial ou total: `Editar` lê a migração e envia o objeto inteiro, sem proteção contra outra escrita no meio.
 - A unidade de `Consumo` não é declarada pela API.
 - O limitador vale por processo; vários processos no mesmo IP ou agente somam requisições sem que ele saiba.

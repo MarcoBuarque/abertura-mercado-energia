@@ -31,8 +31,8 @@ func erroCampo(campo string) error {
 // dataDe lê uma data só de dia ("2027-01-15"), uma data e hora sem
 // deslocamento ("2027-01-15T10:20:30", com ou sem fração de segundo) ou um
 // instante RFC 3339. As duas primeiras valem em -03:00 e o instante é levado
-// para -03:00. O formato sem deslocamento é uma hipótese, como a de ParseMes
-// (D20). Texto vazio devolve o tempo zero.
+// para -03:00. O formato sem deslocamento é tolerância sem ocorrência observada;
+// o sandbox devolveu RFC 3339 com deslocamento ou Z (D21). Texto vazio devolve o tempo zero.
 func dataDe(campo, s string) (time.Time, error) {
 	s = strings.TrimSpace(s)
 	if s == "" {

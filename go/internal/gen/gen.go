@@ -321,7 +321,10 @@ type Erro struct {
 	Message string `json:"message"`
 	Status  int    `json:"status,omitempty"`
 
-	// Timestamp Instante do erro. O backend inclui milissegundos; o autorizador, não.
+	// Timestamp Instante do erro, em RFC 3339 com deslocamento. A fração de segundo
+	// tem comprimento variável (2 ou 3 dígitos observados, com zeros à
+	// direita cortados) ou não existe, como no autorizador (D21). Sem
+	// `format`, para não rejeitar essas variações.
 	Timestamp string `json:"timestamp,omitempty"`
 }
 
@@ -383,17 +386,29 @@ type MigracaoDetalhe struct {
 	CodigoSupridora                              int    `json:"codigoSupridora,omitempty"`
 	CodigoUnidadeConsumidora                     string `json:"codigoUnidadeConsumidora,omitempty"`
 	Comentario                                   string `json:"comentario,omitempty"`
-	DataDenuncia                                 string `json:"dataDenuncia,omitempty"`
 
-	// DataReferencia Mês de referência. Formato ainda não registrado (D2, D20). Em
-	// 01/11/2026 a resposta chegou e validou contra esta spec, mas o
-	// conversor do SDK falhou em algum campo do detalhe e a rodada não
-	// identificou qual. Este é o principal suspeito, porque o formato
-	// dele nunca foi registrado; é só uma suspeita, a confirmar na
-	// próxima rodada. Se for ele, provavelmente não é AAAA-MM, MM-AAAA
-	// nem RFC 3339. Sem `format`.
-	DataReferencia          string      `json:"dataReferencia,omitempty"`
-	DataSolicitacao         string      `json:"dataSolicitacao,omitempty"`
+	// DataDenuncia RFC 3339 em UTC, com `Z` (D21).
+	//
+	// Example: 2027-01-15T03:00:00Z
+	DataDenuncia string `json:"dataDenuncia,omitempty"`
+
+	// DataReferencia Mês de referência como data e hora RFC 3339 com deslocamento e sem
+	// fração de segundo (por exemplo, o dia 1 do mês à meia-noite em
+	// -03:00). Observado em 01/11/2026 (D21); o SDK o lê sem problema.
+	// A falha de `Obter` no sandbox tem outra causa (D23).
+	//
+	//
+	// Example: 2027-03-01T00:00:00-03:00
+	DataReferencia string `json:"dataReferencia,omitempty"`
+
+	// DataSolicitacao RFC 3339 com três dígitos de fração e deslocamento (D21).
+	//
+	// Example: 2027-01-10T14:30:15.123-03:00
+	DataSolicitacao string `json:"dataSolicitacao,omitempty"`
+
+	// DataValidacao RFC 3339 com deslocamento; a fração de segundo aparece em algumas respostas e em outras não (D21).
+	//
+	// Example: 2027-02-20T09:00:00-03:00
 	DataValidacao           string      `json:"dataValidacao,omitempty"`
 	EmailUnidadeConsumidora string      `json:"emailUnidadeConsumidora,omitempty"`
 	IdMigracao              string      `json:"idMigracao"`
@@ -420,16 +435,34 @@ type MigracaoResumo struct {
 	CodigoPerfilVarejista                        int    `json:"codigoPerfilVarejista,omitempty"`
 	CodigoUnidadeConsumidora                     string `json:"codigoUnidadeConsumidora,omitempty"`
 	Comentario                                   string `json:"comentario,omitempty"`
-	DataDenuncia                                 string `json:"dataDenuncia,omitempty"`
-	DataSolicitacao                              string `json:"dataSolicitacao,omitempty"`
-	DataValidacao                                string `json:"dataValidacao,omitempty"`
-	EmailUnidadeConsumidora                      string `json:"emailUnidadeConsumidora,omitempty"`
-	IdCelebracaoCER                              string `json:"idCelebracaoCER,omitempty"`
-	IdMigracao                                   string `json:"idMigracao"`
-	IndicadorProcessoSiga                        string `json:"indicadorProcessoSiga,omitempty"`
-	Justificativa                                string `json:"justificativa,omitempty"`
 
-	// MesReferencia Data e hora em -03:00, sempre no dia 1. Sem `format` por causa dos três formatos de mês (D2).
+	// DataDenuncia RFC 3339 em UTC, com `Z` (D21).
+	//
+	// Example: 2027-01-15T03:00:00Z
+	DataDenuncia string `json:"dataDenuncia,omitempty"`
+
+	// DataSolicitacao RFC 3339 com três dígitos de fração e deslocamento (D21).
+	//
+	// Example: 2027-01-10T14:30:15.123-03:00
+	DataSolicitacao string `json:"dataSolicitacao,omitempty"`
+
+	// DataValidacao RFC 3339 com deslocamento; a fração de segundo aparece em algumas respostas e em outras não (D21).
+	//
+	// Example: 2027-02-20T09:00:00-03:00
+	DataValidacao           string `json:"dataValidacao,omitempty"`
+	EmailUnidadeConsumidora string `json:"emailUnidadeConsumidora,omitempty"`
+	IdCelebracaoCER         string `json:"idCelebracaoCER,omitempty"`
+	IdMigracao              string `json:"idMigracao"`
+	IndicadorProcessoSiga   string `json:"indicadorProcessoSiga,omitempty"`
+	Justificativa           string `json:"justificativa,omitempty"`
+
+	// MesReferencia Não é `AAAA-MM`: é data e hora RFC 3339 com deslocamento e sem
+	// fração de segundo (por exemplo, o dia 1 do mês à meia-noite em
+	// -03:00). Observado em 01/11/2026 (D21). O parâmetro de consulta
+	// continua `AAAA-MM`.
+	//
+	//
+	// Example: 2027-03-01T00:00:00-03:00
 	MesReferencia   string      `json:"mesReferencia,omitempty"`
 	NumeroDocumento string      `json:"numeroDocumento,omitempty"`
 	PagamentoMulta  string      `json:"pagamentoMulta,omitempty"`
@@ -521,7 +554,7 @@ type StatusMigracao = string
 type Token struct {
 	AccessToken string `json:"access_token,omitempty"`
 
-	// ExpiresIn Validade em segundos. Observado 300; a documentação pública mostra 298.
+	// ExpiresIn Validade em segundos. Observado 300, sempre com três dígitos (confirmado em 01/11/2026); a documentação pública mostra 298.
 	ExpiresIn       int `json:"expires_in,omitempty"`
 	NotBeforePolicy int `json:"not-before-policy,omitempty"`
 

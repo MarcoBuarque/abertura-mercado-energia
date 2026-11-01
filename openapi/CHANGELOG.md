@@ -10,14 +10,15 @@ Esta é uma descrição **não oficial**, escrita à mão. O projeto é independ
 
 - Schema `ErroOAuth2` (`error`, `error_description`) para o 400 de `obterToken`, que não usa o `Erro` (D17).
 - Códigos `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO` e `ERR_MES_REFERENCIA_INICIAL_DIFERENCA` em `Erro.error`, com as descrições e os links do catálogo (D18, D19).
-- Seção "Rodada do contrato de 2026-11-01" em `FONTES.md` e divergências D17 a D20.
+- Seção "Rodada do contrato de 2026-11-01" em `FONTES.md` e divergências D17 a D23 (terceira rodada: D21 a D23).
 
 ### Alterado
 
 - `TokenRequisicao` sem `grant_type`: o formulário com ele foi recusado com 400 em 01/11/2026 (D17). O 400 de `obterToken` passa a usar `ErroOAuth2`.
 - `mesReferenciaInicial` e `mesReferenciaFinal` de `listarMigracoes` passam a `required` (D18); o limite de distância entre os meses existe e não foi medido (D19). A listagem de solicitações mantém os filtros opcionais.
 - `x-verificado-em` passa a 2026-11-01 em `obterToken`, `listarMigracoes`, `obterMigracao` e `listarMedicoes` (esta última segue com lista vazia e confiança `media`).
-- `MigracaoDetalhe.dataReferencia`: formato ainda não registrado, `x-confianca: baixa` (D20).
+- `MigracaoResumo.mesReferencia`, `MigracaoDetalhe.dataReferencia`, `dataSolicitacao`, `dataValidacao` e `dataDenuncia` (lista e detalhe) ganham `format: date-time` e o formato observado em 01/11/2026 (D21); `mesReferencia` e `dataReferencia` com `x-confianca: alta`. `Erro.timestamp` descreve a fração de comprimento variável; `Token.expires_in` confirmado com três dígitos.
+- `listarMigracoes`: teto da faixa entre 12 e 24 meses; página de 71 itens sem cursor visto (D22). `obterMigracao` passa a `x-confianca: media`: o sandbox pode devolver mais de um item para um id (hipótese, D23).
 - Descrições do schema `Erro` (um código por linha) e das respostas 400, 403, 429 e 500 apontam para o catálogo de erros (`docs/erros.md`). Só texto: formato e tipos não mudam.
 
 ### Corrigido
@@ -26,7 +27,7 @@ Esta é uma descrição **não oficial**, escrita à mão. O projeto é independ
 
 ### Quebras
 
-Pré-release 0.x, aceitas com `QUEBRA_SPEC=1` (rótulo `quebra-spec` no PR). O oasdiff aponta exatamente três quebras: a propriedade `message` sai da resposta 400 do token (`response-required-property-removed`), e `mesReferenciaInicial` e `mesReferenciaFinal` de `listarMigracoes` passam a obrigatórios (`request-parameter-became-required`). A saída de `grant_type` do formulário do token não é quebra, só aviso (`request-property-removed`). Quem já enviava o intervalo de meses e só os dois campos do token não muda nada.
+Pré-release 0.x: uma quebra é aceita quando registrada nesta seção `### Quebras` de `[Não lançado]`; o rótulo `quebra-spec` do PR a declara e o CI confere a declaração com esta seção (`scripts/quebra-spec.sh`). O oasdiff aponta exatamente três quebras: a propriedade `message` sai da resposta 400 do token (`response-required-property-removed`), e `mesReferenciaInicial` e `mesReferenciaFinal` de `listarMigracoes` passam a obrigatórios (`request-parameter-became-required`). A saída de `grant_type` do formulário do token não é quebra, só aviso (`request-property-removed`). Quem já enviava o intervalo de meses e só os dois campos do token não muda nada.
 
 ## [0.1.0]
 
@@ -61,6 +62,6 @@ Primeira versão. Dez operações, de quatro grupos. A coluna de confiança é o
 
 ### Quebras
 
-Nenhuma. A seção só existirá em versões 0.x futuras que quebrem clientes, com o rótulo `quebra-spec` (ver `scripts/oasdiff.sh`).
+Nenhuma. A seção só existirá em versões 0.x futuras que quebrem clientes, e uma quebra é aceita em 0.x quando registrada em `### Quebras` de `[Não lançado]`; o rótulo `quebra-spec` do PR a declara e o CI confere a declaração com essa seção (`scripts/quebra-spec.sh`).
 
 [Não lançado]: openapi/v0.1.0...HEAD

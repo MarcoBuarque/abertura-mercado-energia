@@ -25,9 +25,9 @@ func MesDe(ano int, mes time.Month) Mes {
 
 // formatosMes são os formatos aceitos por [ParseMes]. O RFC 3339 e a data e
 // hora sem deslocamento também leem fração de segundo, mesmo sem ela no
-// layout. Os dois últimos foram acrescentados como hipótese para a
-// dataReferencia do detalhe de uma migração, cujo formato ainda não está
-// registrado (D20).
+// layout. Os dois últimos são tolerância: o sandbox devolveu a
+// dataReferencia como RFC 3339 com deslocamento (D21), e a falha do Obter
+// tem outra causa (D23); ficam por serem inofensivos.
 var formatosMes = []string{"2006-01", "01-2006", time.RFC3339, "2006-01-02", "2006-01-02T15:04:05"}
 
 // ParseMes lê um mês em "2026-12", "12-2026", "2026-12-01T00:00:00-03:00",

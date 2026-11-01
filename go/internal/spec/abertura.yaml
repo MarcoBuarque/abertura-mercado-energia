@@ -128,10 +128,17 @@ paths:
         é exigido na consulta e também no cabeçalho, assim como o intervalo de
         meses (`mesReferenciaInicial` e `mesReferenciaFinal`). Quando `indexProximaPagina`
         vem preenchido, envie-o de volta para ler a página seguinte.
+
+        A distância entre os dois meses tem teto: em 01/11/2026 o sandbox
+        aceitou 12 meses e recusou 24, 48 e 96 (400
+        `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`); o teto está entre 12 e 24,
+        provavelmente 12 (D22). Uma faixa de 12 meses devolveu 71 itens numa só
+        página, com `indexProximaPagina` presente e sem cursor: a página tem ao
+        menos 71 itens e o cursor ainda não foi visto.
       x-confianca: alta
       x-verificado-em: "2026-11-01"
       x-fonte: Coleção, seção APIs do varejista, migrações v1.1; testes no sandbox em 30/10/2026 e 01/11/2026.
-      x-divergencias: [2, 8, 10, 14, 18, 19]
+      x-divergencias: [2, 8, 10, 14, 18, 19, 21, 22]
       parameters:
         - $ref: "#/components/parameters/CodigoAgente"
         - $ref: "#/components/parameters/CodigoPerfil"
@@ -165,9 +172,9 @@ paths:
                         numeroDocumento: "11111111111111"
                         codigoAgenteVarejista: 900002
                         mesReferencia: "2027-03-01T00:00:00-03:00"
-                        dataDenuncia: "2027-01-15"
+                        dataDenuncia: "2027-01-15T03:00:00Z"
                         codigoPerfilVarejista: 900003
-                        dataSolicitacao: "2027-01-10"
+                        dataSolicitacao: "2027-01-10T14:30:15.123-03:00"
                         statusMigracao: CRIADA
                         submercado: SUL
                         valorDHC: 12.5
@@ -193,16 +200,16 @@ paths:
                         numeroDocumento: "22222222222"
                         codigoAgenteVarejista: 900002
                         mesReferencia: "2027-04-01T00:00:00-03:00"
-                        dataDenuncia: "2027-02-15"
+                        dataDenuncia: "2027-02-15T03:00:00Z"
                         codigoPerfilVarejista: 900003
-                        dataSolicitacao: "2027-02-10"
+                        dataSolicitacao: "2027-02-10T14:30:15.123-03:00"
                         statusMigracao: CONCLUIDA
                         submercado: NORTE
                         valorDHC: null
                         valorMusd: null
                         pagamentoMulta: SIM
                         justificativa: null
-                        dataValidacao: "2027-02-20"
+                        dataValidacao: "2027-02-20T09:00:00-03:00"
                         emailUnidadeConsumidora: outro@example.org
                         comentario: null
                         idCelebracaoCER: null
@@ -309,12 +316,15 @@ paths:
       tags: [Migracoes]
       summary: Obtém uma migração
       description: |
-        Devolve a migração pelo identificador. A resposta é uma lista com um
-        item, no formato do detalhe, que difere do formato da listagem.
-      x-confianca: alta
+        Devolve a migração pelo identificador. A resposta é uma lista, no
+        formato do detalhe, que difere do formato da listagem. Em 30/10/2026
+        a lista tinha um item; em 01/11/2026 há indício (hipótese, ainda sem
+        confirmação) de que o sandbox devolva mais de um item para um id, e o
+        SDK escolhe o item pelo `idMigracao` (D23).
+      x-confianca: media
       x-verificado-em: "2026-11-01"
       x-fonte: Coleção, seção APIs do varejista, migrações v1.1; testes no sandbox em 30/10/2026 e 01/11/2026.
-      x-divergencias: [2, 10, 14, 20]
+      x-divergencias: [2, 10, 14, 20, 21, 23]
       parameters:
         - $ref: "#/components/parameters/CodigoAgente"
         - $ref: "#/components/parameters/CodigoPerfil"
@@ -344,9 +354,9 @@ paths:
                       numeroDocumento: "11111111111111"
                       codigoAgenteVarejista: 900002
                       dataReferencia: "2027-03-01T00:00:00-03:00"
-                      dataDenuncia: "2027-01-15"
+                      dataDenuncia: "2027-01-15T03:00:00Z"
                       codigoPerfilVarejista: 900003
-                      dataSolicitacao: "2027-01-10"
+                      dataSolicitacao: "2027-01-10T14:30:15.123-03:00"
                       statusMigracao: CRIADA
                       submercado: SUL
                       valorDHC: null
@@ -1005,9 +1015,9 @@ components:
         numeroDocumento: "11111111111111"
         codigoAgenteVarejista: 900002
         dataReferencia: "2027-03-01T00:00:00-03:00"
-        dataDenuncia: "2027-01-15"
+        dataDenuncia: "2027-01-15T03:00:00Z"
         codigoPerfilVarejista: 900003
-        dataSolicitacao: "2027-01-10"
+        dataSolicitacao: "2027-01-10T14:30:15.123-03:00"
         statusMigracao: CRIADA
         submercado: SUL
         valorDHC: null
@@ -1150,7 +1160,11 @@ components:
       properties:
         timestamp:
           type: string
-          description: Instante do erro. O backend inclui milissegundos; o autorizador, não.
+          description: |
+            Instante do erro, em RFC 3339 com deslocamento. A fração de segundo
+            tem comprimento variável (2 ou 3 dígitos observados, com zeros à
+            direita cortados) ou não existe, como no autorizador (D21). Sem
+            `format`, para não rejeitar essas variações.
         status:
           type: integer
         error:
@@ -1213,7 +1227,7 @@ components:
           type: string
         expires_in:
           type: integer
-          description: Validade em segundos. Observado 300; a documentação pública mostra 298.
+          description: Validade em segundos. Observado 300, sempre com três dígitos (confirmado em 01/11/2026); a documentação pública mostra 298.
         refresh_expires_in:
           type: integer
           description: Sempre 0 no sandbox; não há token de renovação.
@@ -1268,17 +1282,31 @@ components:
           nullable: true
         mesReferencia:
           type: string
+          format: date-time
           nullable: true
-          description: Data e hora em -03:00, sempre no dia 1. Sem `format` por causa dos três formatos de mês (D2).
+          description: |
+            Não é `AAAA-MM`: é data e hora RFC 3339 com deslocamento e sem
+            fração de segundo (por exemplo, o dia 1 do mês à meia-noite em
+            -03:00). Observado em 01/11/2026 (D21). O parâmetro de consulta
+            continua `AAAA-MM`.
+          example: "2027-03-01T00:00:00-03:00"
+          x-confianca: alta
+          x-verificado-em: "2026-11-01"
         dataDenuncia:
           type: string
+          format: date-time
           nullable: true
+          description: RFC 3339 em UTC, com `Z` (D21).
+          example: "2027-01-15T03:00:00Z"
         codigoPerfilVarejista:
           type: integer
           nullable: true
         dataSolicitacao:
           type: string
+          format: date-time
           nullable: true
+          description: RFC 3339 com três dígitos de fração e deslocamento (D21).
+          example: "2027-01-10T14:30:15.123-03:00"
         statusMigracao:
           type: string
           nullable: true
@@ -1308,7 +1336,10 @@ components:
           nullable: true
         dataValidacao:
           type: string
+          format: date-time
           nullable: true
+          description: RFC 3339 com deslocamento; a fração de segundo aparece em algumas respostas e em outras não (D21).
+          example: "2027-02-20T09:00:00-03:00"
         emailUnidadeConsumidora:
           type: string
           nullable: true
@@ -1372,25 +1403,31 @@ components:
           nullable: true
         dataReferencia:
           type: string
+          format: date-time
           nullable: true
           description: |
-            Mês de referência. Formato ainda não registrado (D2, D20). Em
-            01/11/2026 a resposta chegou e validou contra esta spec, mas o
-            conversor do SDK falhou em algum campo do detalhe e a rodada não
-            identificou qual. Este é o principal suspeito, porque o formato
-            dele nunca foi registrado; é só uma suspeita, a confirmar na
-            próxima rodada. Se for ele, provavelmente não é AAAA-MM, MM-AAAA
-            nem RFC 3339. Sem `format`.
-          x-confianca: baixa
+            Mês de referência como data e hora RFC 3339 com deslocamento e sem
+            fração de segundo (por exemplo, o dia 1 do mês à meia-noite em
+            -03:00). Observado em 01/11/2026 (D21); o SDK o lê sem problema.
+            A falha de `Obter` no sandbox tem outra causa (D23).
+          example: "2027-03-01T00:00:00-03:00"
+          x-confianca: alta
+          x-verificado-em: "2026-11-01"
         dataDenuncia:
           type: string
+          format: date-time
           nullable: true
+          description: RFC 3339 em UTC, com `Z` (D21).
+          example: "2027-01-15T03:00:00Z"
         codigoPerfilVarejista:
           type: integer
           nullable: true
         dataSolicitacao:
           type: string
+          format: date-time
           nullable: true
+          description: RFC 3339 com três dígitos de fração e deslocamento (D21).
+          example: "2027-01-10T14:30:15.123-03:00"
         statusMigracao:
           type: string
           nullable: true
@@ -1420,7 +1457,10 @@ components:
           nullable: true
         dataValidacao:
           type: string
+          format: date-time
           nullable: true
+          description: RFC 3339 com deslocamento; a fração de segundo aparece em algumas respostas e em outras não (D21).
+          example: "2027-02-20T09:00:00-03:00"
         emailUnidadeConsumidora:
           type: string
           nullable: true

@@ -58,8 +58,8 @@ func TestListaMigracoes_WhenTolerancia_DecodificaSemErro(t *testing.T) {
 	if m.StatusMigracao != "STATUS_NOVO" {
 		t.Errorf("StatusMigracao = %q, quero STATUS_NOVO", m.StatusMigracao)
 	}
-	if m.MesReferencia != "12-2026" {
-		t.Errorf("MesReferencia = %q, quero 12-2026", m.MesReferencia)
+	if m.MesReferencia != "2026-12-01T00:00:00-03:00" {
+		t.Errorf("MesReferencia = %q, quero 2026-12-01T00:00:00-03:00", m.MesReferencia)
 	}
 	if m.ValorDHC != "" || m.Justificativa != "" || m.CodigoAgenteSupridora != 0 {
 		t.Errorf("nulos deveriam virar valor zero: %+v", m)

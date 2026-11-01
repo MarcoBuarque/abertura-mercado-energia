@@ -176,7 +176,8 @@ var (
 	ErrFaixaDeMesesObrigatoria error = &sentinela{texto: "abertura: faixa de meses obrigatória (ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO)", codigo: "ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO"}
 	// ErrFaixaDeMesesLargaDemais: a faixa entre o mês inicial e o final passou
 	// do limite da API (ERR_MES_REFERENCIA_INICIAL_DIFERENCA). O limite não é
-	// publicado nem foi medido; estreite a faixa ou divida a consulta.
+	// publicado; no sandbox, em 01/11/2026, 12 meses passaram e 24 não (teto entre
+	// 12 e 24, FONTES D22). Estreite a faixa ou divida a consulta.
 	ErrFaixaDeMesesLargaDemais error = &sentinela{texto: "abertura: faixa de meses larga demais (ERR_MES_REFERENCIA_INICIAL_DIFERENCA)", codigo: "ERR_MES_REFERENCIA_INICIAL_DIFERENCA"}
 )
 
