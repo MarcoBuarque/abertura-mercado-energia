@@ -127,7 +127,7 @@ func TestTiposPublicos_WhenJSON_LevaOsCamposEmClaro(t *testing.T) {
 		{name: "Migracao", valor: migracaoComDados(t), quero: []string{ucMascara, emailMascara}},
 		{name: "Medicao", valor: medicaoComDados(t), quero: []string{ucMascara, consumoMascara}},
 		{name: "NovaMigracao", valor: NovaMigracao{UC: ucMascara, Email: emailMascara}, quero: []string{ucMascara, emailMascara}},
-		{name: "FiltroMigracoes", valor: FiltroMigracoes{UC: ucMascara}, quero: []string{ucMascara}},
+		{name: "FiltroMigracoes", valor: FiltroMigracoes{De: deTst, Ate: ateTst, UC: ucMascara}, quero: []string{ucMascara}},
 		{name: "FiltroMedicoes", valor: FiltroMedicoes{UC: ucMascara}, quero: []string{ucMascara}},
 	}
 	for _, tc := range tests {

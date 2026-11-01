@@ -95,7 +95,7 @@ func TestLogSemDadoPessoal(t *testing.T) {
 			name:  "listar duas páginas",
 			rotas: []testserver.Rota{rota(http.MethodGet, modeloLista, resp(200, "migracoes_pagina1.json"), resp(200, "migracoes_pagina2.json"))},
 			rodar: func(t *testing.T, c *Client) {
-				itens, err := coletarSeq(t, c.Migracoes.Listar(ctx, FiltroMigracoes{UC: ucInventada}))
+				itens, err := coletarSeq(t, c.Migracoes.Listar(ctx, FiltroMigracoes{De: deTst, Ate: ateTst, UC: ucInventada}))
 				if err != nil || len(itens) == 0 {
 					t.Fatalf("Listar: %d itens, %v", len(itens), err)
 				}

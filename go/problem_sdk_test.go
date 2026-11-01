@@ -104,7 +104,7 @@ func TestProblemFrom_WhenFalhaDeToken_UsaFalhaAoObterToken(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			_, err := tc.cliente(t).Migracoes.ListarPagina(context.Background(), FiltroMigracoes{UC: ucInventada}, "")
+			_, err := tc.cliente(t).Migracoes.ListarPagina(context.Background(), FiltroMigracoes{De: deTst, Ate: ateTst, UC: ucInventada}, "")
 			if err == nil {
 				t.Fatal("quero erro")
 			}
