@@ -57,13 +57,16 @@ paths:
       summary: Obtém o token de acesso
       description: |
         Troca as credenciais do cliente por um token de acesso (fluxo
-        `client_credentials`). O token vale cerca de cinco minutos e não há
-        token de renovação: peça outro antes de vencer.
+        `client_credentials`). Envie só `client_id` e `client_secret`: o
+        formulário com `grant_type` foi recusado com 400 em 01/11/2026. O token
+        vale cerca de cinco minutos e não há token de renovação: peça outro
+        antes de vencer. O corpo do 400 desta rota é um objeto de erro OAuth2,
+        não o `Erro` das demais rotas.
       security: []
       x-confianca: alta
-      x-verificado-em: "2026-10-30"
-      x-fonte: Coleção, seção Autenticação; teste no sandbox em 30/10/2026.
-      x-divergencias: [15]
+      x-verificado-em: "2026-11-01"
+      x-fonte: Coleção, seção Autenticação; testes no sandbox em 30/10/2026 e 01/11/2026.
+      x-divergencias: [15, 17]
       requestBody:
         description: Credenciais do cliente, em formulário.
         required: true
@@ -92,7 +95,22 @@ paths:
                     not-before-policy: 0
                     scope: escopo-inventado
         "400":
-          $ref: "#/components/responses/Requisicao400"
+          description: |
+            Formulário recusado (por exemplo, com `grant_type`). O corpo segue o
+            formato de erro OAuth2 (RFC 6749, seção 5.2), não o `Erro`.
+          headers:
+            x-amzn-RequestId:
+              $ref: "#/components/headers/RequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErroOAuth2"
+              examples:
+                formularioRecusado:
+                  summary: "Inventado: formulário recusado"
+                  value:
+                    error: invalid_request
+                    error_description: descricao-inventada
         "403":
           $ref: "#/components/responses/Acesso403"
         "429":
@@ -107,18 +125,19 @@ paths:
       summary: Lista migrações do varejista
       description: |
         Devolve as migrações do perfil informado, uma página por vez. O perfil
-        é exigido na consulta e também no cabeçalho. Quando `indexProximaPagina`
+        é exigido na consulta e também no cabeçalho, assim como o intervalo de
+        meses (`mesReferenciaInicial` e `mesReferenciaFinal`). Quando `indexProximaPagina`
         vem preenchido, envie-o de volta para ler a página seguinte.
       x-confianca: alta
-      x-verificado-em: "2026-10-30"
-      x-fonte: Coleção, seção APIs do varejista, migrações v1.1; teste no sandbox em 30/10/2026.
-      x-divergencias: [2, 8, 10, 14]
+      x-verificado-em: "2026-11-01"
+      x-fonte: Coleção, seção APIs do varejista, migrações v1.1; testes no sandbox em 30/10/2026 e 01/11/2026.
+      x-divergencias: [2, 8, 10, 14, 18, 19]
       parameters:
         - $ref: "#/components/parameters/CodigoAgente"
         - $ref: "#/components/parameters/CodigoPerfil"
         - $ref: "#/components/parameters/CodigoPerfilVarejistaQuery"
-        - $ref: "#/components/parameters/MesReferenciaInicial"
-        - $ref: "#/components/parameters/MesReferenciaFinal"
+        - $ref: "#/components/parameters/MesReferenciaInicialObrigatorio"
+        - $ref: "#/components/parameters/MesReferenciaFinalObrigatorio"
         - $ref: "#/components/parameters/CodigoUnidadeConsumidoraQuery"
         - $ref: "#/components/parameters/StatusMigracaoQuery"
         - $ref: "#/components/parameters/IndexProximaPagina"
@@ -289,9 +308,9 @@ paths:
         Devolve a migração pelo identificador. A resposta é uma lista com um
         item, no formato do detalhe, que difere do formato da listagem.
       x-confianca: alta
-      x-verificado-em: "2026-10-30"
-      x-fonte: Coleção, seção APIs do varejista, migrações v1.1; teste no sandbox em 30/10/2026.
-      x-divergencias: [2, 10, 14]
+      x-verificado-em: "2026-11-01"
+      x-fonte: Coleção, seção APIs do varejista, migrações v1.1; testes no sandbox em 30/10/2026 e 01/11/2026.
+      x-divergencias: [2, 10, 14, 20]
       parameters:
         - $ref: "#/components/parameters/CodigoAgente"
         - $ref: "#/components/parameters/CodigoPerfil"
@@ -409,7 +428,8 @@ paths:
         sandbox respondeu lista vazia nos testes: os campos do item vêm só da
         documentação pública e têm confiança baixa.
       x-confianca: media
-      x-fonte: Coleção, seção APIs do varejista, consumo; teste no sandbox em 30/10/2026 (lista vazia).
+      x-verificado-em: "2026-11-01"
+      x-fonte: Coleção, seção APIs do varejista, consumo; testes no sandbox em 30/10/2026 e 01/11/2026 (lista vazia nas duas).
       x-divergencias: [12, 14, 16]
       parameters:
         - $ref: "#/components/parameters/CodigoAgente"
@@ -754,6 +774,34 @@ components:
         pattern: ^[0-9]{4}-[0-9]{2}$
       example: 2027-12
       x-divergencias: [2]
+    MesReferenciaInicialObrigatorio:
+      name: mesReferenciaInicial
+      in: query
+      required: true
+      description: |
+        Primeiro mês do intervalo, no formato AAAA-MM. Obrigatório na listagem de
+        migrações: sem ele o sandbox responde 400
+        `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`. Um intervalo largo demais volta
+        400 `ERR_MES_REFERENCIA_INICIAL_DIFERENCA` (um mês passou; 96 meses não).
+      schema:
+        type: string
+        pattern: ^[0-9]{4}-[0-9]{2}$
+      example: 2027-01
+      x-divergencias: [2, 18, 19]
+    MesReferenciaFinalObrigatorio:
+      name: mesReferenciaFinal
+      in: query
+      required: true
+      description: |
+        Último mês do intervalo, no formato AAAA-MM. Obrigatório na listagem de
+        migrações, junto com o mês inicial. A distância máxima entre os dois não
+        foi medida: 1 mês foi aceito e 96 foram recusados
+        (`ERR_MES_REFERENCIA_INICIAL_DIFERENCA`).
+      schema:
+        type: string
+        pattern: ^[0-9]{4}-[0-9]{2}$
+      example: 2027-01
+      x-divergencias: [2, 18, 19]
     CodigoUnidadeConsumidoraQuery:
       name: codigoUnidadeConsumidora
       in: query
@@ -1075,6 +1123,8 @@ components:
         - `ERR_VALIDACAO_CAMPOS`: 400. Um campo foi recusado; a validação para no primeiro.
         - `ERR_PERFIL_VAREJISTA_OBRIGATORIO`: 400. A consulta não trouxe o perfil.
         - `ERR_MIGRACAO_SOLICITADA`: 400. Já existe migração ativa para a UC e a concessionária.
+        - `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`: 400. A listagem de migrações não trouxe o intervalo de meses ([catálogo](docs/erros.md#faixa-de-meses-obrigatoria)).
+        - `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`: 400. O intervalo de meses é largo demais ([catálogo](docs/erros.md#faixa-de-meses-larga-demais)).
       externalDocs:
         description: Catálogo de erros, com o que fazer e quando repetir.
         url: https://marcobuarque.github.io/abertura-mercado-energia/erros
@@ -1092,14 +1142,42 @@ components:
             - ERR_VALIDACAO_CAMPOS
             - ERR_PERFIL_VAREJISTA_OBRIGATORIO
             - ERR_MIGRACAO_SOLICITADA
+            - ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO
+            - ERR_MES_REFERENCIA_INICIAL_DIFERENCA
             - ERR_CREDENCIAL_INVALIDA
         message:
           type: string
           description: Texto para humanos, em português.
       x-divergencias: [6]
 
+    ErroOAuth2:
+      type: object
+      description: |
+        Corpo do 400 de `POST /sso/oauth/token`, no formato de erro OAuth2 (RFC
+        6749, seção 5.2). Não tem `status` nem `timestamp`; não é o `Erro`.
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: Código OAuth2. Não se viu qual deles o servidor devolve.
+          x-confianca: media
+          x-extensible-enum:
+            - invalid_request
+            - invalid_client
+            - invalid_grant
+            - unauthorized_client
+            - unsupported_grant_type
+            - invalid_scope
+        error_description:
+          type: string
+          description: Texto para humanos.
+      x-divergencias: [17]
+
     TokenRequisicao:
       type: object
+      description: |
+        Só `client_id` e `client_secret`. Um formulário com `grant_type` foi
+        recusado com 400 (corpo de erro OAuth2) em 01/11/2026.
       required: [client_id, client_secret]
       properties:
         client_id:
@@ -1109,11 +1187,6 @@ components:
           type: string
           format: password
           description: Segredo do cliente. Nunca registre em log.
-        grant_type:
-          type: string
-          description: Tipo de concessão. Opcional e não conferido; o fluxo é `client_credentials`.
-          example: client_credentials
-          x-confianca: baixa
 
     Token:
       type: object
@@ -1282,7 +1355,11 @@ components:
         dataReferencia:
           type: string
           nullable: true
-          description: Mês de referência. O formato não foi guardado no teste (D2).
+          description: |
+            Mês de referência. Formato ainda não registrado (D2, D20): em
+            01/11/2026 a resposta chegou, mas o SDK não a converteu; provável que
+            não seja AAAA-MM, MM-AAAA nem RFC 3339. Sem `format`.
+          x-confianca: baixa
         dataDenuncia:
           type: string
           nullable: true
