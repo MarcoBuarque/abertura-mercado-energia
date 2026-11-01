@@ -95,6 +95,11 @@ func (o *orcamento) RoundTrip(req *http.Request) (*http.Response, error) {
 	op, problema := o.validar(req, resp, corpo)
 	linha := fmt.Sprintf("requisição %d: %s -> %d; campos: %s", o.n.Load(), op, resp.StatusCode, nomesDeCampos(corpo))
 	if n := itensNaRaiz(corpo); n != "" {
+		if op == "obterMigracao" {
+			if c := comparaItens(corpo); c != "" {
+				n += "; " + c
+			}
+		}
 		linha += "; " + n
 		o.mu.Lock()
 		if o.raizes == nil {
@@ -382,4 +387,62 @@ func itensNaRaiz(corpo []byte) string {
 		return ""
 	}
 	return fmt.Sprintf("itens na raiz: %d", len(l))
+}
+
+// comparaItens, quando a raiz é uma lista de mais de um objeto, diz se os itens
+// são iguais depois de recodificados (a ordem dos campos não conta) e, se
+// diferem, quais NOMES de campo de primeiro nível mudam entre o primeiro item
+// e qualquer outro. Nunca imprime valores. Para os demais casos, vazio.
+func comparaItens(corpo []byte) string {
+	var v any
+	if json.Unmarshal(bytes.TrimSpace(corpo), &v) != nil {
+		return ""
+	}
+	l, ok := v.([]any)
+	if !ok || len(l) < 2 {
+		return ""
+	}
+	primeiro, ok := l[0].(map[string]any)
+	if !ok {
+		return ""
+	}
+	difere := map[string]bool{}
+	for _, it := range l[1:] {
+		outro, ok := it.(map[string]any)
+		if !ok {
+			return "itens diferentes"
+		}
+		for k, a := range primeiro {
+			if !mesmoJSON(a, outro[k]) || !temChave(outro, k) {
+				difere[k] = true
+			}
+		}
+		for k := range outro {
+			if !temChave(primeiro, k) {
+				difere[k] = true
+			}
+		}
+	}
+	if len(difere) == 0 {
+		return "itens iguais"
+	}
+	nomes := make([]string, 0, len(difere))
+	for k := range difere {
+		nomes = append(nomes, k)
+	}
+	sort.Strings(nomes)
+	return "itens diferentes; campos que diferem: " + strings.Join(nomes, ",")
+}
+
+func temChave(m map[string]any, k string) bool {
+	_, ok := m[k]
+	return ok
+}
+
+// mesmoJSON compara dois valores decodificados pela forma canônica (chaves
+// ordenadas pelo codificador).
+func mesmoJSON(a, b any) bool {
+	ja, erra := json.Marshal(a)
+	jb, errb := json.Marshal(b)
+	return erra == nil && errb == nil && bytes.Equal(ja, jb)
 }

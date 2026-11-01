@@ -132,9 +132,10 @@ paths:
         A distância entre os dois meses tem teto: em 01/11/2026 o sandbox
         aceitou 12 meses e recusou 24, 48 e 96 (400
         `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`); o teto está entre 12 e 24,
-        provavelmente 12 (D22). Uma faixa de 12 meses devolveu 71 itens numa só
-        página, com `indexProximaPagina` presente e sem cursor: a página tem ao
-        menos 71 itens e o cursor ainda não foi visto.
+        provavelmente 12 (D22). Uma faixa de 12 meses devolveu 71 e, uma hora
+        depois, 92 itens numa só página, com `indexProximaPagina` presente e
+        sem cursor: a página tem ao menos 92 itens e o cursor ainda não foi
+        visto.
       x-confianca: alta
       x-verificado-em: "2026-11-01"
       x-fonte: Coleção, seção APIs do varejista, migrações v1.1; testes no sandbox em 30/10/2026 e 01/11/2026.
@@ -318,9 +319,10 @@ paths:
       description: |
         Devolve a migração pelo identificador. A resposta é uma lista, no
         formato do detalhe, que difere do formato da listagem. Em 30/10/2026
-        a lista tinha um item; em 01/11/2026 há indício (hipótese, ainda sem
-        confirmação) de que o sandbox devolva mais de um item para um id, e o
-        SDK escolhe o item pelo `idMigracao` (D23).
+        a lista tinha um item; em 01/11/2026 o sandbox devolveu duas entradas
+        com o mesmo `idMigracao` (D23). Não se sabe se eram idênticas, versões
+        ou histórico. O SDK escolhe a entrada pelo `idMigracao` e só a devolve
+        se as entradas repetidas forem iguais.
       x-confianca: media
       x-verificado-em: "2026-11-01"
       x-fonte: Coleção, seção APIs do varejista, migrações v1.1; testes no sandbox em 30/10/2026 e 01/11/2026.
@@ -331,7 +333,7 @@ paths:
         - $ref: "#/components/parameters/IdMigracao"
       responses:
         "200":
-          description: Lista com a migração pedida.
+          description: Lista com a migração pedida. O sandbox devolveu duas entradas com o mesmo `idMigracao` em 01/11/2026 (D23).
           headers:
             x-amzn-RequestId:
               $ref: "#/components/headers/RequestId"

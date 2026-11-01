@@ -8,6 +8,7 @@ import (
 	"iter"
 	"net/http"
 	"net/url"
+	"reflect"
 	"slices"
 	"strconv"
 	"strings"
@@ -89,9 +90,14 @@ func (m *Migracoes) ListarPagina(ctx context.Context, f FiltroMigracoes, cursor 
 //
 // Se a lista trouxer mais de um item, vale o item cujo IdMigracao é o id
 // pedido (comparado depois de tirar os espaços): um só casa e é devolvido;
-// nenhum casa e dá [ErrNotFound]; mais de um casa e dá erro de resposta
-// ilegível. O sandbox devolveu, em 01/11/2026, uma lista com mais de um item
-// para um id; é hipótese, ainda sem confirmação (ver FONTES D23).
+// nenhum casa e dá [ErrNotFound]. Se mais de um casar, todos precisam ser
+// iguais depois de decodificados (a ordem dos campos não conta): então vale
+// o primeiro; se algum diferir, não há como saber qual é o vigente e o erro é
+// de resposta ilegível.
+//
+// Observação de 01/11/2026 no sandbox: a lista trouxe duas entradas com o
+// mesmo id (ver FONTES D23). Ainda não se sabe se eram idênticas; entradas
+// com conteúdo diferente continuam sendo um limite conhecido.
 func (m *Migracoes) Obter(ctx context.Context, id string, opts ...CallOption) (Migracao, error) {
 	const op = "obterMigracao"
 	id, err := validarID(op, id)
@@ -113,7 +119,7 @@ func (m *Migracoes) Obter(ctx context.Context, id string, opts ...CallOption) (M
 		itens = slices.DeleteFunc(itens, func(d gen.MigracaoDetalhe) bool {
 			return strings.TrimSpace(d.IdMigracao) != id
 		})
-		if len(itens) > 1 {
+		if len(itens) > 1 && !todosIguais(itens) {
 			return Migracao{}, fmt.Errorf("%s: %w", op, respostaIlegivel(errors.New("a API devolveu mais de uma migração para o id")))
 		}
 	}
@@ -125,6 +131,17 @@ func (m *Migracoes) Obter(ctx context.Context, id string, opts ...CallOption) (M
 		return Migracao{}, fmt.Errorf("%s: %w", op, err)
 	}
 	return mig, nil
+}
+
+// todosIguais diz se todos os detalhes são iguais ao primeiro, comparados
+// como decodificados (a ordem dos campos no JSON não influi).
+func todosIguais(itens []gen.MigracaoDetalhe) bool {
+	for _, d := range itens[1:] {
+		if !reflect.DeepEqual(itens[0], d) {
+			return false
+		}
+	}
+	return true
 }
 
 // Criar registra uma nova migração. O código do varejista e o perfil vêm do

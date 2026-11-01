@@ -16,6 +16,7 @@ Esta é uma descrição **não oficial**, escrita à mão. O projeto é independ
 
 - `TokenRequisicao` sem `grant_type`: o formulário com ele foi recusado com 400 em 01/11/2026 (D17). O 400 de `obterToken` passa a usar `ErroOAuth2`.
 - `mesReferenciaInicial` e `mesReferenciaFinal` de `listarMigracoes` passam a `required` (D18); o limite de distância entre os meses existe e não foi medido (D19). A listagem de solicitações mantém os filtros opcionais.
+- `obterMigracao`: a descrição registra que o sandbox devolveu duas entradas com o mesmo `idMigracao` em 01/11/2026 (D23, quarta rodada). Só texto. `listarMigracoes` registra a página de até 92 itens sem cursor (D22).
 - `x-verificado-em` passa a 2026-11-01 em `obterToken`, `listarMigracoes`, `obterMigracao` e `listarMedicoes` (esta última segue com lista vazia e confiança `media`).
 - `MigracaoResumo.mesReferencia`, `MigracaoDetalhe.dataReferencia`, `dataSolicitacao`, `dataValidacao` e `dataDenuncia` (lista e detalhe) ganham `format: date-time` e o formato observado em 01/11/2026 (D21); `mesReferencia` e `dataReferencia` com `x-confianca: alta`. `Erro.timestamp` descreve a fração de comprimento variável; `Token.expires_in` confirmado com três dígitos.
 - `listarMigracoes`: teto da faixa entre 12 e 24 meses; página de 71 itens sem cursor visto (D22). `obterMigracao` passa a `x-confianca: media`: o sandbox pode devolver mais de um item para um id (hipótese, D23).
