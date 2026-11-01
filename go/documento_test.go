@@ -52,7 +52,15 @@ func TestDocumento_WhenImpresso_NaoMostraONumero(t *testing.T) {
 	impr := func(verbo string, v any) string { return fmt.Sprintf(verbo, v) }
 	jsonSlog := func(v any) string {
 		var buf bytes.Buffer
-		slog.New(slog.NewJSONHandler(&buf, nil)).Info("teste", "valor", v)
+		// Sem o carimbo de tempo: os microssegundos podem conter o trecho do
+		// número que o teste proíbe na saída (ex.: "...30.701113-03:00").
+		semTempo := &slog.HandlerOptions{ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
+			if a.Key == slog.TimeKey {
+				return slog.Attr{}
+			}
+			return a
+		}}
+		slog.New(slog.NewJSONHandler(&buf, semTempo)).Info("teste", "valor", v)
 		return buf.String()
 	}
 	jsonStd := func(v any) string {
