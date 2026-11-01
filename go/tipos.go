@@ -64,6 +64,10 @@ const (
 // leva os campos em claro, UC e e-mail inclusive: o JSON é para guardar, nunca
 // para log. Com o handler JSON do slog, logue o id e não a lista inteira, porque
 // uma lista passa por json.Marshal.
+//
+// O JSON é só de ida por enquanto: um Migracao serializado não volta com
+// json.Unmarshal, porque o Documento sai mascarado e não tem método de leitura
+// (previsto para a v0.2).
 type Migracao struct {
 	// ID é o identificador da migração.
 	ID string
@@ -219,13 +223,22 @@ func (f FiltroMedicoes) LogValue() slog.Value {
 // NovaMigracao reúne os dados para criar uma migração. O código do varejista
 // e o perfil vêm do cliente.
 type NovaMigracao struct {
-	UC             string
+	// UC é o código da unidade consumidora. Dado pessoal.
+	UC string
+	// Concessionaria é o código da concessionária (distribuidora) da UC.
 	Concessionaria int
-	Documento      Documento
-	Email          string
-	Mes            Mes
-	DataDenuncia   time.Time
-	Comentario     string
+	// Documento é o CPF ou CNPJ do titular. Dado pessoal.
+	Documento Documento
+	// Email é o e-mail de contato do titular. Dado pessoal.
+	Email string
+	// Mes é o mês de referência da migração.
+	Mes Mes
+	// DataDenuncia é a data da denúncia do contrato. Só o dia do calendário é
+	// enviado, como foi escrito, na localização do valor: sem conversão de fuso
+	// e sem a hora. O tempo zero omite o campo.
+	DataDenuncia time.Time
+	// Comentario é um texto livre opcional. Pode conter dado pessoal.
+	Comentario string
 }
 
 // String descreve a nova migração sem UC, documento, e-mail nem comentário:
@@ -248,11 +261,17 @@ func (n NovaMigracao) LogValue() slog.Value {
 // EdicaoMigracao reúne os campos editáveis de uma migração. Só os campos que
 // a spec descreve para o PUT.
 type EdicaoMigracao struct {
-	Mes       Mes
-	Perfil    int
+	// Mes é o mês de referência enviado no PUT. Defina-o explicitamente quando
+	// a migração abrange mais de um mês (ver [Migracoes.Editar]).
+	Mes Mes
+	// Perfil é o código do perfil do varejista.
+	Perfil int
+	// Documento é o CPF ou CNPJ do titular. Dado pessoal.
 	Documento Documento
-	Email     string
-	Status    StatusMigracao
+	// Email é o e-mail de contato do titular. Dado pessoal.
+	Email string
+	// Status é a situação da migração.
+	Status StatusMigracao
 }
 
 // String descreve a edição sem documento nem e-mail: só o mês, o perfil e o

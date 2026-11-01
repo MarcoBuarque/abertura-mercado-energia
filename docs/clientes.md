@@ -126,8 +126,8 @@ Dois detalhes dos clientes gerados:
   menu. Por isso as classes saem como `AutenticacaoApi`, `MigracoesApi`,
   `MedicoesApi` e `SolicitacoesApi`. Os nomes dos métodos vêm do `operationId`
   (`listar_migracoes` em Python, `listarMigracoes` em TypeScript e Java).
-- Como as datas de resposta ficam sem `format` na spec, elas chegam como `str`:
-  convertê-las é com você (ver "O que os clientes gerados não fazem").
+- As datas de resposta têm `format: date-time` na spec, então os clientes
+  gerados as tipam como `datetime` (ver "O que os clientes gerados não fazem").
 
 ## 3. Python: do token à lista de migrações
 
@@ -161,6 +161,8 @@ with ac.ApiClient(cfg) as cliente:
         codigo_agente=900002,
         codigo_perfil=900003,
         codigo_perfil_varejista=900003,
+        mes_referencia_inicial="2027-01",
+        mes_referencia_final="2027-03",
     )
 for m in pagina.migracao:
     print(m.id_migracao, m.codigo_unidade_consumidora, m.status_migracao)
@@ -181,11 +183,18 @@ Para ver a última página e um erro, passe o `Prefer` por `_headers`:
 from abertura_cliente.exceptions import ApiException
 
 api = MigracoesApi(cliente)
-ultima = api.listar_migracoes(900002, 900003, 900003, _headers={"Prefer": "example=pagina-2"})
+ultima = api.listar_migracoes(
+    codigo_agente=900002, codigo_perfil=900003, codigo_perfil_varejista=900003,
+    mes_referencia_inicial="2027-01", mes_referencia_final="2027-03",
+    _headers={"Prefer": "example=pagina-2"},
+)
 print(ultima.index_proxima_pagina)  # None
 
 try:
-    api.listar_migracoes(900002, 900003, 900003, _headers={"Prefer": "code=403"})
+    api.listar_migracoes(
+        codigo_agente=900002, codigo_perfil=900003, codigo_perfil_varejista=900003,
+        mes_referencia_inicial="2027-01", mes_referencia_final="2027-03",
+        _headers={"Prefer": "code=403"})
 except ApiException as erro:
     print(erro.status, erro.body)  # 403 {"...","error":"ERR_CREDENCIAL_INVALIDA",...}
 ```
@@ -219,9 +228,10 @@ conta:
    exceção; ele não distingue "não saiu" de "saiu e não sei".
 4. **Aceitar os três formatos de mês.** O mês de referência aparece como
    `AAAA-MM` (filtros e corpos de envio), como data e hora com deslocamento
-   `-03:00` sempre no dia 1 (listagem) e, no detalhe, em `dataReferencia`, cujo
-   formato exato não foi guardado. A spec deixa as datas de resposta como texto
-   para o cliente gerado não quebrar; interpretar cada formato é com você.
+   `-03:00` sempre no dia 1 (listagem) e, no detalhe, em `dataReferencia`, que
+   também é RFC 3339 com deslocamento (D21). A spec declara as datas de
+   resposta como `date-time`; ainda assim, o mês de referência dos filtros e
+   corpos de envio é `AAAA-MM`, e interpretar cada formato é com você.
 5. **Códigos como número ou como texto.** Códigos de agente, perfil e
    concessionária são inteiros no sandbox e texto na documentação pública; os
    campos `consumo` e `codigoAgenteConcessionaria` de uma medição vêm sem tipo

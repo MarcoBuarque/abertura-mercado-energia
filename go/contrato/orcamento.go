@@ -111,6 +111,9 @@ func (o *orcamento) RoundTrip(req *http.Request) (*http.Response, error) {
 	if f := formatosDeCampos(corpo); f != "" {
 		linha += "; formatos: " + f
 	}
+	if h := horasDeCampos(corpo); h != "" {
+		linha += "; horas: " + h
+	}
 	if code := codigoDoErro(corpo); code != "" {
 		linha += "; code: " + code
 	}
@@ -316,13 +319,38 @@ func mascarar(valor string) string {
 // ocorrência de cada um, procurada como em [nomesDeCampos]. Nulo vira "null";
 // número vira uma sequência de noves. Nunca o valor.
 func formatosDeCampos(corpo []byte) string {
+	return juntarTemporais(primeirosTemporais(corpo), mascaraDoValor)
+}
+
+// reHora casa a parte da hora de um RFC 3339 com deslocamento ou Z.
+var reHora = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2}))$`)
+
+// horasDeCampos imprime, para os campos temporais da lista branca cujo valor
+// é um RFC 3339, só a parte da hora e do deslocamento ("T00:00:00Z"). A hora
+// não é dado pessoal e mostra se a API usa meia-noite UTC ou em -03:00.
+func horasDeCampos(corpo []byte) string {
+	return juntarTemporais(primeirosTemporais(corpo), func(v any) string {
+		s, ok := v.(string)
+		if !ok {
+			return ""
+		}
+		if m := reHora.FindStringSubmatch(s); m != nil {
+			return m[1]
+		}
+		return ""
+	})
+}
+
+// primeirosTemporais devolve o valor da primeira ocorrência de cada campo
+// temporal da lista branca (só o primeiro item de cada lista).
+func primeirosTemporais(corpo []byte) map[string]any {
 	dec := json.NewDecoder(bytes.NewReader(bytes.TrimSpace(corpo)))
 	dec.UseNumber()
 	var v any
 	if err := dec.Decode(&v); err != nil {
-		return ""
+		return nil
 	}
-	achados := map[string]string{}
+	achados := map[string]any{}
 	var anda func(v any)
 	anda = func(v any) {
 		switch x := v.(type) {
@@ -334,7 +362,7 @@ func formatosDeCampos(corpo []byte) string {
 			sort.Strings(chaves)
 			for _, k := range chaves {
 				if _, ja := achados[k]; camposTemporais[k] && !ja {
-					achados[k] = mascaraDoValor(x[k])
+					achados[k] = x[k]
 				}
 				anda(x[k])
 			}
@@ -345,6 +373,12 @@ func formatosDeCampos(corpo []byte) string {
 		}
 	}
 	anda(v)
+	return achados
+}
+
+// juntarTemporais descreve cada campo achado, em ordem de nome, omitindo os
+// que a descrição deixa vazios.
+func juntarTemporais(achados map[string]any, descrever func(any) string) string {
 	nomes := make([]string, 0, len(achados))
 	for k := range achados {
 		nomes = append(nomes, k)
@@ -352,7 +386,9 @@ func formatosDeCampos(corpo []byte) string {
 	sort.Strings(nomes)
 	partes := make([]string, 0, len(nomes))
 	for _, k := range nomes {
-		partes = append(partes, k+"="+achados[k])
+		if d := descrever(achados[k]); d != "" {
+			partes = append(partes, k+"="+d)
+		}
 	}
 	return strings.Join(partes, ", ")
 }
