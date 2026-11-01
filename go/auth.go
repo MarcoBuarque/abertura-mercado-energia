@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
@@ -58,6 +57,7 @@ type configToken struct {
 	clientID     string
 	clientSecret string
 	httpClient   *http.Client // nil usa o cliente padrão
+	userAgent    string       // User-Agent do SDK; vazio não envia o cabeçalho
 }
 
 // cacheToken guarda o token de client credentials, renova-o antes do vencimento
@@ -182,6 +182,9 @@ func (c *cacheToken) buscar(ctx context.Context) (*oauth2.Token, error) {
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept", "application/json")
+	if c.cfg.userAgent != "" {
+		req.Header["User-Agent"] = []string{c.cfg.userAgent}
+	}
 
 	hc := c.httpClient
 	if hc == nil {
@@ -204,13 +207,12 @@ func (c *cacheToken) buscar(ctx context.Context) (*oauth2.Token, error) {
 			return nil, fmt.Errorf("%s: %w", operacaoToken, &erroFalhaToken{err: erroSemURL(err)})
 		}
 	}
-	defer func() {
-		if cerr := resp.Body.Close(); cerr != nil {
-			slog.Debug("fechando a resposta do token", "err", erroSemURL(cerr))
-		}
-	}()
-
 	corpo, err := io.ReadAll(io.LimitReader(resp.Body, limiteResposta))
+	// Como em transport.go: falha ao fechar vale como falha de leitura, se a
+	// leitura em si não falhou.
+	if cerr := resp.Body.Close(); cerr != nil && err == nil {
+		err = cerr
+	}
 	if err != nil {
 		return nil, fmt.Errorf("%s: ler a resposta: %w", operacaoToken, &erroFalhaToken{err: erroSemURL(err)})
 	}

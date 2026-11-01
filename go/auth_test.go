@@ -20,6 +20,7 @@ import (
 const (
 	idInventado      = "id-inventado"
 	segredoInventado = "segredo-inventado"
+	uaInventado      = "ua-inventado/1.0"
 	urlInexistente   = "http://exemplo.invalid/sso/oauth/token"
 )
 
@@ -70,6 +71,7 @@ type servidorToken struct {
 	formulario       map[string][]string
 	basic            bool
 	temAuthorization bool
+	userAgent        string
 	metodo           string
 	tipoMidia        string
 }
@@ -89,6 +91,7 @@ func novoServidorToken(t *testing.T, atraso time.Duration, falha func(w http.Res
 		s.mu.Lock()
 		s.formulario = r.PostForm
 		s.basic = temBasic
+		s.userAgent = r.Header.Get("User-Agent")
 		s.temAuthorization = r.Header.Get("Authorization") != ""
 		s.metodo = r.Method
 		s.tipoMidia = r.Header.Get("Content-Type")
@@ -119,6 +122,7 @@ func novoCacheDeTeste(s *servidorToken, rel *relogioFalso) *cacheToken {
 		clientID:     idInventado,
 		clientSecret: segredoInventado,
 		httpClient:   s.Client(),
+		userAgent:    uaInventado,
 	})
 	if rel != nil {
 		c.agora = rel.agora
@@ -150,6 +154,9 @@ func TestCacheToken_WhenPedido_UsaFormularioSemBasic(t *testing.T) {
 	}
 	if s.basic {
 		t.Error("o pedido usou cabeçalho Basic; deveria usar o formulário")
+	}
+	if s.userAgent != uaInventado {
+		t.Errorf("User-Agent = %q, quer %q", s.userAgent, uaInventado)
 	}
 	if s.temAuthorization {
 		t.Error("o pedido trouxe cabeçalho Authorization")
@@ -690,5 +697,37 @@ func exigirSemSegredo(t *testing.T, err error, extras ...any) {
 		if out := fmt.Sprintf("%+v", e); strings.Contains(out, segredoInventado) {
 			t.Errorf("%%+v de %T vazou o segredo: %q", e, out)
 		}
+	}
+}
+
+// corpoFechaMal lê normalmente, mas falha ao fechar.
+type corpoFechaMal struct{ io.Reader }
+
+func (corpoFechaMal) Close() error { return errors.New("falha ao fechar o corpo") }
+
+// transporteFalso devolve uma resposta pronta, sem rede.
+type transporteFalso func(*http.Request) (*http.Response, error)
+
+func (f transporteFalso) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
+
+func TestCacheToken_WhenFechamentoDoCorpoFalha_ViraErroFalhaTokenSemSegredo(t *testing.T) {
+	t.Parallel()
+
+	hc := &http.Client{Transport: transporteFalso(func(*http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header{},
+			Body:       corpoFechaMal{strings.NewReader(`{"access_token":"t","expires_in":300}`)},
+		}, nil
+	})}
+	c := novoCacheToken(configToken{tokenURL: urlInexistente, clientID: idInventado, clientSecret: segredoInventado, httpClient: hc})
+
+	_, err := c.token(context.Background())
+	var ft *erroFalhaToken
+	if !errors.As(err, &ft) {
+		t.Fatalf("err = %v, quer *erroFalhaToken", err)
+	}
+	if strings.Contains(err.Error(), segredoInventado) {
+		t.Errorf("erro vaza o segredo: %q", err)
 	}
 }
