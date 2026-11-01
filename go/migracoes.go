@@ -117,7 +117,7 @@ func (m *Migracoes) Obter(ctx context.Context, id string, opts ...CallOption) (M
 	if err != nil {
 		return Migracao{}, fmt.Errorf("%s: %w", op, err)
 	}
-	if len(itens) > 1 {
+	if len(itens) >= 1 {
 		itens = slices.DeleteFunc(itens, func(d gen.MigracaoDetalhe) bool {
 			return strings.TrimSpace(d.IdMigracao) != id
 		})
@@ -205,6 +205,12 @@ func (m *Migracoes) Criar(ctx context.Context, n NovaMigracao, opts ...CallOptio
 // Editar lê a migração, aplica mudar sobre os campos editáveis e envia o
 // objeto inteiro. Como não se sabe se o PUT da API é parcial ou total, enviar
 // tudo dá o mesmo resultado nos dois casos, ao custo de um GET antes.
+//
+// Quando o detalhe traz uma linha por mês de referência, [Migracoes.Obter]
+// escolhe o mês mais recente e Editar o devolve no corpo completo do PUT; a
+// semântica do PUT (parcial ou total, e para qual mês) não foi verificada.
+// Se a migração abrange mais de um mês, defina [EdicaoMigracao].Mes
+// explicitamente em mudar.
 //
 // Não há ETag: outra escrita entre o GET e o PUT pode ser sobrescrita. Se o
 // resultado do PUT for incerto, o erro é um [*UncertainResultError] com uma
