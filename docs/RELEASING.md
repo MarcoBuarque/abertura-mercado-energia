@@ -20,4 +20,4 @@ Two artifacts, two tag prefixes: `openapi/vX.Y.Z` (spec, Redoc page, mock image)
 - `naming_test.go` in the package: Portuguese words in identifiers, field/type stutter, non-ASCII in non-test sources, missing doc comments on exported names.
 - `golangci-lint` with `gochecknoglobals`, `revive` (exported, var-naming, receiver-naming) and `misspell` (US English).
 - `check-english`: documents and the spec read as English (`README.pt-BR.md` exempt).
-- `check-trademark`: the CCEE name only in the non-affiliation sentence.
+- `check-trademark`: the operator's name only in the non-affiliation notice.
