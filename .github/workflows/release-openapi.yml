@@ -1,6 +1,6 @@
-# Release da spec: tag openapi/vX.Y.Z (ou openapi/vX.Y.Z-rc.N).
-# Pré-versão (-rc.N) vira release marcado como pré-release e não publica Pages
-# nem a tag "latest" da imagem.
+# Spec release: tag openapi/vX.Y.Z (or openapi/vX.Y.Z-rc.N).
+# A pre-release (-rc.N) becomes a release marked as pre-release and publishes
+# neither Pages nor the image's "latest" tag.
 name: release-openapi
 
 on:
@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  verifica:
+  verify:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -27,30 +27,30 @@ jobs:
           go-version: '1.26.x'
           check-latest: true
           cache: false
-      - name: Tag igual a info.version
-        run: make checa-tag TIPO=openapi TAG="$TAG"
+      - name: Tag equals info.version
+        run: make check-tag KIND=openapi TAG="$TAG"
         env:
           TAG: ${{ github.ref_name }}
-      - name: Lint da spec e regras próprias
-        run: make testa-regras spec-lint spec-exemplos
-      # spec-diff fica de fora: neste commit a "última tag openapi/v*" é a
-      # própria tag do release. A compatibilidade já foi checada no PR.
-      - name: Página Redoc
+      - name: Spec lint and own rules
+        run: make test-rules spec-lint spec-examples
+      # spec-diff is left out: at this commit the "latest openapi/v* tag" is the
+      # release tag itself. Compatibility was already checked in the PR.
+      - name: Redoc page
         run: make docs
-      - name: Smoke do mock
+      - name: Mock smoke test
         run: make mock-smoke
 
   release:
-    needs: verifica
+    needs: verify
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
-      contents: write # cria o release e anexa a spec
+      contents: write # creates the release and attaches the spec
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Release com a spec como asset
+      - name: Release with the spec as an asset
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
@@ -60,16 +60,16 @@ jobs:
           gh release create "$TAG" openapi/abertura.yaml \
             --verify-tag \
             --title "Spec ${TAG#openapi/}" \
-            --notes "Descrição não oficial da API de Abertura de Mercado. Mudanças em openapi/CHANGELOG.md nesta tag." \
+            --notes "Unofficial description of the Market Opening API. Changes in openapi/CHANGELOG.md at this tag." \
             "${flags[@]}"
 
-  # Pages e imagem só valem com o repositório público. A condição lê
-  # github.event.repository.private do evento do push, não do estado atual:
-  # empurre as tags finais só depois de o repositório estar público. Rodar o
-  # workflow de novo repete o mesmo evento e, portanto, o mesmo valor; para
-  # publicar depois, é preciso um novo push da tag.
+  # Pages and the image only make sense with a public repository. The condition
+  # reads github.event.repository.private from the push event, not the current
+  # state: push the final tags only after the repository is public. Re-running
+  # the workflow repeats the same event and therefore the same value; to publish
+  # later, the tag must be pushed again.
   pages:
-    needs: verifica
+    needs: verify
     if: github.event.repository.private == false && !contains(github.ref_name, '-rc.')
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -96,9 +96,9 @@ jobs:
       - id: deploy
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
 
-  imagem:
-    needs: verifica
-    if: github.event.repository.private == false # GHCR público só depois do repositório público
+  image:
+    needs: verify
+    if: github.event.repository.private == false # public GHCR only after the repository is public
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
@@ -108,22 +108,22 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Constrói e publica a imagem do mock no GHCR
+      - name: Build and publish the mock image to GHCR
         env:
           TAG: ${{ github.ref_name }}
           REPO: ${{ github.repository }}
           ACTOR: ${{ github.actor }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          nome="ghcr.io/${REPO,,}-mock"
-          versao="${TAG#openapi/v}"
-          make mock-imagem MOCK_IMAGEM="$nome" MOCK_TAG="$versao"
+          name="ghcr.io/${REPO,,}-mock"
+          version="${TAG#openapi/v}"
+          make mock-image MOCK_IMAGE="$name" MOCK_TAG="$version"
           echo "$GH_TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
-          docker push "$nome:$versao"
-          case "$versao" in
+          docker push "$name:$version"
+          case "$version" in
             *-rc.*) ;;
             *)
-              docker tag "$nome:$versao" "$nome:latest"
-              docker push "$nome:latest"
+              docker tag "$name:$version" "$name:latest"
+              docker push "$name:latest"
               ;;
           esac

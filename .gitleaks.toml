@@ -1,6 +1,6 @@
-# Guarda de segredos do repositório. As regras padrão do gitleaks continuam
-# ligadas; as regras abaixo cobrem o que este projeto não pode ter nunca.
-# Nenhuma regra contém o valor de uma credencial.
+# Secrets guard for the repository. The default gitleaks rules stay on; the
+# rules below cover what this project must never have.
+# No rule contains the value of a credential.
 title = "abertura-mercado-energia"
 
 [extend]
@@ -8,20 +8,20 @@ useDefault = true
 
 [[rules]]
 id = "abertura-jwt"
-description = "Token JWT (cabeçalho e corpo em base64url)"
+description = "JWT token (header and body in base64url)"
 regex = '''eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.'''
 keywords = ["eyj"]
 
 [[rules]]
-id = "abertura-atribuicao-de-segredo"
-description = "client_secret atribuído a um valor entre aspas"
+id = "abertura-secret-assignment"
+description = "client_secret assigned to a quoted value"
 regex = '''(?i)client_secret["']?\s*[:=]\s*["'][^"'\s]{8,}["']'''
 keywords = ["client_secret"]
 
 [[rules]]
-id = "abertura-exportacao-postman"
-description = "Exportação de coleção ou ambiente do Postman"
+id = "abertura-postman-export"
+description = "Postman collection or environment export"
 regex = '''["]_postman_id["]|schema\.getpostman\.com'''
 keywords = ["_postman_id", "getpostman"]
 
-# Sem [allowlist]: nada é ignorado. Qualquer exceção exige justificativa em revisão.
+# No [allowlist]: nothing is ignored. Any exception requires a justification in review.
