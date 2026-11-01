@@ -285,6 +285,15 @@ func TestMigracoesObter(t *testing.T) {
 				return errors.As(err, &er) && !errors.Is(err, ErrNotFound) && strings.Contains(err.Error(), "mais de uma")
 			},
 		},
+		{name: "meses diferentes, o antigo primeiro, devolve o mês mais recente", resposta: resp(200, "migracao_detalhe_meses_antigo_primeiro.json"), wantID: idMigracaoTst},
+		{name: "meses diferentes, o recente primeiro, devolve o mês mais recente", resposta: resp(200, "migracao_detalhe_meses_recente_primeiro.json"), wantID: idMigracaoTst},
+		{
+			name: "mês e status diferentes é resposta ilegível", resposta: resp(200, "migracao_detalhe_meses_e_status.json"),
+			wantErr: func(err error) bool {
+				var er *erroResposta
+				return errors.As(err, &er) && !errors.Is(err, ErrNotFound) && strings.Contains(err.Error(), "mais de uma")
+			},
+		},
 		{
 			name: "404 do servidor é ErrNotFound", resposta: testserver.Resposta{Status: 404},
 			wantErr: func(err error) bool { return errors.Is(err, ErrNotFound) },

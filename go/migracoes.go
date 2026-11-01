@@ -90,14 +90,16 @@ func (m *Migracoes) ListarPagina(ctx context.Context, f FiltroMigracoes, cursor 
 //
 // Se a lista trouxer mais de um item, vale o item cujo IdMigracao é o id
 // pedido (comparado depois de tirar os espaços): um só casa e é devolvido;
-// nenhum casa e dá [ErrNotFound]. Se mais de um casar, todos precisam ser
-// iguais depois de decodificados (a ordem dos campos não conta): então vale
-// o primeiro; se algum diferir, não há como saber qual é o vigente e o erro é
-// de resposta ilegível.
+// nenhum casa e dá [ErrNotFound]. Se mais de um casar e forem todos iguais
+// depois de decodificados (a ordem dos campos não conta), vale o primeiro.
 //
-// Observação de 01/11/2026 no sandbox: a lista trouxe duas entradas com o
-// mesmo id (ver FONTES D23). Ainda não se sabe se eram idênticas; entradas
-// com conteúdo diferente continuam sendo um limite conhecido.
+// O detalhe pode trazer uma entrada por mês de referência da mesma migração
+// (observado em 01/11/2026: duas entradas que diferiam só em dataReferencia;
+// ver FONTES D23). Nesse caso o SDK devolve a entrada do mês mais recente; a
+// regra é do SDK, a API não documenta qual mês é o vigente. Para ler todas as
+// linhas, use [Client.Do]. Se as entradas diferirem em qualquer outro campo,
+// ou algum mês não for legível, não há como saber qual vale e o erro é de
+// resposta ilegível.
 func (m *Migracoes) Obter(ctx context.Context, id string, opts ...CallOption) (Migracao, error) {
 	const op = "obterMigracao"
 	id, err := validarID(op, id)
@@ -119,29 +121,59 @@ func (m *Migracoes) Obter(ctx context.Context, id string, opts ...CallOption) (M
 		itens = slices.DeleteFunc(itens, func(d gen.MigracaoDetalhe) bool {
 			return strings.TrimSpace(d.IdMigracao) != id
 		})
-		if len(itens) > 1 && !todosIguais(itens) {
-			return Migracao{}, fmt.Errorf("%s: %w", op, respostaIlegivel(errors.New("a API devolveu mais de uma migração para o id")))
-		}
 	}
 	if len(itens) == 0 {
 		return Migracao{}, fmt.Errorf("%s: %w", op, ErrNotFound)
 	}
-	mig, err := migracaoDeDetalhe(itens[0])
+	escolhido := itens[0]
+	if len(itens) > 1 {
+		var ok bool
+		if escolhido, ok = entradaVigente(itens); !ok {
+			return Migracao{}, fmt.Errorf("%s: %w", op, respostaIlegivel(errors.New("a API devolveu mais de uma migração para o id")))
+		}
+	}
+	mig, err := migracaoDeDetalhe(escolhido)
 	if err != nil {
 		return Migracao{}, fmt.Errorf("%s: %w", op, err)
 	}
 	return mig, nil
 }
 
-// todosIguais diz se todos os detalhes são iguais ao primeiro, comparados
-// como decodificados (a ordem dos campos no JSON não influi).
-func todosIguais(itens []gen.MigracaoDetalhe) bool {
+// entradaVigente escolhe uma entre várias entradas do mesmo id. Se todas são
+// iguais depois de decodificadas, vale a primeira. Se só a dataReferencia
+// difere, vale a de mês mais recente (o primeiro, em caso de empate). Se algo
+// mais difere, ou algum mês não se lê, devolve false.
+func entradaVigente(itens []gen.MigracaoDetalhe) (gen.MigracaoDetalhe, bool) {
+	base := itens[0]
+	base.DataReferencia = ""
 	for _, d := range itens[1:] {
-		if !reflect.DeepEqual(itens[0], d) {
-			return false
+		sem := d
+		sem.DataReferencia = ""
+		if !reflect.DeepEqual(base, sem) {
+			return gen.MigracaoDetalhe{}, false
 		}
 	}
-	return true
+	todosIguais := true
+	for _, d := range itens[1:] {
+		if !reflect.DeepEqual(itens[0], d) {
+			todosIguais = false
+			break
+		}
+	}
+	if todosIguais {
+		return itens[0], true
+	}
+	melhor, melhorMes := itens[0], Mes{}
+	for i, d := range itens {
+		m, err := ParseMes(d.DataReferencia)
+		if err != nil {
+			return gen.MigracaoDetalhe{}, false
+		}
+		if i == 0 || m.Ano > melhorMes.Ano || m.Ano == melhorMes.Ano && m.Mes > melhorMes.Mes {
+			melhor, melhorMes = d, m
+		}
+	}
+	return melhor, true
 }
 
 // Criar registra uma nova migração. O código do varejista e o perfil vêm do
