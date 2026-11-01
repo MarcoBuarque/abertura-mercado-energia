@@ -1,10 +1,8 @@
 package abertura
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"strings"
 	"testing"
 )
@@ -50,19 +48,7 @@ func TestDocumento_WhenImpresso_NaoMostraONumero(t *testing.T) {
 		Status:    StatusCriada,
 	}
 	impr := func(verbo string, v any) string { return fmt.Sprintf(verbo, v) }
-	jsonSlog := func(v any) string {
-		var buf bytes.Buffer
-		// Sem o carimbo de tempo: os microssegundos podem conter o trecho do
-		// número que o teste proíbe na saída (ex.: "...30.701113-03:00").
-		semTempo := &slog.HandlerOptions{ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
-			if a.Key == slog.TimeKey {
-				return slog.Attr{}
-			}
-			return a
-		}}
-		slog.New(slog.NewJSONHandler(&buf, semTempo)).Info("teste", "valor", v)
-		return buf.String()
-	}
+	jsonSlog := func(v any) string { return slogJSONSemTempo("valor", v) }
 	jsonStd := func(v any) string {
 		b, err := json.Marshal(v)
 		if err != nil {
@@ -119,10 +105,9 @@ func TestDocumento_WhenMigracaoImpressa_NaoTrazDocumento(t *testing.T) {
 
 func TestDocumento_WhenMigracaoNoSlog_NaoTrazDocumento(t *testing.T) {
 	mig := Migracao{ID: "00000000-0000-0000-0000-000000000001", Documento: DocumentoCNPJ(cnpjInventado)}
-	var buf bytes.Buffer
-	slog.New(slog.NewJSONHandler(&buf, nil)).Info("teste", "valor", mig)
-	if strings.Contains(buf.String(), "111") || strings.Contains(buf.String(), "CNPJ") {
-		t.Errorf("slog da migração trouxe o documento: %s", buf.String())
+	saida := slogJSONSemTempo("valor", mig)
+	if strings.Contains(saida, "111") || strings.Contains(saida, "CNPJ") {
+		t.Errorf("slog da migração trouxe o documento: %s", saida)
 	}
 }
 

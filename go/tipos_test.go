@@ -1,7 +1,6 @@
 package abertura
 
 import (
-	"bytes"
 	"encoding/json"
 	"log/slog"
 	"strings"
@@ -103,9 +102,7 @@ func TestTipos_WhenLogValue_NaoVazaDadoPessoal(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			var buf bytes.Buffer
-			slog.New(slog.NewJSONHandler(&buf, nil)).Info("teste", "item", tc.valor)
-			saida := buf.String()
+			saida := slogJSONSemTempo("item", tc.valor)
 			t.Logf("saída: %s", saida)
 			for _, quer := range tc.devePossuir {
 				if !strings.Contains(saida, quer) {
