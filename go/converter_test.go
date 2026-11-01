@@ -585,6 +585,9 @@ func TestDataDe_WhenFormato_LeEmBrasilia(t *testing.T) {
 		{name: "RFC 3339 em UTC vai para -03:00", in: "2027-01-15T03:00:00Z", want: time.Date(2027, 1, 15, 0, 0, 0, 0, fusoBrasilia)},
 		{name: "data e hora sem deslocamento", in: "2027-01-15T10:20:30", want: time.Date(2027, 1, 15, 10, 20, 30, 0, fusoBrasilia)},
 		{name: "data e hora sem deslocamento com fração", in: "2027-01-15T10:20:30.123", want: time.Date(2027, 1, 15, 10, 20, 30, 123000000, fusoBrasilia)},
+		{name: "observado: deslocamento sem fração", in: "2027-01-10T14:30:15-03:00", want: time.Date(2027, 1, 10, 14, 30, 15, 0, fusoBrasilia)},
+		{name: "observado: deslocamento com três dígitos de fração", in: "2027-01-10T14:30:15.123-03:00", want: time.Date(2027, 1, 10, 14, 30, 15, 123000000, fusoBrasilia)},
+		{name: "observado: UTC com Z", in: "2027-01-15T03:00:00Z", want: time.Date(2027, 1, 15, 0, 0, 0, 0, fusoBrasilia)},
 		{name: "barras são recusadas", in: "2026/12/01", wantErr: true},
 	}
 	for _, tc := range tests {

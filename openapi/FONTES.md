@@ -8,7 +8,7 @@ Projeto independente e não oficial. Este arquivo diz de onde vem cada afirmaç�
 |---|---|---|
 | Coleção pública do Postman "Abertura de Mercado" (<https://documenter.getpostman.com/view/30322966/2sAXqqchhJ>), publicada em 16/05/2025 | Rotas, nomes de campo, enums e descrições curtas | extraída em 30/10/2026 às 10:52 (-03:00) |
 | Teste manual no ambiente sandbox, com 38 requisições | Formato real de respostas e erros, tipos, nulos, validações e regras de autenticação | 30/10/2026, a partir das 11:56 (-03:00) |
-| Duas rodadas do contrato no sandbox, com 6 e 7 requisições (limite de 90) | Formulário do token, intervalo de meses obrigatório e seu limite, detalhe da migração | 01/11/2026 (ver a seção da rodada) |
+| Três rodadas do contrato no sandbox, com 6, 7 e 10 requisições (limite de 90) | Formulário do token, intervalo de meses obrigatório e seu teto, detalhe da migração, formatos de data | 01/11/2026 (ver a seção da rodada) |
 
 Regra de precedência: **o que se observou no sandbox ganha da coleção**. O que só a coleção mostra leva `x-confianca: baixa` (ou `media`, quando a operação inteira não foi exercitada).
 
@@ -19,9 +19,9 @@ Os dados do sandbox são fictícios e compartilhados. Nenhum valor observado (UC
 | `operationId` | Método e caminho | `x-confianca` | `x-verificado-em` | Divergências |
 |---|---|---|---|---|
 | `obterToken` | `POST /sso/oauth/token` | alta | 2026-11-01 | D15, D17 |
-| `listarMigracoes` | `GET /v1.1/varejista/migracoes` | alta | 2026-11-01 | D2, D8, D10, D14, D18, D19 |
+| `listarMigracoes` | `GET /v1.1/varejista/migracoes` | alta | 2026-11-01 | D2, D8, D10, D14, D18, D19, D21, D22 |
 | `criarMigracao` | `POST /v1.1/varejista/migracoes` | alta | 2026-10-30 | D2, D10, D12, D14 |
-| `obterMigracao` | `GET /v1.1/varejista/migracoes/{idMigracao}` | alta | 2026-11-01 | D2, D10, D14, D20 |
+| `obterMigracao` | `GET /v1.1/varejista/migracoes/{idMigracao}` | media | 2026-11-01 | D2, D10, D14, D20, D21, D23 |
 | `editarMigracao` | `PUT /v1/varejista/migracoes/{idMigracao}` | media | n/a | D10, D14 |
 | `listarMedicoes` | `GET /v1/varejista/consumo/medicoes` | media | 2026-11-01 | D12, D14, D16 |
 | `listarSolicitacoes` | `GET /v1/solicitacoes` | alta | 2026-10-30 | D3, D5, D11, D14 |
@@ -71,19 +71,26 @@ Cada item diz o que a coleção afirma, o que se observou e o que a spec adota.
 
 **D18. Intervalo de meses obrigatório.** A coleção não marca `mesReferenciaInicial` nem `mesReferenciaFinal` da listagem de migrações como obrigatórios. Com o perfil e sem o intervalo, o sandbox respondeu 400 `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO` (corpo no formato do `Erro`). A spec marca os dois como `required` nesta operação, com parâmetros próprios, para não afetar a listagem de solicitações. Fonte: teste no sandbox em 01/11/2026.
 
-**D19. Distância máxima entre os meses.** Um intervalo de um mês foi aceito; um de 96 meses (2020-01 a 2027-12) voltou 400 `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`. O limite não foi medido, e por isso a paginação por `indexProximaPagina` continua sem um cursor observado. A spec não declara limite numérico. Fonte: teste no sandbox em 01/11/2026.
+**D19. Distância máxima entre os meses.** Um intervalo de um mês foi aceito; um de 96 meses (2020-01 a 2027-12) voltou 400 `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`. A medição de 01/11/2026 refinou o limite em D22. Fonte: teste no sandbox em 01/11/2026.
 
-**D20. `dataReferencia` do detalhe.** A resposta do GET por identificador bateu com o schema `MigracaoDetalhe`, mas o SDK não conseguiu converter um campo ao ler o corpo; o suspeito é `dataReferencia`, que ele lê como `AAAA-MM`, `MM-AAAA` ou RFC 3339 (o `mesReferencia` da listagem converteu bem). O formato real continua sem registro; é provável que não seja nenhum dos três. A propriedade ficou sem `format` e com `x-confianca: baixa`; a próxima rodada deve guardar o formato com os dígitos mascarados. Fonte: teste no sandbox em 01/11/2026.
+**D20. `dataReferencia` do detalhe.** Na segunda rodada, a resposta do GET por identificador bateu com o schema, mas o SDK falhou ao ler o corpo, e se suspeitou de `dataReferencia`. A terceira rodada descartou a suspeita: o campo é RFC 3339 com deslocamento, sem fração, e o `ParseMes` o lê (D21). A causa da falha está em D23. Fonte: testes no sandbox em 01/11/2026.
+
+**D21. Formatos de data e hora das respostas.** Por máscara (`9` dígito, `A` letra), em 01/11/2026: `mesReferencia` da listagem `9999-99-99A99:99:99-99:99` (RFC 3339 com deslocamento, sem fração; é uma data e hora e não `AAAA-MM`, por exemplo o dia 1 à meia-noite em -03:00); `dataReferencia` do detalhe, a mesma máscara; `dataSolicitacao` `9999-99-99A99:99:99.999-99:99` (três dígitos de fração); `dataValidacao` `9999-99-99A99:99:99-99:99` numa resposta e `….999-99:99` em outra (fração às vezes presente); `dataDenuncia` `9999-99-99A99:99:99A` (RFC 3339 em UTC, com `Z`); `Erro.timestamp` `9999-99-99A99:99:99.999-99:99` na maioria e `….99-99:99` numa (fração de 2 ou 3 dígitos, zeros à direita cortados). A spec marca esses campos como `format: date-time`, menos `Erro.timestamp`, que fica sem `format` pela variação (e porque o autorizador usa outra forma). Os filtros de consulta seguem `AAAA-MM`. Fonte: testes no sandbox em 01/11/2026.
+
+**D22. Teto da faixa e tamanho da página.** Faixas de 96, 48 e 24 meses voltaram 400 `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`; 12 meses foram aceitos. O teto está entre 12 e 24 meses, provavelmente 12. A faixa de 12 meses devolveu 71 itens numa só página, com `indexProximaPagina` presente e sem cursor: a página tem ao menos 71 itens e o cursor continua nunca visto (atualiza D19). Fonte: testes no sandbox em 01/11/2026.
+
+**D23. Falha do `Obter` no sandbox.** O GET por id devolveu 200, válido contra a spec, e o `Migracoes.Obter` ainda falhou com um erro embrulhado (`*fmt.wrapError`) que não é conversão de campo (`erroCampo`) nem tipo JSON. Hipótese, não confirmada: a resposta é uma lista com mais de um item (em 30/10/2026 era um). O SDK passou a escolher o item pelo `idMigracao`; a próxima rodada confirma pela contagem `itens na raiz: N` que o teste de contrato imprime. Por isso `obterMigracao` fica com `x-confianca: media`. Fonte: teste no sandbox em 01/11/2026.
 
 ## Rodada do contrato de 2026-11-01
 
-Duas rodadas contra o sandbox, com as credenciais fictícias compartilhadas e o perfil fictício da coleção. Nenhum valor de credencial, token, UC, documento ou e-mail é guardado aqui.
+Três rodadas contra o sandbox, com as credenciais fictícias compartilhadas e o perfil fictício da coleção. Nenhum valor de credencial, token, UC, documento ou e-mail é guardado aqui.
 
 - **Rodada 1, com escrita permitida (6 de 90 requisições).** Todo `POST /sso/oauth/token` com `client_id`, `client_secret` e `grant_type` voltou 400 com corpo OAuth2. Nada mais rodou.
 - **Rodada 2, só leitura (7 de 90).** O SDK passou a enviar só os dois campos. Resultados: token 200 (D17); listagem de migrações com um mês `AAAA-MM` em 200, com 7 itens dentro do filtro e sem próximo cursor (D2); sem perfil, 400 `ERR_PERFIL_VAREJISTA_OBRIGATORIO` (D8); com perfil e sem intervalo, 400 `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO` (D18); detalhe de migração em 200, conforme o schema, mas ilegível para o SDK (D20); medições do mês anterior em 200 com lista vazia, como em 30/10; intervalo de 96 meses em 400 `ERR_MES_REFERENCIA_INICIAL_DIFERENCA` (D19).
+- **Rodada 3, só leitura (10 de 90).** Token 200 só com `client_id` e `client_secret` (`expires_in` de três dígitos); listagem de um mês com 7 itens e as máscaras de data de D21; sem perfil, 400 `ERR_PERFIL_VAREJISTA_OBRIGATORIO`; sem faixa, 400 `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`; detalhe por id em 200 e válido, mas o SDK ainda falhou (D23); medições em 200 com lista vazia; faixas de 96, 48 e 24 meses em 400 `ERR_MES_REFERENCIA_INICIAL_DIFERENCA` e a de 12 meses em 200 com 71 itens numa página, sem cursor (D22).
 - **Confirmado:** D2 (filtro `AAAA-MM`), D8, o envelope `indexProximaPagina` e `migracao`, o detalhe como lista de um item.
 - **Mudou na spec:** formulário do token sem `grant_type`; 400 do token com `ErroOAuth2`; intervalo de meses obrigatório na listagem de migrações; dois novos códigos em `Erro.error`.
-- **Segue sem verificação:** `editarMigracao` e a semântica do PUT (parcial ou total), o cursor de paginação, a unidade de `consumo`, o formato de `dataReferencia` e a distância máxima entre os meses. Nenhuma escrita ocorreu nas duas rodadas.
+- **Segue sem verificação:** `editarMigracao` e a semântica do PUT (parcial ou total), a unidade de `consumo`, o cursor de paginação, a causa da falha do `Obter` (D23) e o teto exato da faixa (D22). Nenhuma escrita ocorreu nas três rodadas.
 
 ## Notas sobre os enums
 

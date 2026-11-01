@@ -128,11 +128,11 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026 (quatro cód
 
 - **Código da API:** `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`.
 - **Status:** 400.
-- **Quando acontece:** a distância entre o mês inicial e o final passou do limite da API. O limite não foi publicado nem medido: uma faixa de 96 meses foi recusada e uma de um mês foi aceita (sandbox, 01/11/2026).
+- **Quando acontece:** a distância entre o mês inicial e o final passou do limite da API. O limite não foi publicado: no sandbox, em 01/11/2026, faixas de 12 meses foram aceitas e as de 24, 48 e 96 foram recusadas, então o teto está entre 12 e 24 meses (provavelmente 12).
 - **O que fazer:** estreite a faixa ou divida a consulta em partes menores, uma por vez.
 - **Repetir:** GET e escrita, não, sem estreitar a faixa antes.
 - **Sentinela Go:** `ErrFaixaDeMesesLargaDemais`.
-- **Confiança:** visto no sandbox (o limite é desconhecido).
+- **Confiança:** visto no sandbox (o teto exato é desconhecido: entre 12 e 24 meses).
 
 <a id="codigo-desconhecido"></a>
 ## Código de erro desconhecido do SDK

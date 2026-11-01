@@ -51,6 +51,7 @@ type orcamento struct {
 	mu        sync.Mutex
 	linhas    []string
 	violacoes []string
+	raizes    map[string]string
 }
 
 func novoOrcamento(base http.RoundTripper, max int64) (*orcamento, error) {
@@ -93,6 +94,15 @@ func (o *orcamento) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 	op, problema := o.validar(req, resp, corpo)
 	linha := fmt.Sprintf("requisição %d: %s -> %d; campos: %s", o.n.Load(), op, resp.StatusCode, nomesDeCampos(corpo))
+	if n := itensNaRaiz(corpo); n != "" {
+		linha += "; " + n
+		o.mu.Lock()
+		if o.raizes == nil {
+			o.raizes = map[string]string{}
+		}
+		o.raizes[op] = n
+		o.mu.Unlock()
+	}
 	if f := formatosDeCampos(corpo); f != "" {
 		linha += "; formatos: " + f
 	}
@@ -131,6 +141,14 @@ func (o *orcamento) todasViolacoes() []string {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	return append([]string(nil), o.violacoes...)
+}
+
+// raizDe devolve o "itens na raiz: N" da última resposta da operação cuja raiz
+// era uma lista; vazio se não houve.
+func (o *orcamento) raizDe(op string) string {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	return o.raizes[op]
 }
 
 // usadas devolve quantas requisições já passaram.
@@ -350,4 +368,18 @@ func mascaraDoValor(v any) string {
 	default:
 		return "lista"
 	}
+}
+
+// itensNaRaiz devolve "itens na raiz: N" quando a raiz do JSON é uma lista; N
+// é uma contagem, nunca um valor. Para objeto ou corpo que não é JSON, vazio.
+func itensNaRaiz(corpo []byte) string {
+	var v any
+	if json.Unmarshal(bytes.TrimSpace(corpo), &v) != nil {
+		return ""
+	}
+	l, ok := v.([]any)
+	if !ok {
+		return ""
+	}
+	return fmt.Sprintf("itens na raiz: %d", len(l))
 }
