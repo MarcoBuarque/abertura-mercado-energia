@@ -28,7 +28,7 @@ export GITLEAKS
 $(GITLEAKS): Makefile
 	GOBIN=$(CURDIR)/out/bin go install github.com/zricethezav/gitleaks/v8@$(GITLEAKS_VERSION)
 
-.PHONY: secrets spec-lint spec-examples test-rules spec-diff docs mock mock-smoke mock-image go-tidy go-gen go-test go-race go-lint go-contract go-vuln go-deps check-workflows test-breaking-spec breaking-spec test-check-tag check-tag test-check-trademark check-trademark hooks ci
+.PHONY: secrets spec-lint spec-examples test-rules spec-diff docs mock mock-smoke mock-image go-tidy go-gen go-test go-race go-lint go-contract go-vuln go-deps check-workflows test-breaking-spec breaking-spec test-check-tag check-tag test-check-trademark check-trademark check-english api-check api-update hooks ci
 
 secrets: $(GITLEAKS) ## prove the secrets guard and scan the repository
 	scripts/test-secrets.sh
@@ -129,9 +129,19 @@ test-check-trademark: ## prove the trademark check (table of cases in temporary 
 check-trademark: ## the operator's name only in the non-affiliation notice (scripts/check-trademark.sh)
 	scripts/check-trademark.sh
 
+check-english: ## documents, spec, scripts and Makefile read as English (README.pt-BR.md exempt)
+	scripts/check-english.sh
+
+api-check: ## exported Go API equals abertura/API.txt (run api-update after an intended change and record it in the CHANGELOG)
+	@scripts/api-surface.sh | diff -u abertura/API.txt - && echo "api-check: exported API unchanged (abertura/API.txt)"
+
+api-update: ## rewrite abertura/API.txt from the current exported API
+	scripts/api-surface.sh > abertura/API.txt
+	@echo "api-update: abertura/API.txt rewritten; list the change under Breaking or Changed in abertura/CHANGELOG.md"
+
 hooks: $(GITLEAKS) ## install the pre-commit hook (works in a worktree)
 	@dir="$$(git rev-parse --git-path hooks)" && mkdir -p "$$dir" && \
 		install -m 755 scripts/pre-commit "$$dir/pre-commit" && \
 		echo "hook installed at $$dir/pre-commit"
 
-ci: secrets test-check-trademark check-trademark check-workflows test-check-tag test-breaking-spec test-rules spec-lint spec-examples spec-diff docs mock mock-smoke go-tidy go-gen go-test go-race go-lint go-contract go-vuln go-deps
+ci: secrets test-check-trademark check-trademark check-english check-workflows test-check-tag test-breaking-spec test-rules spec-lint spec-examples spec-diff docs mock mock-smoke go-tidy go-gen go-test api-check go-race go-lint go-contract go-vuln go-deps
