@@ -6,7 +6,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 
 ## [0.1.0]
 
-Primeira versão. Segue a spec `openapi/v0.1.0`; a pré-versão `go/v0.1.0-rc.1` segue a `openapi/v0.1.0-rc.2` e a `go/v0.1.0-rc.2` segue a `openapi/v0.1.0-rc.3` (a spec foi remarcada por causa dos achados do sandbox de 01/11/2026), e não a `openapi/v0.1.0-rc.1`. Requer Go 1.26 ou mais novo.
+Primeira versão. Segue a spec `openapi/v0.1.0`; a pré-versão `go/v0.1.0-rc.1` segue a `openapi/v0.1.0-rc.2`; a `go/v0.1.0-rc.2` e a `go/v0.1.0-rc.3` seguem a `openapi/v0.1.0-rc.3` (a spec foi remarcada por causa dos achados do sandbox de 01/11/2026), e não a `openapi/v0.1.0-rc.1`. A `go/v0.1.0-rc.2` não teve release publicado: a CI da tag reprovou no `govulncheck` antigo (corrigido na rc.3, que também traz os achados da quarta rodada). Requer Go 1.26 ou mais novo.
 
 ### Adicionado
 
