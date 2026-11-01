@@ -81,7 +81,7 @@ list="$base/v1.1/varejista/migracoes?codigoPerfilVarejista=900003&mesReferenciaI
 req "${agent[@]}" "$list"
 verify "listMigrations: status" 200 "$status"
 verify "listMigrations: key migracao" true "$(jqc 'has("migracao")')"
-verify "listMigrations: cursor of page 1" cursor-inventado-2 "$(jqc '.indexProximaPagina')"
+verify "listMigrations: cursor of page 1" invented-cursor-2 "$(jqc '.indexProximaPagina')"
 
 req "${agent[@]}" -H "Prefer: example=page-2" "$list"
 verify "listMigrations page-2: indexProximaPagina null" null "$(jqc '.indexProximaPagina')"

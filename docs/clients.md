@@ -180,7 +180,7 @@ Expected output:
 ```text
 token expires in 300 s
 00000000-0000-4000-8000-000000000001 000000000000001 CRIADA
-next page: cursor-inventado-2
+next page: invented-cursor-2
 ```
 
 To see the last page and an error, pass `Prefer` through `_headers`:
