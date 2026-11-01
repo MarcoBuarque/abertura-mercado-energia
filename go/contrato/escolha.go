@@ -44,9 +44,19 @@ func daUC(lista []abertura.Migracao, uc string, concessionaria int) []abertura.M
 	return out
 }
 
+// mesesFaixaInicial é a largura da primeira faixa tentada. Em 01/11/2026 o
+// sandbox aceitou 12 meses e recusou 24 (teto entre 12 e 24, ver FONTES D22).
+const mesesFaixaInicial = 12
+
+// faixaInicial devolve a primeira faixa a tentar: mesesFaixaInicial meses
+// terminando em hoje.
+func faixaInicial(hoje abertura.Mes) (de, ate abertura.Mes) {
+	return somarMeses(hoje, -(mesesFaixaInicial - 1)), hoje
+}
+
 // maxTentativasFaixa é o teto de requisições do passo que procura a maior faixa
-// de meses que a API aceita: a faixa inicial e até seis reduções (96, 48, 24,
-// 12, 6, 3 e 1 mês).
+// de meses que a API aceita: a faixa inicial e até seis reduções pela metade
+// (a partir de 12 meses bastam quatro: 12, 6, 3 e 1).
 const maxTentativasFaixa = 7
 
 // metadeDaFaixa devolve a metade da faixa de n meses, com mínimo de um mês.

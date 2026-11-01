@@ -12,6 +12,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -138,12 +139,53 @@ func descreve(err error) string {
 	if m := reCampoIlegivel.FindStringSubmatch(err.Error()); m != nil {
 		return "campo ilegível na resposta: " + m[1]
 	}
+	if errors.Is(err, abertura.ErrNotFound) {
+		return "ErrNotFound"
+	}
+	if t := textoFixoDoSDK(err.Error()); t != "" {
+		return t
+	}
 	return fmt.Sprintf("erro do tipo %T", err)
 }
 
 // reCampoIlegivel casa o texto fixo do erro de conversão do SDK
 // (erroCampo, go/converter.go). O nome do campo não é um valor.
 var reCampoIlegivel = regexp.MustCompile(`o campo "([A-Za-z0-9_.]+)" da resposta tem um valor ilegível`)
+
+// textosFixosDoSDK são os textos de resposta ilegível que o próprio SDK
+// escreve (go/migracoes.go, go/do.go). O tipo que os carrega não é exportado,
+// então se casa o texto; só o texto fixo casado é impresso, nada além dele.
+var textosFixosDoSDK = []string{
+	"a API devolveu mais de uma migração para o id",
+	"resposta vazia",
+	"a resposta não traz uma migração identificável",
+	"decodificar a resposta: ",
+}
+
+// reJSONInvalido casa o texto fixo do erro de sintaxe do SDK (go/do.go).
+var reJSONInvalido = regexp.MustCompile(`a resposta não é JSON válido \(byte \d+\)`)
+
+// textoFixoDoSDK devolve o texto fixo do SDK contido na mensagem, ou vazio.
+func textoFixoDoSDK(msg string) string {
+	if m := reJSONInvalido.FindString(msg); m != "" {
+		return m
+	}
+	for _, t := range textosFixosDoSDK {
+		if strings.Contains(msg, t) {
+			return t
+		}
+	}
+	return ""
+}
+
+// raizOu devolve a contagem de itens da raiz, ou "raiz: objeto" quando a raiz
+// não era uma lista.
+func raizOu(raiz string) string {
+	if raiz == "" {
+		return "raiz: objeto"
+	}
+	return raiz
+}
 
 func TestContrato(t *testing.T) {
 	cfg := lerConfig(t)
@@ -185,13 +227,14 @@ func TestContrato(t *testing.T) {
 
 	hoje := time.Now().In(brasilia)
 	mes := abertura.MesDe(hoje.Year(), hoje.Month())
-	faixaDe, faixaAte := abertura.MesDe(2020, time.January), abertura.MesDe(hoje.Year()+1, time.December)
+	faixaDe, faixaAte := faixaInicial(mes)
 	var primeiro abertura.Migracao
 
 	// faixaLarga procura, na primeira vez, a maior faixa de meses que a API
-	// aceita: começa na faixa ampla (faixaDe a faixaAte) e, a cada
+	// aceita: começa em 12 meses terminando no mês corrente
+	// (faixaDe a faixaAte; teto medido em 01/11/2026 entre 12 e 24) e, a cada
 	// ErrFaixaDeMesesLargaDemais, reduz pela metade, centrada no mês corrente
-	// (96, 48, 24, 12, 6, 3, 1), com no máximo maxTentativasFaixa requisições.
+	// (12, 6, 3, 1), com no máximo maxTentativasFaixa requisições.
 	// O resultado fica guardado: os passos que listam numa faixa ampla usam a
 	// faixa aceita e a primeira página já lida.
 	var (
@@ -212,7 +255,7 @@ func TestContrato(t *testing.T) {
 		case faixaErr != nil:
 			achado(t, "faixa de meses: nenhuma faixa testada foi aceita (%s)", descreve(faixaErr))
 		case faixa.Recusada == 0:
-			achado(t, "faixa de meses: %d meses aceitos de primeira (o teto, se existe, é maior)", faixa.Meses)
+			achado(t, "faixa de %d meses aceita (teto entre 12 e 24, medido em 01/11/2026)", faixa.Meses)
 		default:
 			achado(t, "faixa de %d meses aceita; de %d recusada (teto entre %d e %d)", faixa.Meses, faixa.Recusada, faixa.Meses, faixa.Recusada)
 		}
@@ -288,10 +331,10 @@ func TestContrato(t *testing.T) {
 		}
 		m, err := c.Migracoes.Obter(ctx, primeiro.ID)
 		if err != nil {
-			achado(t, "Obter: %s (o nome do campo ilegível, se for o caso, é o dado a registrar em FONTES.md)", descreve(err))
+			achado(t, "Obter: %s; %s (o nome do campo ilegível, se for o caso, é o dado a registrar em FONTES.md)", descreve(err), raizOu(o.raizDe("obterMigracao")))
 			t.Fatalf("Obter: %s", descreve(err))
 		}
-		achado(t, "Obter: ok; mesmo status da lista: %v; mesmo mês da lista: %v", m.Status == primeiro.Status, m.Mes == primeiro.Mes)
+		achado(t, "Obter: ok; %s; mesmo status da lista: %v; mesmo mês da lista: %v", raizOu(o.raizDe("obterMigracao")), m.Status == primeiro.Status, m.Mes == primeiro.Mes)
 	})
 
 	passo("leitura/medições", func(t *testing.T) {

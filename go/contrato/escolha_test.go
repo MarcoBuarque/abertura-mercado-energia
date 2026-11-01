@@ -244,3 +244,23 @@ func TestEscolha_WhenBuscarFaixaAceita_EstreitaAteAAPIAceitar(t *testing.T) {
 		}
 	})
 }
+
+func TestFaixaInicial(t *testing.T) {
+	tests := []struct {
+		name            string
+		hoje            abertura.Mes
+		wantDe, wantAte abertura.Mes
+	}{
+		{name: "meio do ano", hoje: abertura.MesDe(2026, time.November), wantDe: abertura.MesDe(2025, time.December), wantAte: abertura.MesDe(2026, time.November)},
+		{name: "dezembro", hoje: abertura.MesDe(2026, time.December), wantDe: abertura.MesDe(2026, time.January), wantAte: abertura.MesDe(2026, time.December)},
+		{name: "janeiro", hoje: abertura.MesDe(2027, time.January), wantDe: abertura.MesDe(2026, time.February), wantAte: abertura.MesDe(2027, time.January)},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			de, ate := faixaInicial(tc.hoje)
+			if de != tc.wantDe || ate != tc.wantAte || mesesNaFaixa(de, ate) != mesesFaixaInicial {
+				t.Errorf("faixaInicial = %v a %v (%d meses); quero %v a %v (%d)", de, ate, mesesNaFaixa(de, ate), tc.wantDe, tc.wantAte, mesesFaixaInicial)
+			}
+		})
+	}
+}

@@ -11,6 +11,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	abertura "github.com/MarcoBuarque/abertura-mercado-energia/go"
 )
 
 // Os testes deste arquivo rodam offline, contra um servidor local: provam o
@@ -208,5 +210,84 @@ func TestOrcamento_Descreve_WhenErroDeCampoIlegivel_NomeiaOCampo(t *testing.T) {
 				t.Errorf("got %q, quero %q", got, tc.want)
 			}
 		})
+	}
+}
+
+func TestOrcamento_Descreve_WhenErroDoProprioSDK_ImprimeSoTextoFixo(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want string
+	}{
+		{name: "mais de uma migração", err: fmt.Errorf("obterMigracao: %w", errors.New("a API devolveu mais de uma migração para o id")), want: "a API devolveu mais de uma migração para o id"},
+		{name: "resposta vazia", err: fmt.Errorf("obterMigracao: %w", errors.New("resposta vazia")), want: "resposta vazia"},
+		{name: "sem migração identificável", err: fmt.Errorf("criarMigracao: %w", errors.New("a resposta não traz uma migração identificável")), want: "a resposta não traz uma migração identificável"},
+		{name: "JSON inválido com byte", err: fmt.Errorf("obterMigracao: %w", errors.New("a resposta não é JSON válido (byte 42)")), want: "a resposta não é JSON válido (byte 42)"},
+		{name: "decodificar só o prefixo", err: fmt.Errorf("obterMigracao: decodificar a resposta: %w", errors.New("valor-secreto")), want: "decodificar a resposta: "},
+		{name: "não encontrado", err: fmt.Errorf("obterMigracao: %w", abertura.ErrNotFound), want: "ErrNotFound"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := descreve(tc.err)
+			if got != tc.want {
+				t.Errorf("got %q, quero %q", got, tc.want)
+			}
+			if strings.Contains(got, "valor-secreto") {
+				t.Errorf("valor vazou: %q", got)
+			}
+		})
+	}
+}
+
+func TestOrcamento_ItensNaRaiz(t *testing.T) {
+	tests := []struct {
+		name, in, want string
+	}{
+		{name: "lista com três", in: `[{"a":1},{"a":2},{"a":3}]`, want: "itens na raiz: 3"},
+		{name: "lista vazia", in: `[]`, want: "itens na raiz: 0"},
+		{name: "objeto não imprime nada", in: `{"a":1}`, want: ""},
+		{name: "não JSON não imprime nada", in: `Bad Gateway`, want: ""},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := itensNaRaiz([]byte(tc.in)); got != tc.want {
+				t.Errorf("got %q, quero %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestOrcamento_WhenRaizEhLista_LinhaTrazContagem(t *testing.T) {
+	s := servidorLocal(t, 200, `[{"idMigracao":"valor-secreto"},{"idMigracao":"outro-secreto"}]`)
+	o, err := novoOrcamento(http.DefaultTransport, 90)
+	if err != nil {
+		t.Fatalf("novoOrcamento: %v", err)
+	}
+	if err := pegar(t, o, s.URL+"/v1.1/varejista/migracoes/00000000-0000-4000-8000-000000000001"); err != nil {
+		t.Fatalf("pegar: %v", err)
+	}
+	l := strings.Join(o.descarregar(), "\n")
+	if !strings.Contains(l, "itens na raiz: 2") {
+		t.Errorf("a linha devia trazer a contagem: %s", l)
+	}
+	if strings.Contains(l, "secreto") {
+		t.Errorf("valor vazou: %s", l)
+	}
+}
+
+func TestOrcamento_RaizDe_WhenListaNaOperacao_GuardaAContagem(t *testing.T) {
+	s := servidorLocal(t, 200, `[{"a":1},{"a":2},{"a":3}]`)
+	o, err := novoOrcamento(http.DefaultTransport, 90)
+	if err != nil {
+		t.Fatalf("novoOrcamento: %v", err)
+	}
+	if got := o.raizDe("obterMigracao"); got != "" {
+		t.Fatalf("antes de qualquer requisição raizDe = %q, quero vazio", got)
+	}
+	if err := pegar(t, o, s.URL+"/v1.1/varejista/migracoes/00000000-0000-4000-8000-000000000001"); err != nil {
+		t.Fatalf("pegar: %v", err)
+	}
+	if got := o.raizDe("obterMigracao"); got != "itens na raiz: 3" {
+		t.Errorf("raizDe = %q, quero %q", got, "itens na raiz: 3")
 	}
 }
