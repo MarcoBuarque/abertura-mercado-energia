@@ -63,7 +63,7 @@ jobs:
             --notes "Unofficial description of the Market Opening API. Changes in openapi/CHANGELOG.md at this tag." \
             "${flags[@]}"
 
-  # Pages and the image only make sense with a public repository. The condition
+  # Pages and the image are only valid with a public repository. The condition
   # reads github.event.repository.private from the push event, not the current
   # state: push the final tags only after the repository is public. Re-running
   # the workflow repeats the same event and therefore the same value; to publish
@@ -96,7 +96,7 @@ jobs:
       - id: deploy
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
 
-  image:
+  mock-image:
     needs: verify
     if: github.event.repository.private == false # public GHCR only after the repository is public
     runs-on: ubuntu-24.04
