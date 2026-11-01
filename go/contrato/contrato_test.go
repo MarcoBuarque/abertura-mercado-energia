@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 	"testing"
 	"time"
@@ -35,7 +36,12 @@ import (
 // Para na 91ª requisição e no primeiro 403.
 //
 // Leitura (sem efeito no servidor): token, lista de um mês, lista sem perfil,
-// lista sem faixa, Obter, medições e até 3 páginas. Escrita (cria e altera
+// lista sem faixa, Obter, medições e até 3 páginas. A faixa ampla é procurada
+// uma vez: começa em 2020-01 até dezembro do ano que vem e, a cada
+// ErrFaixaDeMesesLargaDemais, cai pela metade (centrada no mês corrente) até
+// a API aceitar; os passos seguintes reaproveitam a faixa aceita. Cada
+// resposta ganha, além dos nomes de campo, a máscara de formato dos campos
+// temporais (dígito = 9, letra = A), nunca o valor. Escrita (cria e altera
 // registro no sandbox): Criar, ConferirCriacao, Editar, ConferirEdicao e o PUT
 // parcial pelo Do. Na escrita, ErrValidacaoCampos no Criar, uma conferência
 // que não acha migração (depois de procurar a UC numa faixa ampla de meses
@@ -119,8 +125,15 @@ func descreve(err error) string {
 	if errors.As(err, &inc) {
 		return "resultado incerto em " + inc.Operation
 	}
+	if m := reCampoIlegivel.FindStringSubmatch(err.Error()); m != nil {
+		return "campo ilegível na resposta: " + m[1]
+	}
 	return fmt.Sprintf("erro do tipo %T", err)
 }
+
+// reCampoIlegivel casa o texto fixo do erro de conversão do SDK
+// (erroCampo, go/converter.go). O nome do campo não é um valor.
+var reCampoIlegivel = regexp.MustCompile(`o campo "([A-Za-z0-9_.]+)" da resposta tem um valor ilegível`)
 
 func TestContrato(t *testing.T) {
 	cfg := lerConfig(t)
@@ -164,6 +177,37 @@ func TestContrato(t *testing.T) {
 	mes := abertura.MesDe(hoje.Year(), hoje.Month())
 	faixaDe, faixaAte := abertura.MesDe(2020, time.January), abertura.MesDe(hoje.Year()+1, time.December)
 	var primeiro abertura.Migracao
+
+	// faixaLarga procura, na primeira vez, a maior faixa de meses que a API
+	// aceita: começa na faixa ampla (faixaDe a faixaAte) e, a cada
+	// ErrFaixaDeMesesLargaDemais, reduz pela metade, centrada no mês corrente
+	// (96, 48, 24, 12, 6, 3, 1), com no máximo maxTentativasFaixa requisições.
+	// O resultado fica guardado: os passos que listam numa faixa ampla usam a
+	// faixa aceita e a primeira página já lida.
+	var (
+		faixaFeita bool
+		faixa      faixaAceita
+		faixaErr   error
+	)
+	faixaLarga := func(t *testing.T) (faixaAceita, error) {
+		t.Helper()
+		if faixaFeita {
+			return faixa, faixaErr
+		}
+		faixaFeita = true
+		faixa, faixaErr = buscarFaixaAceita(faixaDe, faixaAte, mes, func(de, ate abertura.Mes) (abertura.Pagina[abertura.Migracao], error) {
+			return c.Migracoes.ListarPagina(ctx, abertura.FiltroMigracoes{De: de, Ate: ate}, "")
+		})
+		switch {
+		case faixaErr != nil:
+			achado(t, "faixa de meses: nenhuma faixa testada foi aceita (%s)", descreve(faixaErr))
+		case faixa.Recusada == 0:
+			achado(t, "faixa de meses: %d meses aceitos de primeira (o teto, se existe, é maior)", faixa.Meses)
+		default:
+			achado(t, "faixa de %d meses aceita; de %d recusada (teto entre %d e %d)", faixa.Meses, faixa.Recusada, faixa.Meses, faixa.Recusada)
+		}
+		return faixa, faixaErr
+	}
 
 	passo("leitura/token e lista de um mês", func(t *testing.T) {
 		pag, err := c.Migracoes.ListarPagina(ctx, abertura.FiltroMigracoes{De: mes, Ate: mes}, "")
@@ -209,8 +253,12 @@ func TestContrato(t *testing.T) {
 		q := url.Values{"codigoPerfilVarejista": {strconv.Itoa(cfg.perfil)}}
 		var raw json.RawMessage
 		err := c.Do(ctx, http.MethodGet, "/v1.1/varejista/migracoes?"+q.Encode(), nil, &raw)
+		if errors.Is(err, abertura.ErrFaixaDeMesesObrigatoria) {
+			achado(t, "faixa de meses: obrigatória, ErrFaixaDeMesesObrigatoria (%s)", descreve(err))
+			return
+		}
 		if err != nil {
-			achado(t, "faixa de meses: parece obrigatória (%s)", descreve(err))
+			achado(t, "faixa de meses: parece obrigatória, mas com outro erro (%s)", descreve(err))
 			return
 		}
 		achado(t, "faixa de meses: NÃO é obrigatória (200)")
@@ -218,10 +266,11 @@ func TestContrato(t *testing.T) {
 
 	passo("leitura/Obter do primeiro item", func(t *testing.T) {
 		if primeiro.ID == "" {
-			pag, err := c.Migracoes.ListarPagina(ctx, abertura.FiltroMigracoes{De: faixaDe, Ate: faixaAte}, "")
+			fx, err := faixaLarga(t)
 			if err != nil {
 				t.Fatalf("lista ampla: %s", descreve(err))
 			}
+			pag := fx.Pagina
 			if len(pag.Itens) == 0 {
 				t.Skip("o sandbox não tem migrações visíveis para este perfil")
 			}
@@ -229,6 +278,7 @@ func TestContrato(t *testing.T) {
 		}
 		m, err := c.Migracoes.Obter(ctx, primeiro.ID)
 		if err != nil {
+			achado(t, "Obter: %s (o nome do campo ilegível, se for o caso, é o dado a registrar em FONTES.md)", descreve(err))
 			t.Fatalf("Obter: %s", descreve(err))
 		}
 		achado(t, "Obter: ok; mesmo status da lista: %v; mesmo mês da lista: %v", m.Status == primeiro.Status, m.Mes == primeiro.Mes)
@@ -251,11 +301,18 @@ func TestContrato(t *testing.T) {
 	})
 
 	passo("leitura/até 3 páginas numa faixa ampla", func(t *testing.T) {
+		fx, err := faixaLarga(t)
+		if err != nil {
+			t.Fatalf("página 1: %s", descreve(err))
+		}
+		pag := fx.Pagina
 		cursor, vistos := "", 0
 		for pagina := 1; pagina <= 3; pagina++ {
-			pag, err := c.Migracoes.ListarPagina(ctx, abertura.FiltroMigracoes{De: faixaDe, Ate: faixaAte}, cursor)
-			if err != nil {
-				t.Fatalf("página %d: %s", pagina, descreve(err))
+			if pagina > 1 {
+				pag, err = c.Migracoes.ListarPagina(ctx, abertura.FiltroMigracoes{De: fx.De, Ate: fx.Ate}, cursor)
+				if err != nil {
+					t.Fatalf("página %d: %s", pagina, descreve(err))
+				}
 			}
 			vistos += len(pag.Itens)
 			if pag.Proxima == "" {
@@ -313,8 +370,12 @@ func TestContrato(t *testing.T) {
 				// Com ErrMigracaoSolicitada a migração ativa pode estar em outro
 				// mês ou perfil: procura a UC numa faixa ampla de meses.
 				achado(t, "ConferirCriacao: vazio no mês da chave; procurando a UC numa faixa ampla de meses")
+				fx, err := faixaLarga(t)
+				if err != nil {
+					t.Fatalf("faixa ampla: %s", descreve(err))
+				}
 				n := 0
-				for m, err := range c.Migracoes.Listar(ctx, abertura.FiltroMigracoes{De: faixaDe, Ate: faixaAte, UC: cfg.uc}) {
+				for m, err := range c.Migracoes.Listar(ctx, abertura.FiltroMigracoes{De: fx.De, Ate: fx.Ate, UC: cfg.uc}) {
 					if err != nil {
 						t.Fatalf("lista ampla pela UC: %s", descreve(err))
 					}
