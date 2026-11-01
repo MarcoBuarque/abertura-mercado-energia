@@ -1,71 +1,73 @@
 #!/usr/bin/env bash
-# Checagens de tag de release, as mesmas que os dois workflows de release rodam:
+# Release tag checks, the same ones the two release workflows run:
 #
-#   scripts/checa-tag.sh openapi openapi/vX.Y.Z[-rc.N]
-#   scripts/checa-tag.sh go      go/vX.Y.Z[-rc.N]
+#   scripts/check-tag.sh openapi  openapi/vX.Y.Z[-rc.N]
+#   scripts/check-tag.sh abertura abertura/vX.Y.Z[-rc.N]
 #
-# O script só lê arquivos; a tag é um argumento e não precisa existir.
+# The script only reads files; the tag is an argument and does not need to exist.
 #
-# openapi: a tag é openapi/vX.Y.Z e info.version (openapi/abertura.yaml) é X.Y.Z.
-#          Numa pré-versão (-rc.N), info.version continua sendo o núcleo X.Y.Z:
-#          a spec do rc é a mesma da versão final.
-# go:      a tag é go/vX.Y.Z[-rc.N]; Version em go/internal/version/version.go é
-#          igual à versão da tag (com o sufixo -rc.N, se houver); o go/CHANGELOG.md
-#          tem a seção "## [versão]" (num rc, vale também a do núcleo) e ela cita
-#          uma tag openapi/vX.Y.Z de origem.
-# Tag pura vX.Y.Z (sem prefixo) é sempre rejeitada: o prefixo escolhe o release.
+# openapi:  the tag is openapi/vX.Y.Z and info.version (openapi/abertura.yaml)
+#           is X.Y.Z. On a pre-release (-rc.N), info.version stays the core
+#           X.Y.Z: the rc's spec is the same as the final version's.
+# abertura: the tag is abertura/vX.Y.Z[-rc.N]; Version in
+#           abertura/internal/version/version.go equals the tag's version (with
+#           the -rc.N suffix, if any); abertura/CHANGELOG.md has the section
+#           "## [version]" (on an rc, the core's section also counts) and it
+#           cites an originating openapi/vX.Y.Z tag.
+# A bare vX.Y.Z tag and the old go/vX.Y.Z prefix are always rejected: the
+# prefix chooses the release.
 #
-# Saída: 0 passa, 1 reprova, 2 uso errado.
+# Exit: 0 passes, 1 fails, 2 wrong usage.
 set -euo pipefail
 
-raiz="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-uso() { echo "uso: scripts/checa-tag.sh openapi|go <tag>" >&2; exit 2; }
-falha() { echo "checa-tag: $1" >&2; exit 1; }
+usage() { echo "usage: scripts/check-tag.sh openapi|abertura <tag>" >&2; exit 2; }
+fail() { echo "check-tag: $1" >&2; exit 1; }
 
-[ "$#" -eq 2 ] || uso
-tipo="$1"; tag="$2"
-case "$tipo" in openapi|go) ;; *) uso ;; esac
+[ "$#" -eq 2 ] || usage
+kind="$1"; tag="$2"
+case "$kind" in openapi|abertura) ;; *) usage ;; esac
 
 semver='[0-9]+\.[0-9]+\.[0-9]+(-rc\.[0-9]+)?'
-if ! [[ "$tag" =~ ^${tipo}/v(${semver})$ ]]; then
-  falha "tag '$tag' fora do formato ${tipo}/vX.Y.Z ou ${tipo}/vX.Y.Z-rc.N (tag pura vX.Y.Z não vale)"
+if ! [[ "$tag" =~ ^${kind}/v(${semver})$ ]]; then
+  fail "tag '$tag' is not in the ${kind}/vX.Y.Z or ${kind}/vX.Y.Z-rc.N format (a bare vX.Y.Z or go/v* tag is not valid)"
 fi
-versao="${BASH_REMATCH[1]}"
-nucleo="${versao%%-*}"
+version="${BASH_REMATCH[1]}"
+core="${version%%-*}"
 
-case "$tipo" in
+case "$kind" in
   openapi)
-    arq="$raiz/openapi/abertura.yaml"
-    [ -f "$arq" ] || falha "$arq não existe"
-    # primeiro `version:` filho direto do bloco info (dois espaços de recuo)
-    info="$(awk '/^info:/ {dentro=1; next} dentro && /^[^ #]/ {exit} dentro && /^  version:/ {sub(/^  version:[ ]*/, ""); gsub(/["'"'"']/, ""); sub(/[ ]+#.*$/, ""); print; exit}' "$arq")"
-    [ -n "$info" ] || falha "info.version não encontrada em openapi/abertura.yaml"
-    if [ "$info" != "$nucleo" ]; then
-      falha "info.version é '$info', mas a tag $tag pede '$nucleo'"
+    file="$root/openapi/abertura.yaml"
+    [ -f "$file" ] || fail "$file does not exist"
+    # first `version:` that is a direct child of the info block (two-space indent)
+    info="$(awk '/^info:/ {inside=1; next} inside && /^[^ #]/ {exit} inside && /^  version:/ {sub(/^  version:[ ]*/, ""); gsub(/["'"'"']/, ""); sub(/[ ]+#.*$/, ""); print; exit}' "$file")"
+    [ -n "$info" ] || fail "info.version not found in openapi/abertura.yaml"
+    if [ "$info" != "$core" ]; then
+      fail "info.version is '$info', but tag $tag requires '$core'"
     fi
-    echo "checa-tag: ok, $tag × info.version $info"
+    echo "check-tag: ok, $tag x info.version $info"
     ;;
-  go)
-    arq="$raiz/go/internal/version/version.go"
-    [ -f "$arq" ] || falha "$arq não existe"
-    atual="$(sed -n 's/^.*Version[[:space:]]*=[[:space:]]*"\([^"]*\)".*$/\1/p' "$arq" | head -n1)"
-    [ -n "$atual" ] || falha "Version não encontrada em go/internal/version/version.go"
-    if [ "$atual" != "$versao" ]; then
-      falha "Version é '$atual', mas a tag $tag pede '$versao'"
+  abertura)
+    file="$root/abertura/internal/version/version.go"
+    [ -f "$file" ] || fail "$file does not exist"
+    current="$(sed -n 's/^.*Version[[:space:]]*=[[:space:]]*"\([^"]*\)".*$/\1/p' "$file" | head -n1)"
+    [ -n "$current" ] || fail "Version not found in abertura/internal/version/version.go"
+    if [ "$current" != "$version" ]; then
+      fail "Version is '$current', but tag $tag requires '$version'"
     fi
 
-    cl="$raiz/go/CHANGELOG.md"
-    [ -f "$cl" ] || falha "$cl não existe"
-    secao=""
-    for v in "$versao" "$nucleo"; do
-      secao="$(awk -v alvo="## [$v]" 'index($0, alvo) == 1 {dentro=1; print; next} dentro && /^## / {exit} dentro {print}' "$cl")"
-      [ -n "$secao" ] && break
+    cl="$root/abertura/CHANGELOG.md"
+    [ -f "$cl" ] || fail "$cl does not exist"
+    section=""
+    for v in "$version" "$core"; do
+      section="$(awk -v target="## [$v]" 'index($0, target) == 1 {inside=1; print; next} inside && /^## / {exit} inside {print}' "$cl")"
+      [ -n "$section" ] && break
     done
-    [ -n "$secao" ] || falha "go/CHANGELOG.md não tem a seção '## [$versao]'"
-    if ! grep -Eq "openapi/v${semver}" <<<"$secao"; then
-      falha "a seção de $versao em go/CHANGELOG.md não cita a tag openapi/vX.Y.Z de origem"
+    [ -n "$section" ] || fail "abertura/CHANGELOG.md has no '## [$version]' section"
+    if ! grep -Eq "openapi/v${semver}" <<<"$section"; then
+      fail "the $version section of abertura/CHANGELOG.md does not cite the originating openapi/vX.Y.Z tag"
     fi
-    echo "checa-tag: ok, $tag × Version $atual × CHANGELOG"
+    echo "check-tag: ok, $tag x Version $current x CHANGELOG"
     ;;
 esac

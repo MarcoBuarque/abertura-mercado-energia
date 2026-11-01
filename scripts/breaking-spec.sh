@@ -1,53 +1,53 @@
 #!/usr/bin/env bash
-# Diz se a quebra da spec está registrada: a seção "## [Não lançado]" de
-# openapi/CHANGELOG.md tem uma subseção "### Quebras" com conteúdo além de
-# "Nenhuma." (qualquer caixa, aceita texto depois do ponto).
+# Tells whether the spec breaking change is recorded: the "## [Unreleased]"
+# section of openapi/CHANGELOG.md has a "### Breaking" subsection with content
+# other than "None." (any case, text after the full stop is accepted).
 #
-# Uso:
-#   scripts/quebra-spec.sh [--exige] [CHANGELOG]
-#     sem flag: imprime 1 (registrada) ou 0 (não registrada) e sai 0;
-#     --exige:  sai 1 com mensagem se a seção não estiver preenchida
-#               (usado quando o PR leva o rótulo `quebra-spec`).
-# Sai 2 em uso errado ou arquivo ausente. Só lê arquivos.
+# Usage:
+#   scripts/breaking-spec.sh [--require] [CHANGELOG]
+#     no flag:   prints 1 (recorded) or 0 (not recorded) and exits 0;
+#     --require: exits 1 with a message if the section is not filled in
+#                (used when the PR carries the `breaking-spec` label).
+# Exits 2 on wrong usage or a missing file. Only reads files.
 set -euo pipefail
 
-exige=0
-arquivo=""
+require=0
+file=""
 for arg in "$@"; do
   case "$arg" in
-    --exige) exige=1 ;;
-    -*) echo "quebra-spec: opção desconhecida: $arg" >&2; exit 2 ;;
+    --require) require=1 ;;
+    -*) echo "breaking-spec: unknown option: $arg" >&2; exit 2 ;;
     *)
-      [ -z "$arquivo" ] || { echo "quebra-spec: argumentos demais" >&2; exit 2; }
-      arquivo="$arg"
+      [ -z "$file" ] || { echo "breaking-spec: too many arguments" >&2; exit 2; }
+      file="$arg"
       ;;
   esac
 done
 
-if [ -z "$arquivo" ]; then
-  arquivo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/openapi/CHANGELOG.md"
+if [ -z "$file" ]; then
+  file="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/openapi/CHANGELOG.md"
 fi
-[ -f "$arquivo" ] || { echo "quebra-spec: $arquivo não existe" >&2; exit 2; }
+[ -f "$file" ] || { echo "breaking-spec: $file does not exist" >&2; exit 2; }
 
-preenchida="$(awk '
-  /^## / { naoLancado = ($0 ~ /^## \[Não lançado\]/); quebras = 0; next }
-  /^### / { quebras = (naoLancado && $0 ~ /^### Quebras[[:space:]]*$/); next }
-  quebras {
-    linha = $0
-    gsub(/^[[:space:]]+|[[:space:]]+$/, "", linha)
-    if (linha == "") next
-    if (tolower(linha) ~ /^nenhuma\.?([[:space:]]|$)/) next
-    achou = 1
+filled="$(awk '
+  /^## / { unreleased = ($0 ~ /^## \[Unreleased\]/); breaking = 0; next }
+  /^### / { breaking = (unreleased && $0 ~ /^### Breaking[[:space:]]*$/); next }
+  breaking {
+    line = $0
+    gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
+    if (line == "") next
+    if (tolower(line) ~ /^none\.?([[:space:]]|$)/) next
+    found = 1
   }
-  END { print achou ? 1 : 0 }
-' "$arquivo")"
+  END { print found ? 1 : 0 }
+' "$file")"
 
-if [ "$exige" -eq 1 ]; then
-  if [ "$preenchida" -ne 1 ]; then
-    echo "quebra-spec: rótulo quebra-spec sem seção Quebras preenchida em [Não lançado] ($arquivo)" >&2
+if [ "$require" -eq 1 ]; then
+  if [ "$filled" -ne 1 ]; then
+    echo "breaking-spec: breaking-spec label without a filled Breaking section under [Unreleased] ($file)" >&2
     exit 1
   fi
-  echo "quebra-spec: seção Quebras preenchida em [Não lançado]"
+  echo "breaking-spec: Breaking section filled under [Unreleased]"
   exit 0
 fi
-echo "$preenchida"
+echo "$filled"

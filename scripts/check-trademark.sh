@@ -1,67 +1,69 @@
 #!/usr/bin/env bash
-# Regra do projeto (termos de uso da CCEE de 13/10/2025): o nome "CCEE" aparece
-# só no aviso de não afiliação. Varre os arquivos versionados e reprova toda
-# ocorrência fora dessa regra, listando arquivo:linha.
+# Project rule (CCEE terms of use of 13/10/2025): the name "CCEE" appears only
+# in the non-affiliation notice. Scans the tracked files and fails on every
+# occurrence outside that rule, listing file:line.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
-# Arquivos que podem conter o aviso. Cada linha com "CCEE" precisa estar num
-# bloco de aviso (ver abaixo).
-avisos=(
-  NOTICE                          # aviso de não afiliação
-  go/NOTICE                       # cópia do NOTICE para o zip do módulo Go
-  README.md                       # aviso no topo
-  go/README.md                    # aviso no topo
-  go/doc.go                       # aviso na documentação do pacote
-  openapi/abertura.yaml           # aviso em info.description
-  go/internal/spec/abertura.yaml  # cópia da spec (go generate), mesmo aviso
-  docs/clientes.md                # aviso no topo
-  docs/template.hbs               # faixa de aviso da página Redoc
-  openapi/CHANGELOG.md            # aviso no topo
+# Files that may contain the notice. Every line with "CCEE" must be inside a
+# notice block (see below).
+notices=(
+  NOTICE                          # non-affiliation notice
+  abertura/NOTICE                 # copy of NOTICE for the Go module zip
+  README.md                       # notice at the top
+  README.pt-BR.md                 # Portuguese translation of the README, same notice
+  abertura/README.md              # notice at the top
+  abertura/doc.go                 # notice in the package documentation
+  openapi/abertura.yaml           # notice in info.description
+  abertura/internal/spec/abertura.yaml  # copy of the spec (go generate), same notice
+  docs/clients.md                 # notice at the top
+  docs/template.hbs               # notice banner of the Redoc page
+  openapi/CHANGELOG.md            # notice at the top
 )
 
-# Arquivos que podem citar a marca sem aviso, por serem a própria checagem.
-ferramentas=(
-  openapi/vacuum.yaml             # regra que proíbe a marca nos metadados
-  scripts/confere-exemplos.sh     # confere que a marca só está em info.description
-  scripts/checa-marca.sh          # este script
-  scripts/testa-checa-marca.sh    # os casos de teste deste script
+# Files that may mention the name without a notice, because they are the check itself.
+tools=(
+  openapi/vacuum.yaml             # rule that forbids the name in metadata
+  scripts/verify-examples.sh      # checks that the name is only in info.description
+  scripts/check-trademark.sh      # this script
+  scripts/test-check-trademark.sh # this script's test cases
 )
 
-# Bloco de aviso: a linha, ou a anterior (o aviso quebra linhas), diz
-# "afiliad", "endoss" ou "não oficial".
-padrao_aviso='afiliad|endoss|não oficial'
+# Notice block: the line, or the previous one (the notice wraps lines), says
+# "affiliated", "endorsed" or "unofficial" (or the Portuguese equivalents, for
+# README.pt-BR.md).
+notice_pattern='affiliated|endorsed|unofficial|afiliad|endoss|não oficial'
 
-em_lista() { # arquivo lista...
+in_list() { # file list...
   local f="$1" x; shift
   for x in "$@"; do [ "$x" = "$f" ] && return 0; done
   return 1
 }
 
-falhas=0
-while IFS= read -r arq; do
-  [ -f "$arq" ] || continue
-  grep -q 'CCEE' "$arq" 2>/dev/null || continue
-  if em_lista "$arq" "${ferramentas[@]}"; then continue; fi
-  if ! em_lista "$arq" "${avisos[@]}"; then
-    grep -n 'CCEE' "$arq" | while IFS=: read -r n _; do
-      echo "marca fora da lista: $arq:$n" >&2
+failures=0
+while IFS= read -r file; do
+  [ -f "$file" ] || continue
+  grep -q 'CCEE' "$file" 2>/dev/null || continue
+  if in_list "$file" "${tools[@]}"; then continue; fi
+  if ! in_list "$file" "${notices[@]}"; then
+    grep -n 'CCEE' "$file" | while IFS=: read -r n _; do
+      echo "name outside the list: $file:$n" >&2
     done
-    falhas=1
+    failures=1
     continue
   fi
   while IFS= read -r n; do
-    atual="$(sed -n "${n}p" "$arq")"
-    anterior=""; [ "$n" -gt 1 ] && anterior="$(sed -n "$((n-1))p" "$arq")"
-    if ! printf '%s\n%s\n' "$anterior" "$atual" | grep -qiE "$padrao_aviso"; then
-      echo "marca fora do aviso de não afiliação: $arq:$n" >&2
-      falhas=1
+    current="$(sed -n "${n}p" "$file")"
+    previous=""; [ "$n" -gt 1 ] && previous="$(sed -n "$((n-1))p" "$file")"
+    if ! printf '%s\n%s\n' "$previous" "$current" | grep -qiE "$notice_pattern"; then
+      echo "name outside the non-affiliation notice: $file:$n" >&2
+      failures=1
     fi
-  done < <(grep -n 'CCEE' "$arq" | cut -d: -f1)
+  done < <(grep -n 'CCEE' "$file" | cut -d: -f1)
 done < <(git ls-files)
 
-if [ "$falhas" != 0 ]; then
-  echo "checa-marca: \"CCEE\" só pode aparecer no aviso de não afiliação" >&2
+if [ "$failures" != 0 ]; then
+  echo "check-trademark: \"CCEE\" may only appear in the non-affiliation notice" >&2
   exit 1
 fi
-echo "checa-marca: ok"
+echo "check-trademark: ok"

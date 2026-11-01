@@ -1,42 +1,42 @@
 #!/usr/bin/env bash
-# Prova que a guarda de segredos funciona: os três arquivos falsos, gerados
-# numa pasta temporária fora do repositório, têm de ser barrados, e o
-# repositório em si tem de passar limpo.
+# Proves that the secrets guard works: the three fake files, generated in a
+# temporary folder outside the repository, must be blocked, and the repository
+# itself must pass clean.
 set -euo pipefail
 GITLEAKS="${GITLEAKS:-gitleaks}"
 
-raiz="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-config="$raiz/.gitleaks.toml"
-[ -f "$config" ] || { echo "falha: $config não existe" >&2; exit 1; }
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+config="$root/.gitleaks.toml"
+[ -f "$config" ] || { echo "fail: $config does not exist" >&2; exit 1; }
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
-# Tudo inventado na hora; nenhum valor real.
-cabecalho="$(printf '{"alg":"none","typ":"JWT"}' | base64 | tr '+/' '-_' | tr -d '=\n')"
-corpo="$(printf '{"sub":"inventado-para-teste"}' | base64 | tr '+/' '-_' | tr -d '=\n')"
-printf 'token=%s.%s.assinatura-inventada\n' "$cabecalho" "$corpo" > "$tmp/jwt.txt"
-# Os nomes são montados em pedaços para este script não casar com as próprias regras.
-printf '%s = "%s"\n' "client_""secret" "valor-inventado-123456" > "$tmp/atribuicao.txt"
-printf '{"info":{"%s":"00000000-inventado"}}\n' "_postman""_id" > "$tmp/colecao.json"
+# Everything invented on the spot; no real value.
+header="$(printf '{"alg":"none","typ":"JWT"}' | base64 | tr '+/' '-_' | tr -d '=\n')"
+body="$(printf '{"sub":"invented-for-test"}' | base64 | tr '+/' '-_' | tr -d '=\n')"
+printf 'token=%s.%s.invented-signature\n' "$header" "$body" > "$tmp/jwt.txt"
+# The names are assembled in pieces so this script does not match its own rules.
+printf '%s = "%s"\n' "client_""secret" "invented-value-123456" > "$tmp/assignment.txt"
+printf '{"info":{"%s":"00000000-invented"}}\n' "_postman""_id" > "$tmp/collection.json"
 
-falhou=0
-for arquivo in jwt.txt atribuicao.txt colecao.json; do
-  # Código 42 = achou segredo; qualquer outro código de erro é falha da própria guarda.
-  codigo=0
-  $GITLEAKS dir --config "$config" --no-banner --redact --exit-code 42 "$tmp/$arquivo" >/dev/null 2>&1 || codigo=$?
-  if [ "$codigo" -eq 42 ]; then
-    echo "ok: $arquivo barrado"
+failed=0
+for file in jwt.txt assignment.txt collection.json; do
+  # Code 42 = found a secret; any other error code is a failure of the guard itself.
+  code=0
+  $GITLEAKS dir --config "$config" --no-banner --redact --exit-code 42 "$tmp/$file" >/dev/null 2>&1 || code=$?
+  if [ "$code" -eq 42 ]; then
+    echo "ok: $file blocked"
   else
-    echo "FALHA: a guarda não barrou $arquivo (código $codigo)" >&2
-    falhou=1
+    echo "FAIL: the guard did not block $file (code $code)" >&2
+    failed=1
   fi
 done
-[ "$falhou" -eq 0 ] || exit 1
+[ "$failed" -eq 0 ] || exit 1
 
-if $GITLEAKS dir --config "$config" --no-banner --exit-code 42 "$raiz"; then
-  echo "ok: repositório limpo"
+if $GITLEAKS dir --config "$config" --no-banner --exit-code 42 "$root"; then
+  echo "ok: repository clean"
 else
-  echo "FALHA: segredo no repositório ou erro da guarda" >&2
+  echo "FAIL: secret in the repository or guard error" >&2
   exit 1
 fi

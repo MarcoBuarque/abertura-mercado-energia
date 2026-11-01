@@ -1,67 +1,67 @@
 #!/usr/bin/env bash
-# Confere os workflows do GitHub Actions sem GitHub:
-#   - actionlint (versão do Makefile) limpo;
-#   - os 5 workflows e o dependabot.yml existem;
-#   - todo `uses:` externo fixado por SHA de 40 caracteres, com a versão em comentário;
-#   - toda imagem (`image:`, `docker://`, `docker run`) com digest sha256;
-#   - `permissions:` e `concurrency:` no topo de cada workflow;
-#   - nenhum segredo além de GITHUB_TOKEN;
-#   - todo `make <alvo>` citado existe no Makefile.
+# Checks the GitHub Actions workflows without GitHub:
+#   - actionlint (Makefile version) clean;
+#   - the 5 workflows and dependabot.yml exist;
+#   - every external `uses:` pinned by a 40-character SHA, with the version in a comment;
+#   - every image (`image:`, `docker://`, `docker run`) with a sha256 digest;
+#   - `permissions:` and `concurrency:` at the top of each workflow;
+#   - no secret besides GITHUB_TOKEN;
+#   - every `make <target>` mentioned exists in the Makefile.
 set -euo pipefail
 
-raiz="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$raiz"
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$root"
 
-falhou=0
-erro() { echo "workflows: $1" >&2; falhou=1; }
+failed=0
+err() { echo "workflows: $1" >&2; failed=1; }
 
-esperados=(openapi go segredos release-openapi release-go)
-for nome in "${esperados[@]}"; do
-  [ -f ".github/workflows/$nome.yml" ] || erro "falta .github/workflows/$nome.yml"
+expected=(openapi go secrets release-openapi release-go)
+for name in "${expected[@]}"; do
+  [ -f ".github/workflows/$name.yml" ] || err "missing .github/workflows/$name.yml"
 done
-[ -f .github/dependabot.yml ] || erro "falta .github/dependabot.yml"
+[ -f .github/dependabot.yml ] || err "missing .github/dependabot.yml"
 
 shopt -s nullglob
-arquivos=(.github/workflows/*.yml .github/workflows/*.yaml)
-[ "${#arquivos[@]}" -gt 0 ] || { echo "workflows: nenhum arquivo em .github/workflows" >&2; exit 1; }
+files=(.github/workflows/*.yml .github/workflows/*.yaml)
+[ "${#files[@]}" -gt 0 ] || { echo "workflows: no file in .github/workflows" >&2; exit 1; }
 
-versao="${ACTIONLINT_VERSION:-$(sed -n 's/^ACTIONLINT_VERSION[[:space:]]*:=[[:space:]]*\([^[:space:]]*\).*/\1/p' Makefile)}"
-[ -n "$versao" ] || { echo "workflows: ACTIONLINT_VERSION não encontrada no Makefile" >&2; exit 1; }
+version="${ACTIONLINT_VERSION:-$(sed -n 's/^ACTIONLINT_VERSION[[:space:]]*:=[[:space:]]*\([^[:space:]]*\).*/\1/p' Makefile)}"
+[ -n "$version" ] || { echo "workflows: ACTIONLINT_VERSION not found in the Makefile" >&2; exit 1; }
 # shellcheck disable=SC2086
-if ! go run "github.com/rhysd/actionlint/cmd/actionlint@$versao" -color=false "${arquivos[@]}"; then
-  erro "actionlint reprovou"
+if ! go run "github.com/rhysd/actionlint/cmd/actionlint@$version" -color=false "${files[@]}"; then
+  err "actionlint failed"
 fi
 
-for f in "${arquivos[@]}"; do
-  # uses: externo (ignora ./local e docker://, tratado abaixo)
-  while IFS= read -r linha; do
-    n="${linha%%:*}"; texto="${linha#*:}"
-    if ! grep -Eq '^[[:space:]]*-?[[:space:]]*uses:[[:space:]]+[A-Za-z0-9_.-]+/[A-Za-z0-9_./-]+@[0-9a-f]{40}[[:space:]]+#[[:space:]]*v[0-9]+(\.[0-9]+)*[[:space:]]*$' <<<"$texto"; then
-      erro "$f:$n: uses sem SHA de 40 caracteres ou sem a versão em comentário: $(echo "$texto" | sed 's/^[[:space:]]*//')"
+for f in "${files[@]}"; do
+  # external uses: (ignores ./local and docker://, handled below)
+  while IFS= read -r line; do
+    n="${line%%:*}"; text="${line#*:}"
+    if ! grep -Eq '^[[:space:]]*-?[[:space:]]*uses:[[:space:]]+[A-Za-z0-9_.-]+/[A-Za-z0-9_./-]+@[0-9a-f]{40}[[:space:]]+#[[:space:]]*v[0-9]+(\.[0-9]+)*[[:space:]]*$' <<<"$text"; then
+      err "$f:$n: uses without a 40-character SHA or without the version in a comment: $(echo "$text" | sed 's/^[[:space:]]*//')"
     fi
   done < <(grep -nE '^[[:space:]]*-?[[:space:]]*uses:[[:space:]]' "$f" | grep -vE 'uses:[[:space:]]+\./' || true)
 
-  # imagens por digest
-  while IFS= read -r linha; do
-    n="${linha%%:*}"; texto="${linha#*:}"
-    if ! grep -Eq '@sha256:[0-9a-f]{64}' <<<"$texto"; then
-      erro "$f:$n: imagem sem digest sha256: $(echo "$texto" | sed 's/^[[:space:]]*//')"
+  # images by digest
+  while IFS= read -r line; do
+    n="${line%%:*}"; text="${line#*:}"
+    if ! grep -Eq '@sha256:[0-9a-f]{64}' <<<"$text"; then
+      err "$f:$n: image without a sha256 digest: $(echo "$text" | sed 's/^[[:space:]]*//')"
     fi
   done < <(grep -nE '^[[:space:]]*(image:|.*docker://|.*docker run )' "$f" | grep -vE '^[0-9]+:[[:space:]]*#' || true)
 
-  grep -Eq '^permissions:' "$f" || erro "$f: falta permissions: no topo"
-  grep -Eq '^concurrency:' "$f" || erro "$f: falta concurrency: no topo"
+  grep -Eq '^permissions:' "$f" || err "$f: missing permissions: at the top"
+  grep -Eq '^concurrency:' "$f" || err "$f: missing concurrency: at the top"
 
-  # segredos: só GITHUB_TOKEN
+  # secrets: only GITHUB_TOKEN
   while IFS= read -r s; do
-    [ "$s" = "GITHUB_TOKEN" ] || erro "$f: usa secrets.$s (só GITHUB_TOKEN é permitido)"
+    [ "$s" = "GITHUB_TOKEN" ] || err "$f: uses secrets.$s (only GITHUB_TOKEN is allowed)"
   done < <(grep -oE 'secrets\.[A-Za-z0-9_]+' "$f" | sed 's/^secrets\.//' | sort -u || true)
 
-  # alvos do Makefile
-  while IFS= read -r alvo; do
-    grep -Eq "^${alvo}:" Makefile || erro "$f: make $alvo não existe no Makefile"
+  # Makefile targets
+  while IFS= read -r target; do
+    grep -Eq "^${target}:" Makefile || err "$f: make $target does not exist in the Makefile"
   done < <(grep -oE '(^|[^A-Za-z0-9_./-])make[[:space:]]+[a-z][a-z0-9-]*' "$f" | awk '{print $NF}' | sort -u || true)
 done
 
-if [ "$falhou" -eq 0 ]; then echo "workflows: ok (${#arquivos[@]} arquivos)"; fi
-exit "$falhou"
+if [ "$failed" -eq 0 ]; then echo "workflows: ok (${#files[@]} files)"; fi
+exit "$failed"

@@ -1,53 +1,57 @@
 #!/usr/bin/env bash
-# Prova scripts/checa-marca.sh em repositórios git temporários, fora deste
-# repositório. Cada caso monta os arquivos, faz git add e roda o script.
+# Proves scripts/check-trademark.sh in temporary git repositories, outside this
+# repository. Each case builds the files, runs git add and runs the script.
 set -euo pipefail
 
-raiz="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-tmp="$(mktemp -d "${TMPDIR:-/tmp}/checa-marca-teste.XXXXXX")"
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+tmp="$(mktemp -d "${TMPDIR:-/tmp}/check-trademark-test.XXXXXX")"
 trap 'rm -rf "$tmp"' EXIT
-falhou=0
+failed=0
 
-aviso='Projeto independente e não oficial. Não é afiliado, patrocinado nem endossado pela CCEE.'
+notice='Independent, unofficial project. Not affiliated with, sponsored or endorsed by the CCEE.'
+notice_pt='Projeto independente e não oficial. Não é afiliado, patrocinado nem endossado pela CCEE.'
 
-# caso nome esperado(0|1) trecho_da_saida arquivo=conteudo...
-caso() {
-  local nome="$1" esperado="$2" trecho="$3"; shift 3
+# case name expected(0|1) output_fragment file=content...
+case_() {
+  local name="$1" expected="$2" fragment="$3"; shift 3
   rm -rf "$tmp/r"; mkdir -p "$tmp/r/scripts"
-  cp "$raiz/scripts/checa-marca.sh" "$tmp/r/scripts/" 2>/dev/null || true
+  cp "$root/scripts/check-trademark.sh" "$tmp/r/scripts/" 2>/dev/null || true
   git -C "$tmp/r" init -q
-  local par arq
-  for par in "$@"; do
-    arq="${par%%=*}"
-    mkdir -p "$tmp/r/$(dirname "$arq")"
-    printf '%s\n' "${par#*=}" > "$tmp/r/$arq"
+  local pair file
+  for pair in "$@"; do
+    file="${pair%%=*}"
+    mkdir -p "$tmp/r/$(dirname "$file")"
+    printf '%s\n' "${pair#*=}" > "$tmp/r/$file"
   done
   git -C "$tmp/r" add -A
-  local saida rc=0
-  saida="$(cd "$tmp/r" && bash scripts/checa-marca.sh 2>&1)" || rc=$?
-  if [ "$rc" != "$esperado" ] || { [ -n "$trecho" ] && ! grep -qF -- "$trecho" <<<"$saida"; }; then
-    echo "FALHOU: $nome (saída $rc, esperado $esperado, trecho '$trecho')" >&2
-    echo "$saida" >&2
-    falhou=1
+  local output rc=0
+  output="$(cd "$tmp/r" && bash scripts/check-trademark.sh 2>&1)" || rc=$?
+  if [ "$rc" != "$expected" ] || { [ -n "$fragment" ] && ! grep -qF -- "$fragment" <<<"$output"; }; then
+    echo "FAILED: $name (exit $rc, expected $expected, fragment '$fragment')" >&2
+    echo "$output" >&2
+    failed=1
   else
-    echo "ok: $nome"
+    echo "ok: $name"
   fi
 }
 
-caso "aviso válido no NOTICE passa" 0 "" "NOTICE=$aviso"
-caso "sem nenhuma ocorrência passa" 0 "" "go/x.go=package x"
-caso "aviso em duas linhas (marca na linha seguinte) passa" 0 "" \
-  "README.md=nem endossado pela
-(CCEE), e só."
-caso "CCEE em .go fora da lista reprova" 1 "go/x.go:1" "go/x.go=// fala com a CCEE"
-caso "CCEE em arquivo da lista fora do aviso reprova" 1 "README.md:3" \
-  "README.md=$aviso
+case_ "valid notice in NOTICE passes" 0 "" "NOTICE=$notice"
+case_ "valid Portuguese notice in README.pt-BR.md passes" 0 "" "README.pt-BR.md=$notice_pt"
+case_ "notice in abertura/NOTICE passes" 0 "" "abertura/NOTICE=$notice"
+case_ "no occurrence at all passes" 0 "" "abertura/x.go=package x"
+case_ "notice on two lines (name on the next line) passes" 0 "" \
+  "README.md=nor endorsed by
+(CCEE), and only that."
+case_ "CCEE in a .go outside the list fails" 1 "abertura/x.go:1" "abertura/x.go=// talks to the CCEE"
+case_ "the old go/ path is no longer allowed" 1 "go/NOTICE:1" "go/NOTICE=$notice"
+case_ "CCEE in a listed file outside the notice fails" 1 "README.md:3" \
+  "README.md=$notice
 
-Use a API da CCEE para tudo."
-caso "reprova todas as ocorrências e lista arquivo:linha" 1 "go/y.go:2" \
-  "go/x.go=// CCEE" "go/y.go=package y
-// CCEE de novo"
-caso "regra do vacuum aceita a marca sem aviso" 0 "" \
-  "openapi/vacuum.yaml=não usam o nome da CCEE."
+Use the CCEE API for everything."
+case_ "fails on every occurrence and lists file:line" 1 "abertura/y.go:2" \
+  "abertura/x.go=// CCEE" "abertura/y.go=package y
+// CCEE again"
+case_ "the vacuum rule accepts the name without a notice" 0 "" \
+  "openapi/vacuum.yaml=do not use the name of the CCEE."
 
-exit "$falhou"
+exit "$failed"

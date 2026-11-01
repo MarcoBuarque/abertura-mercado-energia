@@ -1,101 +1,101 @@
 #!/usr/bin/env bash
-# Prova scripts/oasdiff.sh em repositórios temporários, fora deste repositório:
-#   1. sem tag openapi/v* anterior: pula com aviso e sai 0;
-#   2. com tag e spec igual: sai 0;
-#   3. com tag e uma propriedade de resposta removida: sai diferente de 0;
-#   4. a mesma quebra com QUEBRA_SPEC=1: sai 0 e avisa;
-#   4b. sem a variável, a quebra passa só se a seção Quebras de [Não lançado]
-#       do CHANGELOG está preenchida; QUEBRA_SPEC=0 força o modo estrito;
-#   5. mudança que não quebra (descrição nova): sai 0.
+# Proves scripts/oasdiff.sh in temporary repositories, outside this repository:
+#   1. no previous openapi/v* tag: skips with a notice and exits 0;
+#   2. with a tag and an identical spec: exits 0;
+#   3. with a tag and a removed response property: exits non-zero;
+#   4. the same break with BREAKING_SPEC=1: exits 0 and warns;
+#   4b. without the variable, the break passes only if the Breaking section of
+#       [Unreleased] in the CHANGELOG is filled; BREAKING_SPEC=0 forces strict mode;
+#   5. a change that does not break (new description): exits 0.
 set -euo pipefail
 
-raiz="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-tmp="$(mktemp -d "${TMPDIR:-/tmp}/oasdiff-teste.XXXXXX")"
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+tmp="$(mktemp -d "${TMPDIR:-/tmp}/oasdiff-test.XXXXXX")"
 trap 'rm -rf "$tmp"' EXIT
-falhou=0
+failed=0
 
 ok()    { echo "ok: $1"; }
-falha() { echo "FALHA: $1" >&2; falhou=1; }
+fail() { echo "FAIL: $1" >&2; failed=1; }
 
 repo="$tmp/repo"
 mkdir -p "$repo/scripts" "$repo/openapi"
-cp "$raiz/scripts/oasdiff.sh" "$repo/scripts/" 2>/dev/null || true
-cp "$raiz/Makefile" "$repo/Makefile"
-cp "$raiz/openapi/abertura.yaml" "$repo/openapi/abertura.yaml"
+cp "$root/scripts/oasdiff.sh" "$repo/scripts/" 2>/dev/null || true
+cp "$root/Makefile" "$repo/Makefile"
+cp "$root/openapi/abertura.yaml" "$repo/openapi/abertura.yaml"
 git -C "$repo" init -q
 git -C "$repo" add -A
-git -C "$repo" -c user.name=teste -c user.email=teste@example.org -c core.hooksPath=/dev/null commit -q -m base
+git -C "$repo" -c user.name=test -c user.email=teste@example.org -c core.hooksPath=/dev/null commit -q -m base
 
-roda() { # nome; saída em $saida, status em $codigo
-  codigo=0
-  saida="$(cd "$repo" && env -u QUEBRA_SPEC scripts/oasdiff.sh 2>&1)" || codigo=$?
+run() { # name; output in $output, status in $code
+  code=0
+  output="$(cd "$repo" && env -u BREAKING_SPEC scripts/oasdiff.sh 2>&1)" || code=$?
 }
 
-# 1. sem tag
-roda
-if [ "$codigo" -eq 0 ] && grep -q "pulando" <<<"$saida"; then ok "sem tag: pula com aviso"; else falha "sem tag: esperava sair 0 com aviso (código $codigo): $saida"; fi
+# 1. no tag
+run
+if [ "$code" -eq 0 ] && grep -q "skipping" <<<"$output"; then ok "no tag: skips with a notice"; else fail "no tag: expected exit 0 with a notice (code $code): $output"; fi
 
-git -C "$repo" -c user.name=teste -c user.email=teste@example.org tag openapi/v0.0.1
+git -C "$repo" -c user.name=test -c user.email=teste@example.org tag openapi/v0.0.1
 
-# 2. sem mudança
-roda
-if [ "$codigo" -eq 0 ]; then ok "spec igual à tag: passa"; else falha "spec igual devia passar (código $codigo): $saida"; fi
+# 2. no change
+run
+if [ "$code" -eq 0 ]; then ok "spec identical to the tag: passes"; else fail "identical spec should pass (code $code): $output"; fi
 
-# 5. mudança que não quebra
-sed -i.bak 's/^  title: .*/&  /' "$repo/openapi/abertura.yaml"
-sed -i.bak 's/Validade em segundos\./Validade em segundos (texto novo)./' "$repo/openapi/abertura.yaml"
+# 5. a change that does not break
+perl -pi.bak -e 'if (!$done && /^\s{6,}description: [A-Za-z][^"\x27#|>]*$/) { chomp; $_ .= " (new text)\n"; $done = 1 }' "$repo/openapi/abertura.yaml"
+if cmp -s "$root/openapi/abertura.yaml" "$repo/openapi/abertura.yaml"; then fail "the test could not change the description"; fi
 rm -f "$repo/openapi/abertura.yaml.bak"
-roda
-if [ "$codigo" -eq 0 ]; then ok "descrição alterada: passa"; else falha "descrição alterada devia passar (código $codigo): $saida"; fi
+run
+if [ "$code" -eq 0 ]; then ok "changed description: passes"; else fail "changed description should pass (code $code): $output"; fi
 git -C "$repo" checkout -q -- openapi/abertura.yaml
 
-# 3. quebras, cada uma numa cópia da spec. A propriedade removida é a
-# obrigatória `message` do schema Erro (resposta); o oasdiff só trata como
-# erro a remoção de propriedade obrigatória, e a opcional vira aviso.
-quebra_remove_message() {
+# 3. breaking changes, each on a copy of the spec. The removed property is the
+# required `message` of the Error schema (response); oasdiff only treats the
+# removal of a required property as an error, and an optional one is a warning.
+break_remove_message() {
   awk '
     /^      required: \[error, message\]$/ { print "      required: [error]"; next }
-    /^        message:$/ && !feito { pula = 1; feito = 1; next }
-    pula && /^          / { next }
-    { pula = 0; print }
-  ' "$raiz/openapi/abertura.yaml"
+    /^        message:$/ && !done { skip = 1; done = 1; next }
+    skip && /^          / { next }
+    { skip = 0; print }
+  ' "$root/openapi/abertura.yaml"
 }
-quebra_troca_tipo() {
+break_change_type() {
   awk '
     /^        expires_in:$/ { print; getline; sub(/integer/, "string"); print; next }
     { print }
-  ' "$raiz/openapi/abertura.yaml"
+  ' "$root/openapi/abertura.yaml"
 }
 
-for caso in remove_message:message troca_tipo:expires_in; do
-  fn="quebra_${caso%%:*}"; alvo="${caso##*:}"
+for kase in remove_message:message change_type:expires_in; do
+  fn="break_${kase%%:*}"; target="${kase##*:}"
   "$fn" >"$repo/openapi/abertura.yaml"
-  if cmp -s "$raiz/openapi/abertura.yaml" "$repo/openapi/abertura.yaml"; then
-    falha "$fn: o teste não conseguiu alterar a cópia"
+  if cmp -s "$root/openapi/abertura.yaml" "$repo/openapi/abertura.yaml"; then
+    fail "$fn: the test could not change the copy"
   fi
-  roda
-  if [ "$codigo" -ne 0 ] && [ "$codigo" -ne 127 ] && grep -q "$alvo" <<<"$saida"; then
-    ok "$fn: reprova citando $alvo"
+  run
+  if [ "$code" -ne 0 ] && [ "$code" -ne 127 ] && grep -q "$target" <<<"$output"; then
+    ok "$fn: fails citing $target"
   else
-    falha "$fn devia reprovar citando $alvo (código $codigo): $saida"
+    fail "$fn should fail citing $target (code $code): $output"
   fi
 done
 
-# 4. exceção da 0.x
-codigo=0
-saida="$(cd "$repo" && QUEBRA_SPEC=1 scripts/oasdiff.sh 2>&1)" || codigo=$?
-if [ "$codigo" -eq 0 ] && grep -qi "QUEBRA_SPEC" <<<"$saida"; then ok "QUEBRA_SPEC=1: passa e avisa"; else falha "QUEBRA_SPEC=1 devia passar com aviso (código $codigo): $saida"; fi
+# 4. the 0.x exception
+code=0
+output="$(cd "$repo" && BREAKING_SPEC=1 scripts/oasdiff.sh 2>&1)" || code=$?
+if [ "$code" -eq 0 ] && grep -qi "BREAKING_SPEC" <<<"$output"; then ok "BREAKING_SPEC=1: passes and warns"; else fail "BREAKING_SPEC=1 should pass with a notice (code $code): $output"; fi
 
-# 4b. derivação a partir do CHANGELOG (a quebra de troca_tipo segue na cópia)
-cp "$raiz/scripts/quebra-spec.sh" "$repo/scripts/"
-printf '# Changelog\n\n## [Não lançado]\n\n### Quebras\n\nO tipo de expires_in muda.\n' >"$repo/openapi/CHANGELOG.md"
-roda
-if [ "$codigo" -eq 0 ]; then ok "quebra registrada no CHANGELOG: passa sem a variável"; else falha "quebra registrada devia passar (código $codigo): $saida"; fi
-codigo=0
-saida="$(cd "$repo" && QUEBRA_SPEC=0 scripts/oasdiff.sh 2>&1)" || codigo=$?
-if [ "$codigo" -ne 0 ]; then ok "QUEBRA_SPEC=0 força o modo estrito"; else falha "QUEBRA_SPEC=0 devia reprovar (código $codigo): $saida"; fi
-printf '# Changelog\n\n## [Não lançado]\n\n### Quebras\n\nNenhuma.\n' >"$repo/openapi/CHANGELOG.md"
-roda
-if [ "$codigo" -ne 0 ]; then ok "quebra não registrada: reprova"; else falha "quebra não registrada devia reprovar (código $codigo): $saida"; fi
+# 4b. derivation from the CHANGELOG (the change_type break stays in the copy)
+cp "$root/scripts/breaking-spec.sh" "$repo/scripts/"
+printf '# Changelog\n\n## [Unreleased]\n\n### Breaking\n\nThe type of expires_in changes.\n' >"$repo/openapi/CHANGELOG.md"
+run
+if [ "$code" -eq 0 ]; then ok "break recorded in the CHANGELOG: passes without the variable"; else fail "a recorded break should pass (code $code): $output"; fi
+code=0
+output="$(cd "$repo" && BREAKING_SPEC=0 scripts/oasdiff.sh 2>&1)" || code=$?
+if [ "$code" -ne 0 ]; then ok "BREAKING_SPEC=0 forces strict mode"; else fail "BREAKING_SPEC=0 should fail (code $code): $output"; fi
+printf '# Changelog\n\n## [Unreleased]\n\n### Breaking\n\nNone.\n' >"$repo/openapi/CHANGELOG.md"
+run
+if [ "$code" -ne 0 ]; then ok "unrecorded break: fails"; else fail "an unrecorded break should fail (code $code): $output"; fi
 
-exit "$falhou"
+exit "$failed"

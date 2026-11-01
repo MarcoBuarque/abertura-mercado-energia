@@ -1,57 +1,57 @@
 #!/usr/bin/env bash
-# Prova scripts/quebra-spec.sh com CHANGELOGs sintéticos em diretório temporário.
+# Proves scripts/breaking-spec.sh with synthetic CHANGELOGs in a temporary directory.
 set -euo pipefail
 
-raiz="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-tmp="$(mktemp -d "${TMPDIR:-/tmp}/quebra-spec-teste.XXXXXX")"
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+tmp="$(mktemp -d "${TMPDIR:-/tmp}/breaking-spec-test.XXXXXX")"
 trap 'rm -rf "$tmp"' EXIT
-falhou=0
+failed=0
 
 mkdir -p "$tmp/scripts"
-cp "$raiz/scripts/quebra-spec.sh" "$tmp/scripts/"
+cp "$root/scripts/breaking-spec.sh" "$tmp/scripts/"
 
-CL_PREENCHIDA=$'# Changelog\n\n## [Não lançado]\n\n### Alterado\n\n- x\n\n### Quebras\n\nA propriedade `message` sai da resposta 400.\n\n## [0.1.0]\n\n### Quebras\n\nNenhuma.\n'
-CL_NENHUMA=$'# Changelog\n\n## [Não lançado]\n\n### Quebras\n\nNenhuma.\n\n## [0.1.0]\n'
-CL_NENHUMA_TEXTO=$'# Changelog\n\n## [Não lançado]\n\n### Quebras\n\nNENHUMA. A seção só existirá em versões 0.x futuras.\n\n## [0.1.0]\n'
-CL_SEM_SECAO=$'# Changelog\n\n## [Não lançado]\n\n### Alterado\n\n- x\n\n## [0.1.0]\n'
-CL_SO_LANCADA=$'# Changelog\n\n## [Não lançado]\n\n### Alterado\n\n- x\n\n## [0.1.0]\n\n### Quebras\n\nA propriedade `message` sai.\n'
-CL_VAZIA=$'# Changelog\n\n## [Não lançado]\n\n### Quebras\n\n\n### Alterado\n\n- x\n'
-CL_OUTRA_SUBSECAO=$'# Changelog\n\n## [Não lançado]\n\n### Quebras\n\n### Alterado\n\n- texto que não é quebra\n'
+CL_FILLED=$'# Changelog\n\n## [Unreleased]\n\n### Changed\n\n- x\n\n### Breaking\n\nThe `message` property leaves the 400 response.\n\n## [0.1.0]\n\n### Breaking\n\nNone.\n'
+CL_NONE=$'# Changelog\n\n## [Unreleased]\n\n### Breaking\n\nNone.\n\n## [0.1.0]\n'
+CL_NONE_TEXT=$'# Changelog\n\n## [Unreleased]\n\n### Breaking\n\nNONE. The section will only exist in future 0.x versions.\n\n## [0.1.0]\n'
+CL_NO_SECTION=$'# Changelog\n\n## [Unreleased]\n\n### Changed\n\n- x\n\n## [0.1.0]\n'
+CL_RELEASED_ONLY=$'# Changelog\n\n## [Unreleased]\n\n### Changed\n\n- x\n\n## [0.1.0]\n\n### Breaking\n\nThe `message` property leaves.\n'
+CL_EMPTY=$'# Changelog\n\n## [Unreleased]\n\n### Breaking\n\n\n### Changed\n\n- x\n'
+CL_OTHER_SUBSECTION=$'# Changelog\n\n## [Unreleased]\n\n### Breaking\n\n### Changed\n\n- text that is not a break\n'
 
 tests=(
-  # nome|esperado (saída ou código)|flag|changelog
-  "seção preenchida imprime 1|saida:1||CL_PREENCHIDA"
-  "Nenhuma. imprime 0|saida:0||CL_NENHUMA"
-  "Nenhuma. com texto depois imprime 0|saida:0||CL_NENHUMA_TEXTO"
-  "sem seção imprime 0|saida:0||CL_SEM_SECAO"
-  "seção só na versão lançada imprime 0|saida:0||CL_SO_LANCADA"
-  "seção vazia imprime 0|saida:0||CL_VAZIA"
-  "texto da subseção seguinte não conta imprime 0|saida:0||CL_OUTRA_SUBSECAO"
-  "--exige com seção preenchida sai 0|codigo:0|--exige|CL_PREENCHIDA"
-  "--exige com Nenhuma. sai 1|codigo:1|--exige|CL_NENHUMA"
-  "--exige sem seção sai 1|codigo:1|--exige|CL_SEM_SECAO"
-  "--exige com seção só na versão lançada sai 1|codigo:1|--exige|CL_SO_LANCADA"
+  # name|expected (output or code)|flag|changelog
+  "filled section prints 1|output:1||CL_FILLED"
+  "None. prints 0|output:0||CL_NONE"
+  "None. with text after prints 0|output:0||CL_NONE_TEXT"
+  "no section prints 0|output:0||CL_NO_SECTION"
+  "section only in the released version prints 0|output:0||CL_RELEASED_ONLY"
+  "empty section prints 0|output:0||CL_EMPTY"
+  "text of the next subsection does not count, prints 0|output:0||CL_OTHER_SUBSECTION"
+  "--require with a filled section exits 0|code:0|--require|CL_FILLED"
+  "--require with None. exits 1|code:1|--require|CL_NONE"
+  "--require with no section exits 1|code:1|--require|CL_NO_SECTION"
+  "--require with the section only in the released version exits 1|code:1|--require|CL_RELEASED_ONLY"
 )
 
-for linha in "${tests[@]}"; do
-  IFS='|' read -r nome esperado flag cl <<<"$linha"
+for line in "${tests[@]}"; do
+  IFS='|' read -r name expected flag cl <<<"$line"
   printf '%s' "${!cl}" >"$tmp/CHANGELOG.md"
-  codigo=0
+  code=0
   args=(); [ -z "$flag" ] || args+=("$flag")
-  saida="$("$tmp/scripts/quebra-spec.sh" ${args[@]+"${args[@]}"} "$tmp/CHANGELOG.md" 2>/dev/null)" || codigo=$?
-  case "$esperado" in
-    saida:*) [ "$codigo" -eq 0 ] && [ "$saida" = "${esperado#saida:}" ] && bom=1 || bom=0 ;;
-    codigo:*) [ "$codigo" -eq "${esperado#codigo:}" ] && bom=1 || bom=0 ;;
+  output="$("$tmp/scripts/breaking-spec.sh" ${args[@]+"${args[@]}"} "$tmp/CHANGELOG.md" 2>/dev/null)" || code=$?
+  case "$expected" in
+    output:*) [ "$code" -eq 0 ] && [ "$output" = "${expected#output:}" ] && good=1 || good=0 ;;
+    code:*) [ "$code" -eq "${expected#code:}" ] && good=1 || good=0 ;;
   esac
-  if [ "$bom" -eq 1 ]; then echo "ok: $nome"; else echo "FALHA: $nome (código $codigo, saída '$saida')" >&2; falhou=1; fi
+  if [ "$good" -eq 1 ]; then echo "ok: $name"; else echo "FAIL: $name (code $code, output '$output')" >&2; failed=1; fi
 done
 
-codigo=0
-"$tmp/scripts/quebra-spec.sh" "$tmp/nao-existe.md" >/dev/null 2>&1 || codigo=$?
-if [ "$codigo" -eq 2 ]; then echo "ok: arquivo ausente sai 2"; else echo "FALHA: arquivo ausente devia sair 2 (código $codigo)" >&2; falhou=1; fi
+code=0
+"$tmp/scripts/breaking-spec.sh" "$tmp/does-not-exist.md" >/dev/null 2>&1 || code=$?
+if [ "$code" -eq 2 ]; then echo "ok: missing file exits 2"; else echo "FAIL: missing file should exit 2 (code $code)" >&2; failed=1; fi
 
-codigo=0
-"$tmp/scripts/quebra-spec.sh" --bobagem "$tmp/CHANGELOG.md" >/dev/null 2>&1 || codigo=$?
-if [ "$codigo" -eq 2 ]; then echo "ok: opção desconhecida sai 2"; else echo "FALHA: opção desconhecida devia sair 2 (código $codigo)" >&2; falhou=1; fi
+code=0
+"$tmp/scripts/breaking-spec.sh" --nonsense "$tmp/CHANGELOG.md" >/dev/null 2>&1 || code=$?
+if [ "$code" -eq 2 ]; then echo "ok: unknown option exits 2"; else echo "FAIL: unknown option should exit 2 (code $code)" >&2; failed=1; fi
 
-exit "$falhou"
+exit "$failed"
