@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -82,8 +84,9 @@ type cacheToken struct {
 
 // novoCacheToken cria o cache. As credenciais ficam só aqui, em campos não
 // exportados, e String e GoString as escondem. O pedido de token leva no
-// formulário apenas client_id e client_secret, como na coleção da API: o
-// endpoint recusa com 400 o grant_type extra (observado em 2026-11-01).
+// formulário apenas client_id e client_secret. Fato: o pedido com grant_type foi
+// recusado com 400 em 2026-11-01. Hipótese: a coleção pública manda só os dois
+// campos, e o endpoint não aceita o terceiro.
 func novoCacheToken(cfg configToken) *cacheToken {
 	return &cacheToken{
 		cfg:          cfg,
@@ -164,11 +167,34 @@ func (c *cacheToken) token(ctx context.Context) (*oauth2.Token, error) {
 type respostaToken struct {
 	AccessToken string `json:"access_token"`
 	TokenType   string `json:"token_type"`
-	ExpiresIn   int64  `json:"expires_in"`
+	// ExpiresIn aceita número (300, 300.0) ou texto numérico ("300"); a
+	// validade sai de validadeDe, que nunca falha.
+	ExpiresIn json.RawMessage `json:"expires_in"`
+}
+
+// validadeMaximaToken é o teto aceito para expires_in; acima disso a resposta
+// é tratada como sem validade informada.
+const validadeMaximaToken = 24 * time.Hour
+
+// validadeDe interpreta expires_in. Ausente, ilegível, não positivo ou acima
+// de validadeMaximaToken cai em validadePadraoToken, para a busca não falhar
+// por um campo acessório e para a conta de tempo não estourar time.Duration.
+func validadeDe(raw json.RawMessage) time.Duration {
+	texto := strings.TrimSpace(string(raw))
+	if strings.HasPrefix(texto, `"`) {
+		if err := json.Unmarshal(raw, &texto); err != nil {
+			return validadePadraoToken
+		}
+	}
+	segundos, err := strconv.ParseFloat(strings.TrimSpace(texto), 64)
+	if err != nil || math.IsNaN(segundos) || segundos < 1 || segundos > validadeMaximaToken.Seconds() {
+		return validadePadraoToken
+	}
+	return time.Duration(segundos) * time.Second
 }
 
 // buscar pede um token novo ao endpoint, com o timeout da busca. O formulário
-// leva só client_id e client_secret (sem grant_type, que o endpoint recusa).
+// leva só client_id e client_secret (sem grant_type; ver novoCacheToken).
 // Falhas viram *APIError (resposta de erro do endpoint) ou um erro de
 // transporte sem URL. Nenhum erro cita o corpo, o formulário ou o segredo.
 func (c *cacheToken) buscar(ctx context.Context) (*oauth2.Token, error) {
@@ -188,7 +214,10 @@ func (c *cacheToken) buscar(ctx context.Context) (*oauth2.Token, error) {
 
 	hc := c.httpClient
 	if hc == nil {
-		hc = http.DefaultClient
+		// Cliente privado e sem redirecionamento: seguir um 307/308 reenviaria o
+		// formulário com o client_secret. Em produção o cliente vem de
+		// clienteDeToken; este caso só ocorre sem ele.
+		hc = &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	}
 	resp, err := hc.Do(req)
 	if err != nil {
@@ -233,11 +262,8 @@ func (c *cacheToken) buscar(ctx context.Context) (*oauth2.Token, error) {
 	if r.TokenType == "" {
 		r.TokenType = "Bearer"
 	}
-	t := &oauth2.Token{AccessToken: r.AccessToken, TokenType: r.TokenType, ExpiresIn: r.ExpiresIn}
-	validade := validadePadraoToken
-	if r.ExpiresIn > 0 {
-		validade = time.Duration(r.ExpiresIn) * time.Second
-	}
+	validade := validadeDe(r.ExpiresIn)
+	t := &oauth2.Token{AccessToken: r.AccessToken, TokenType: r.TokenType, ExpiresIn: int64(validade / time.Second)}
 	t.Expiry = c.agora().Add(validade)
 	return t, nil
 }

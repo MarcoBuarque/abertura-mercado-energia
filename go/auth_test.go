@@ -72,6 +72,9 @@ type servidorToken struct {
 	basic            bool
 	temAuthorization bool
 	userAgent        string
+	rawQuery         string
+	tamanho          int64
+	transferEncoding []string
 	metodo           string
 	tipoMidia        string
 }
@@ -91,6 +94,7 @@ func novoServidorToken(t *testing.T, atraso time.Duration, falha func(w http.Res
 		s.mu.Lock()
 		s.formulario = r.PostForm
 		s.basic = temBasic
+		s.rawQuery, s.tamanho, s.transferEncoding = r.URL.RawQuery, r.ContentLength, r.TransferEncoding
 		s.userAgent = r.Header.Get("User-Agent")
 		s.temAuthorization = r.Header.Get("Authorization") != ""
 		s.metodo = r.Method
@@ -149,11 +153,14 @@ func TestCacheToken_WhenPedido_UsaFormularioSemBasic(t *testing.T) {
 	if s.metodo != http.MethodPost {
 		t.Errorf("método = %s", s.metodo)
 	}
-	if !strings.HasPrefix(s.tipoMidia, "application/x-www-form-urlencoded") {
+	if s.tipoMidia != "application/x-www-form-urlencoded" {
 		t.Errorf("Content-Type = %q", s.tipoMidia)
 	}
 	if s.basic {
 		t.Error("o pedido usou cabeçalho Basic; deveria usar o formulário")
+	}
+	if s.rawQuery != "" || s.tamanho <= 0 || len(s.transferEncoding) != 0 {
+		t.Errorf("query=%q ContentLength=%d TransferEncoding=%v", s.rawQuery, s.tamanho, s.transferEncoding)
 	}
 	if s.userAgent != uaInventado {
 		t.Errorf("User-Agent = %q, quer %q", s.userAgent, uaInventado)
@@ -192,6 +199,13 @@ func TestCacheToken_WhenRespostaOK_InterpretaCorpo(t *testing.T) {
 		{name: "when expires_in presente honra o valor", corpo: `{"access_token":"t1","token_type":"Bearer","expires_in":120}`, wantToken: "t1", wantTipo: "Bearer", wantVence: 120 * time.Second},
 		{name: "when sem expires_in assume 300 s", corpo: `{"access_token":"t2","token_type":"Bearer"}`, wantToken: "t2", wantTipo: "Bearer", wantVence: 300 * time.Second},
 		{name: "when sem token_type assume Bearer", corpo: `{"access_token":"t3"}`, wantToken: "t3", wantTipo: "Bearer", wantVence: 300 * time.Second},
+		{name: "when expires_in string numérica", corpo: `{"access_token":"t4","expires_in":"300"}`, wantToken: "t4", wantTipo: "Bearer", wantVence: 300 * time.Second},
+		{name: "when expires_in string de 120", corpo: `{"access_token":"t4","expires_in":"120"}`, wantToken: "t4", wantTipo: "Bearer", wantVence: 120 * time.Second},
+		{name: "when expires_in decimal", corpo: `{"access_token":"t5","expires_in":300.0}`, wantToken: "t5", wantTipo: "Bearer", wantVence: 300 * time.Second},
+		{name: "when expires_in negativo cai no padrão", corpo: `{"access_token":"t6","expires_in":-5}`, wantToken: "t6", wantTipo: "Bearer", wantVence: 300 * time.Second},
+		{name: "when expires_in absurdo cai no padrão", corpo: `{"access_token":"t7","expires_in":1e15}`, wantToken: "t7", wantTipo: "Bearer", wantVence: 300 * time.Second},
+		{name: "when expires_in acima de 24 h cai no padrão", corpo: `{"access_token":"t7","expires_in":86401}`, wantToken: "t7", wantTipo: "Bearer", wantVence: 300 * time.Second},
+		{name: "when expires_in não numérico cai no padrão", corpo: `{"access_token":"t8","expires_in":"abc"}`, wantToken: "t8", wantTipo: "Bearer", wantVence: 300 * time.Second},
 		{name: "when sem access_token falha", corpo: `{"token_type":"Bearer","expires_in":300}`, wantErro: true},
 		{name: "when access_token vazio falha", corpo: `{"access_token":"","expires_in":300}`, wantErro: true},
 		{name: "when JSON invalido falha", corpo: `não é json`, wantErro: true},
@@ -729,5 +743,53 @@ func TestCacheToken_WhenFechamentoDoCorpoFalha_ViraErroFalhaTokenSemSegredo(t *t
 	}
 	if strings.Contains(err.Error(), segredoInventado) {
 		t.Errorf("erro vaza o segredo: %q", err)
+	}
+}
+
+func TestCacheToken_WhenTokenRedireciona_NaoSegueNemVazaSegredo(t *testing.T) {
+	t.Parallel()
+
+	var buscas atomic.Int64
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		buscas.Add(1)
+		http.Redirect(w, r, "/outro", http.StatusTemporaryRedirect)
+	}))
+	t.Cleanup(srv.Close)
+	// httpClient nil usa o cliente privado do SDK, que não segue redirecionamentos.
+	c := novoCacheToken(configToken{tokenURL: srv.URL, clientID: idInventado, clientSecret: segredoInventado})
+
+	_, err := c.token(context.Background())
+	var api *APIError
+	if !errors.As(err, &api) || api.StatusCode != http.StatusTemporaryRedirect {
+		t.Fatalf("err = %v, quer *APIError com status 307", err)
+	}
+	if buscas.Load() != 1 {
+		t.Errorf("buscas = %d, quer 1 (o 307 não pode ser seguido)", buscas.Load())
+	}
+	if strings.Contains(err.Error(), segredoInventado) {
+		t.Errorf("erro vaza o segredo: %q", err)
+	}
+}
+
+func TestCacheToken_WhenErroOAuth2_CodigoSimTextoLivreNao(t *testing.T) {
+	t.Parallel()
+
+	s := novoServidorToken(t, 0, func(w http.ResponseWriter) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		escrever(t, w, `{"error":"invalid_request","error_description":"texto-que-nao-pode-vazar"}`)
+	})
+	c := novoCacheDeTeste(s, nil)
+
+	_, err := c.token(context.Background())
+	var api *APIError
+	if !errors.As(err, &api) {
+		t.Fatalf("err = %v, quer *APIError", err)
+	}
+	if api.Code != "invalid_request" || api.StatusCode != http.StatusBadRequest {
+		t.Errorf("Code=%q status=%d", api.Code, api.StatusCode)
+	}
+	if strings.Contains(err.Error(), "texto-que-nao-pode-vazar") || strings.Contains(err.Error(), segredoInventado) {
+		t.Errorf("erro vaza texto livre ou segredo: %q", err)
 	}
 }
