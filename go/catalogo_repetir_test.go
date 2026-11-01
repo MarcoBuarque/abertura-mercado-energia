@@ -40,6 +40,8 @@ var especDeRepetir = map[string]especRepetir{
 	"validacao-campos":             {get: comStatus(400), escrita: comStatus(400)},
 	"perfil-varejista-obrigatorio": {get: comStatus(400), escrita: comStatus(400)},
 	"migracao-solicitada":          {get: comStatus(400), escrita: comStatus(400)},
+	"faixa-de-meses-obrigatoria":   {get: comStatus(400), escrita: comStatus(400)},
+	"faixa-de-meses-larga-demais":  {get: comStatus(400), escrita: comStatus(400)},
 	"codigo-desconhecido":          {get: comStatus(400), escrita: comStatus(400)},
 	"recusa-sem-codigo":            {get: comStatus(403), escrita: comStatus(403)},
 	"nao-encontrado":               {get: comStatus(404), escrita: comStatus(404)},

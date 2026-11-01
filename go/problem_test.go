@@ -47,6 +47,8 @@ func TestProblemFrom_WhenErroDoSDK_ClassificaNoCatalogo(t *testing.T) {
 		{name: "migração já solicitada", err: apiErro("POST", 400, "ERR_MIGRACAO_SOLICITADA", ""), wantType: "migracao-solicitada", wantStatus: 400, wantCode: "ERR_MIGRACAO_SOLICITADA"},
 		{name: "validação de campos", err: apiErro("POST", 400, "ERR_VALIDACAO_CAMPOS", ""), wantType: "validacao-campos", wantStatus: 400, wantCode: "ERR_VALIDACAO_CAMPOS"},
 		{name: "perfil obrigatório", err: apiErro("GET", 400, "ERR_PERFIL_VAREJISTA_OBRIGATORIO", ""), wantType: "perfil-varejista-obrigatorio", wantStatus: 400, wantCode: "ERR_PERFIL_VAREJISTA_OBRIGATORIO"},
+		{name: "faixa de meses obrigatória", err: apiErro("GET", 400, "ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO", ""), wantType: "faixa-de-meses-obrigatoria", wantStatus: 400, wantCode: "ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO"},
+		{name: "faixa de meses larga demais", err: apiErro("GET", 400, "ERR_MES_REFERENCIA_INICIAL_DIFERENCA", ""), wantType: "faixa-de-meses-larga-demais", wantStatus: 400, wantCode: "ERR_MES_REFERENCIA_INICIAL_DIFERENCA"},
 		{name: "credencial recusada pelo autorizador", err: apiErro("GET", 403, "ERR_CREDENCIAL_INVALIDA", "AccessDeniedException"), wantType: "credencial-invalida-autorizador", wantStatus: 403, wantCode: "ERR_CREDENCIAL_INVALIDA"},
 		{name: "credencial recusada pelo backend", err: apiErro("GET", 403, "ERR_CREDENCIAL_INVALIDA", ""), wantType: "credencial-invalida-backend", wantStatus: 403, wantCode: "ERR_CREDENCIAL_INVALIDA"},
 		{name: "403 sem código", err: apiErro("GET", 403, "", ""), wantType: "recusa-sem-codigo", wantStatus: 403},
@@ -360,6 +362,8 @@ func TestCatalogo_WhenSentinelaExportada_TemEntrada(t *testing.T) {
 		"ErrValidacaoCampos":            apiErro("POST", 400, "ERR_VALIDACAO_CAMPOS", ""),
 		"ErrPerfilVarejistaObrigatorio": apiErro("GET", 400, "ERR_PERFIL_VAREJISTA_OBRIGATORIO", ""),
 		"ErrMigracaoSolicitada":         apiErro("POST", 400, "ERR_MIGRACAO_SOLICITADA", ""),
+		"ErrFaixaDeMesesObrigatoria":    apiErro("GET", 400, "ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO", ""),
+		"ErrFaixaDeMesesLargaDemais":    apiErro("GET", 400, "ERR_MES_REFERENCIA_INICIAL_DIFERENCA", ""),
 		"ErrNotFound":                   ErrNotFound,
 		"ErrRateLimited":                apiErro("GET", 429, "", ""),
 		"ErrCursorRepetido":             ErrCursorRepetido,
@@ -368,6 +372,7 @@ func TestCatalogo_WhenSentinelaExportada_TemEntrada(t *testing.T) {
 	sentinelas := map[string]error{
 		"ErrCredencialInvalida": ErrCredencialInvalida, "ErrValidacaoCampos": ErrValidacaoCampos,
 		"ErrPerfilVarejistaObrigatorio": ErrPerfilVarejistaObrigatorio, "ErrMigracaoSolicitada": ErrMigracaoSolicitada,
+		"ErrFaixaDeMesesObrigatoria": ErrFaixaDeMesesObrigatoria, "ErrFaixaDeMesesLargaDemais": ErrFaixaDeMesesLargaDemais,
 		"ErrNotFound": ErrNotFound, "ErrRateLimited": ErrRateLimited,
 		"ErrCursorRepetido": ErrCursorRepetido, "ErrArgumentoInvalido": ErrArgumentoInvalido,
 	}

@@ -170,6 +170,14 @@ var (
 	// ErrMigracaoSolicitada: já existe migração ativa para a mesma UC e
 	// concessionária (ERR_MIGRACAO_SOLICITADA).
 	ErrMigracaoSolicitada error = &sentinela{texto: "abertura: migração já solicitada (ERR_MIGRACAO_SOLICITADA)", codigo: "ERR_MIGRACAO_SOLICITADA"}
+	// ErrFaixaDeMesesObrigatoria: a listagem de migrações foi pedida sem a faixa
+	// de meses (ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO). O SDK valida a faixa
+	// antes de enviar; só [Client.Do] chega a este código.
+	ErrFaixaDeMesesObrigatoria error = &sentinela{texto: "abertura: faixa de meses obrigatória (ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO)", codigo: "ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO"}
+	// ErrFaixaDeMesesLargaDemais: a faixa entre o mês inicial e o final passou
+	// do limite da API (ERR_MES_REFERENCIA_INICIAL_DIFERENCA). O limite não é
+	// publicado nem foi medido; estreite a faixa ou divida a consulta.
+	ErrFaixaDeMesesLargaDemais error = &sentinela{texto: "abertura: faixa de meses larga demais (ERR_MES_REFERENCIA_INICIAL_DIFERENCA)", codigo: "ERR_MES_REFERENCIA_INICIAL_DIFERENCA"}
 )
 
 // Sentinelas de mecânica HTTP. Casam com errors.Is pelo StatusCode do APIError.

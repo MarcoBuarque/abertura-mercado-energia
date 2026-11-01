@@ -52,6 +52,13 @@ func TestDecodificarErro_WhenFormatoReal_PreencheCampos(t *testing.T) {
 			wantMessage: "perfil inventado ausente",
 		},
 		{
+			name:        "backend 400 faixa de meses larga demais",
+			status:      400,
+			corpo:       `{"timestamp":"2026-01-02T03:04:05.678-03:00","status":400,"error":"ERR_MES_REFERENCIA_INICIAL_DIFERENCA","message":"faixa inventada larga"}`,
+			wantCode:    "ERR_MES_REFERENCIA_INICIAL_DIFERENCA",
+			wantMessage: "faixa inventada larga",
+		},
+		{
 			name:        "backend 400 migração já solicitada",
 			status:      400,
 			corpo:       `{"timestamp":"2026-01-02T03:04:05.678-03:00","status":400,"error":"ERR_MIGRACAO_SOLICITADA","message":"migração inventada repetida"}`,
@@ -245,6 +252,9 @@ func TestAPIError_Is_WhenSentinela_CasaPorCodigoOuStatus(t *testing.T) {
 		{"validação pelo código", &APIError{StatusCode: 400, Code: "ERR_VALIDACAO_CAMPOS"}, ErrValidacaoCampos, true},
 		{"perfil obrigatório pelo código", &APIError{StatusCode: 400, Code: "ERR_PERFIL_VAREJISTA_OBRIGATORIO"}, ErrPerfilVarejistaObrigatorio, true},
 		{"migração solicitada pelo código", &APIError{StatusCode: 400, Code: "ERR_MIGRACAO_SOLICITADA"}, ErrMigracaoSolicitada, true},
+		{"faixa de meses obrigatória pelo código", &APIError{StatusCode: 400, Code: "ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO"}, ErrFaixaDeMesesObrigatoria, true},
+		{"faixa de meses larga demais pelo código", &APIError{StatusCode: 400, Code: "ERR_MES_REFERENCIA_INICIAL_DIFERENCA"}, ErrFaixaDeMesesLargaDemais, true},
+		{"as duas faixas não se confundem", &APIError{StatusCode: 400, Code: "ERR_MES_REFERENCIA_INICIAL_DIFERENCA"}, ErrFaixaDeMesesObrigatoria, false},
 		{"mesmo 400 com outro código não casa", &APIError{StatusCode: 400, Code: "ERR_VALIDACAO_CAMPOS"}, ErrMigracaoSolicitada, false},
 		{"código ignora o status", &APIError{StatusCode: 500, Code: "ERR_MIGRACAO_SOLICITADA"}, ErrMigracaoSolicitada, true},
 		{"403 sem código não é credencial inválida", &APIError{StatusCode: 403}, ErrCredencialInvalida, false},

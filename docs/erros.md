@@ -33,6 +33,8 @@ Esta página é publicada no GitHub Pages a cada tag final `openapi/vX.Y.Z`, só
 | [Campo inválido na requisição](#validacao-campos) | `ERR_VALIDACAO_CAMPOS` | 400 | não | não |
 | [Perfil de varejista obrigatório](#perfil-varejista-obrigatorio) | `ERR_PERFIL_VAREJISTA_OBRIGATORIO` | 400 | não | não |
 | [Migração já solicitada](#migracao-solicitada) | `ERR_MIGRACAO_SOLICITADA` | 400 | não | não (confira) |
+| [Faixa de meses obrigatória](#faixa-de-meses-obrigatoria) | `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO` | 400 | não | não |
+| [Faixa de meses larga demais](#faixa-de-meses-larga-demais) | `ERR_MES_REFERENCIA_INICIAL_DIFERENCA` | 400 | não | não |
 | [Código de erro desconhecido do SDK](#codigo-desconhecido) | `ERR_*` novo | qualquer | não | não |
 | [Recusa sem código da API](#recusa-sem-codigo) | nenhum | 4xx | não | não |
 | [Recurso não encontrado](#nao-encontrado) | nenhum | 404 | não | não |
@@ -109,6 +111,28 @@ Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** q
 - **Repetir:** GET não se aplica; escrita, não (confira antes).
 - **Sentinela Go:** `ErrMigracaoSolicitada`.
 - **Confiança:** visto no sandbox.
+
+<a id="faixa-de-meses-obrigatoria"></a>
+## Faixa de meses obrigatória
+
+- **Código da API:** `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`.
+- **Status:** 400.
+- **Quando acontece:** a listagem de migrações foi pedida sem `mesReferenciaInicial` e `mesReferenciaFinal` (`AAAA-MM`). A API exige os dois; visto no sandbox em 01/11/2026.
+- **O que fazer:** informe a faixa. O SDK valida `De` e `Ate` antes de enviar e devolve `ErrArgumentoInvalido` sem fazer requisição; só `Client.Do` chega a este código. Num cliente próprio, acrescente os dois meses à consulta.
+- **Repetir:** GET e escrita, não, sem corrigir antes.
+- **Sentinela Go:** `ErrFaixaDeMesesObrigatoria`.
+- **Confiança:** visto no sandbox.
+
+<a id="faixa-de-meses-larga-demais"></a>
+## Faixa de meses larga demais
+
+- **Código da API:** `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`.
+- **Status:** 400.
+- **Quando acontece:** a distância entre o mês inicial e o final passou do limite da API. O limite não foi publicado nem medido: uma faixa de 96 meses foi recusada e uma de um mês foi aceita (sandbox, 01/11/2026).
+- **O que fazer:** estreite a faixa ou divida a consulta em partes menores, uma por vez.
+- **Repetir:** GET e escrita, não, sem estreitar a faixa antes.
+- **Sentinela Go:** `ErrFaixaDeMesesLargaDemais`.
+- **Confiança:** visto no sandbox (o limite é desconhecido).
 
 <a id="codigo-desconhecido"></a>
 ## Código de erro desconhecido do SDK

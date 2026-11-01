@@ -164,6 +164,14 @@ var catalogo = map[string]entradaCatalogo{
 		titulo:  "Migração já solicitada",
 		detalhe: "Já existe migração ativa para a mesma unidade consumidora e concessionária. Se a criação anterior ficou incerta, ela provavelmente valeu: confira.",
 	},
+	"faixa-de-meses-obrigatoria": {
+		titulo:  "Faixa de meses obrigatória",
+		detalhe: "A listagem de migrações exige os dois meses da faixa (mesReferenciaInicial e mesReferenciaFinal, AAAA-MM) e a API não os recebeu.",
+	},
+	"faixa-de-meses-larga-demais": {
+		titulo:  "Faixa de meses larga demais",
+		detalhe: "A API limita a distância entre o mês inicial e o final, e a faixa pedida passou do limite. O limite não é publicado; estreite a faixa ou divida a consulta em partes.",
+	},
 	"codigo-desconhecido": {
 		titulo:  "Código de erro desconhecido do SDK",
 		detalhe: "A API devolveu um código ERR_* que o SDK ainda não conhece. O código está em code; o texto da API continua em APIError.Message.",
@@ -368,6 +376,10 @@ func (e *APIError) slug(code string) string {
 		return "perfil-varejista-obrigatorio"
 	case code == "ERR_MIGRACAO_SOLICITADA":
 		return "migracao-solicitada"
+	case code == "ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO":
+		return "faixa-de-meses-obrigatoria"
+	case code == "ERR_MES_REFERENCIA_INICIAL_DIFERENCA":
+		return "faixa-de-meses-larga-demais"
 	case code != "":
 		return "codigo-desconhecido"
 	case e.StatusCode == http.StatusNotFound:
