@@ -385,9 +385,13 @@ type MigracaoDetalhe struct {
 	Comentario                                   string `json:"comentario,omitempty"`
 	DataDenuncia                                 string `json:"dataDenuncia,omitempty"`
 
-	// DataReferencia Mês de referência. Formato ainda não registrado (D2, D20): em
-	// 01/11/2026 a resposta chegou, mas o SDK não a converteu; provável que
-	// não seja AAAA-MM, MM-AAAA nem RFC 3339. Sem `format`.
+	// DataReferencia Mês de referência. Formato ainda não registrado (D2, D20). Em
+	// 01/11/2026 a resposta chegou e validou contra esta spec, mas o
+	// conversor do SDK falhou em algum campo do detalhe e a rodada não
+	// identificou qual. Este é o principal suspeito, porque o formato
+	// dele nunca foi registrado; é só uma suspeita, a confirmar na
+	// próxima rodada. Se for ele, provavelmente não é AAAA-MM, MM-AAAA
+	// nem RFC 3339. Sem `format`.
 	DataReferencia          string      `json:"dataReferencia,omitempty"`
 	DataSolicitacao         string      `json:"dataSolicitacao,omitempty"`
 	DataValidacao           string      `json:"dataValidacao,omitempty"`

@@ -17,6 +17,9 @@ var fusoBrasilia = time.FixedZone("-03:00", -3*60*60)
 const (
 	layoutDia     = "2006-01-02"
 	layoutInstant = "2006-01-02T15:04:05-07:00"
+	// layoutSemDeslocamento é a data e hora sem deslocamento. Como em
+	// ParseMes, o Go lê também a fração de segundo mesmo sem ela no layout.
+	layoutSemDeslocamento = "2006-01-02T15:04:05"
 )
 
 // erroCampo descreve um campo ilegível sem repetir o valor recebido, que pode
@@ -25,14 +28,20 @@ func erroCampo(campo string) error {
 	return respostaIlegivel(fmt.Errorf("abertura: o campo %q da resposta tem um valor ilegível", campo))
 }
 
-// dataDe lê uma data só de dia ("2027-01-15") ou um instante RFC 3339, sempre
-// em -03:00. Texto vazio devolve o tempo zero.
+// dataDe lê uma data só de dia ("2027-01-15"), uma data e hora sem
+// deslocamento ("2027-01-15T10:20:30", com ou sem fração de segundo) ou um
+// instante RFC 3339. As duas primeiras valem em -03:00 e o instante é levado
+// para -03:00. O formato sem deslocamento é uma hipótese, como a de ParseMes
+// (D20). Texto vazio devolve o tempo zero.
 func dataDe(campo, s string) (time.Time, error) {
 	s = strings.TrimSpace(s)
 	if s == "" {
 		return time.Time{}, nil
 	}
 	if t, err := time.ParseInLocation(layoutDia, s, fusoBrasilia); err == nil {
+		return t, nil
+	}
+	if t, err := time.ParseInLocation(layoutSemDeslocamento, s, fusoBrasilia); err == nil {
 		return t, nil
 	}
 	if t, err := time.Parse(time.RFC3339, s); err == nil {

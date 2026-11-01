@@ -3,10 +3,12 @@
 package contrato
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -150,6 +152,7 @@ func TestOrcamento_FormatosDeCampos(t *testing.T) {
 		{name: "primeira ocorrência vence", in: `{"a":{"dataDenuncia":"2026-01-02"},"dataDenuncia":"x"}`, want: "dataDenuncia=9999-99-99"},
 		{name: "nulo", in: `{"dataValidacao":null}`, want: "dataValidacao=null"},
 		{name: "número vira noves", in: `{"expires_in":300}`, want: "expires_in=999"},
+		{name: "letra acentuada e dígito de largura total", in: `{"dataSolicitacao":"é１２"}`, want: "dataSolicitacao=A99"},
 		{name: "valor longo é cortado em 40", in: `{"dataSolicitacao":"` + longa + `"}`, want: "dataSolicitacao=" + strings.Repeat("A9", 20) + "…"},
 		{name: "campo fora da lista não aparece", in: `{"emailUnidadeConsumidora":"a@b.c","codigoUnidadeConsumidora":"123"}`, want: ""},
 		{name: "vários, em ordem de nome", in: `{"mesReferencia":"2026-12","dataReferencia":"2026-12-01"}`, want: "dataReferencia=9999-99-99, mesReferencia=9999-99"},
@@ -194,6 +197,8 @@ func TestOrcamento_Descreve_WhenErroDeCampoIlegivel_NomeiaOCampo(t *testing.T) {
 	}{
 		{name: "campo ilegível embrulhado", err: fmt.Errorf("obterMigracao: %w", errors.New(`o campo "dataReferencia" da resposta tem um valor ilegível`)), want: "campo ilegível na resposta: dataReferencia"},
 		{name: "campo aninhado", err: errors.New(`x: o campo "a.b_c" da resposta tem um valor ilegível`), want: "campo ilegível na resposta: a.b_c"},
+		{name: "tipo inesperado na resposta", err: fmt.Errorf("obterMigracao: %w", &json.UnmarshalTypeError{Field: "migracao.dataReferencia", Value: "string", Type: reflect.TypeOf(0)}), want: "campo com tipo inesperado na resposta: migracao.dataReferencia (string → int)"},
+		{name: "JSON inválido", err: fmt.Errorf("obterMigracao: %w", &json.SyntaxError{Offset: 7}), want: "resposta não é JSON válido (offset 7)"},
 		{name: "outro erro mantém o tipo", err: errors.New("algo com valor-secreto"), want: "erro do tipo *errors.errorString"},
 		{name: "nome com caractere fora do padrão não casa", err: errors.New(`o campo "a b@c" da resposta tem um valor ilegível`), want: "erro do tipo *errors.errorString"},
 	}

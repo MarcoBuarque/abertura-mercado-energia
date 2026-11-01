@@ -26,7 +26,7 @@ Esta é uma descrição **não oficial**, escrita à mão. O projeto é independ
 
 ### Quebras
 
-Pré-release 0.x, aceitas com `QUEBRA_SPEC=1` (rótulo `quebra-spec` no PR): `mesReferenciaInicial` e `mesReferenciaFinal` de `listarMigracoes` viram obrigatórios; `grant_type` sai do formulário do token; o 400 do token deixa de exigir `message` e passa ao formato OAuth2. Quem já enviava o intervalo de meses e só os dois campos do token não muda nada.
+Pré-release 0.x, aceitas com `QUEBRA_SPEC=1` (rótulo `quebra-spec` no PR). O oasdiff aponta exatamente três quebras: a propriedade `message` sai da resposta 400 do token (`response-required-property-removed`), e `mesReferenciaInicial` e `mesReferenciaFinal` de `listarMigracoes` passam a obrigatórios (`request-parameter-became-required`). A saída de `grant_type` do formulário do token não é quebra, só aviso (`request-property-removed`). Quem já enviava o intervalo de meses e só os dois campos do token não muda nada.
 
 ## [0.1.0]
 
