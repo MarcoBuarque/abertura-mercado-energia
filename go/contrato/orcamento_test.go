@@ -276,7 +276,7 @@ func TestOrcamento_WhenRaizEhLista_LinhaTrazContagem(t *testing.T) {
 }
 
 func TestOrcamento_RaizDe_WhenListaNaOperacao_GuardaAContagem(t *testing.T) {
-	s := servidorLocal(t, 200, `[{"a":1},{"a":2},{"a":3}]`)
+	s := servidorLocal(t, 200, `[{"a":1},{"a":1},{"a":1}]`)
 	o, err := novoOrcamento(http.DefaultTransport, 90)
 	if err != nil {
 		t.Fatalf("novoOrcamento: %v", err)
@@ -287,7 +287,53 @@ func TestOrcamento_RaizDe_WhenListaNaOperacao_GuardaAContagem(t *testing.T) {
 	if err := pegar(t, o, s.URL+"/v1.1/varejista/migracoes/00000000-0000-4000-8000-000000000001"); err != nil {
 		t.Fatalf("pegar: %v", err)
 	}
-	if got := o.raizDe("obterMigracao"); got != "itens na raiz: 3" {
-		t.Errorf("raizDe = %q, quero %q", got, "itens na raiz: 3")
+	if got := o.raizDe("obterMigracao"); got != "itens na raiz: 3; itens iguais" {
+		t.Errorf("raizDe = %q, quero %q", got, "itens na raiz: 3; itens iguais")
+	}
+}
+
+func TestOrcamento_ComparaItens(t *testing.T) {
+	tests := []struct {
+		name, in, want string
+	}{
+		{name: "um item não compara", in: `[{"a":1}]`, want: ""},
+		{name: "objeto não compara", in: `{"a":1}`, want: ""},
+		{name: "idênticos mesmo com ordem de campos diferente", in: `[{"a":1,"b":"x"},{"b":"x","a":1}]`, want: "itens iguais"},
+		{
+			name: "diferem em dois campos",
+			in:   `[{"statusMigracao":"A","dataValidacao":null,"id":"1"},{"statusMigracao":"B","dataValidacao":"2027-01-01","id":"1"}]`,
+			want: "itens diferentes; campos que diferem: dataValidacao,statusMigracao",
+		},
+		{name: "campo presente só em um lado", in: `[{"a":1},{"a":1,"z":2}]`, want: "itens diferentes; campos que diferem: z"},
+		{name: "três itens, só o terceiro difere", in: `[{"a":1},{"a":1},{"a":2}]`, want: "itens diferentes; campos que diferem: a"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := comparaItens([]byte(tc.in)); got != tc.want {
+				t.Errorf("got %q, quero %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestOrcamento_WhenRaizTemDoisItensDiferentes_LinhaEGuardadoTrazemCampos(t *testing.T) {
+	s := servidorLocal(t, 200, `[{"idMigracao":"valor-secreto","statusMigracao":"X"},{"idMigracao":"valor-secreto","statusMigracao":"Y"}]`)
+	o, err := novoOrcamento(http.DefaultTransport, 90)
+	if err != nil {
+		t.Fatalf("novoOrcamento: %v", err)
+	}
+	if err := pegar(t, o, s.URL+"/v1.1/varejista/migracoes/00000000-0000-4000-8000-000000000001"); err != nil {
+		t.Fatalf("pegar: %v", err)
+	}
+	want := "itens na raiz: 2; itens diferentes; campos que diferem: statusMigracao"
+	if got := o.raizDe("obterMigracao"); got != want {
+		t.Errorf("raizDe = %q, quero %q", got, want)
+	}
+	l := strings.Join(o.descarregar(), "\n")
+	if !strings.Contains(l, want) {
+		t.Errorf("a linha devia trazer %q: %s", want, l)
+	}
+	if strings.Contains(l, "secreto") {
+		t.Errorf("valor vazou: %s", l)
 	}
 }
