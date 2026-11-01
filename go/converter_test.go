@@ -571,3 +571,38 @@ func comparar(t *testing.T, got, want any) {
 		}
 	}
 }
+
+func TestDataDe_WhenFormato_LeEmBrasilia(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		in      string
+		want    time.Time
+		wantErr bool
+	}{
+		{name: "vazio é o tempo zero", in: "  ", want: time.Time{}},
+		{name: "só o dia", in: "2027-01-15", want: time.Date(2027, 1, 15, 0, 0, 0, 0, fusoBrasilia)},
+		{name: "RFC 3339 em UTC vai para -03:00", in: "2027-01-15T03:00:00Z", want: time.Date(2027, 1, 15, 0, 0, 0, 0, fusoBrasilia)},
+		{name: "data e hora sem deslocamento", in: "2027-01-15T10:20:30", want: time.Date(2027, 1, 15, 10, 20, 30, 0, fusoBrasilia)},
+		{name: "data e hora sem deslocamento com fração", in: "2027-01-15T10:20:30.123", want: time.Date(2027, 1, 15, 10, 20, 30, 123000000, fusoBrasilia)},
+		{name: "barras são recusadas", in: "2026/12/01", wantErr: true},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := dataDe("dataSolicitacao", tc.in)
+			if tc.wantErr {
+				if err == nil || !strings.Contains(err.Error(), `"dataSolicitacao"`) {
+					t.Fatalf("err = %v, quero erro de campo ilegível", err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("dataDe: %v", err)
+			}
+			if !got.Equal(tc.want) || got.Location() != tc.want.Location() && !tc.want.IsZero() {
+				t.Errorf("got %v, quero %v", got, tc.want)
+			}
+		})
+	}
+}

@@ -55,6 +55,12 @@ func (m Mes) IsZero() bool {
 	return m == Mes{}
 }
 
+// valido diz se o mês tem ano maior que zero e mês de 1 a 12. Um Mes montado
+// à mão pode não ter, e iria para a API como "2027-00" ou "2027-13".
+func (m Mes) valido() bool {
+	return m.Ano > 0 && m.Mes >= time.January && m.Mes <= time.December
+}
+
 // String devolve o mês como "2026-12", o formato aceito no envio. O mês
 // ausente vira texto vazio.
 func (m Mes) String() string {

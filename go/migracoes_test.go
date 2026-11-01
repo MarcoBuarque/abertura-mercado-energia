@@ -626,6 +626,11 @@ func TestMigracoesListar_WhenFaixaDeMesesInvalida_FalhaSemRequisicao(t *testing.
 		{name: "só De", filtro: FiltroMigracoes{De: jan}, wantErr: true, wantCampo: "Ate"},
 		{name: "só Ate", filtro: FiltroMigracoes{Ate: jan}, wantErr: true, wantCampo: "De"},
 		{name: "Ate antes de De", filtro: FiltroMigracoes{De: fev, Ate: jan}, wantErr: true, wantCampo: "Ate"},
+		{name: "mês 0 em De", filtro: FiltroMigracoes{De: Mes{Ano: 2027, Mes: 0}, Ate: jan}, wantErr: true, wantCampo: "De"},
+		{name: "mês 13 em De", filtro: FiltroMigracoes{De: Mes{Ano: 2027, Mes: 13}, Ate: Mes{Ano: 2028, Mes: time.January}}, wantErr: true, wantCampo: "De"},
+		{name: "mês 0 em Ate", filtro: FiltroMigracoes{De: jan, Ate: Mes{Ano: 2027, Mes: 0}}, wantErr: true, wantCampo: "Ate"},
+		{name: "mês 13 em Ate", filtro: FiltroMigracoes{De: jan, Ate: Mes{Ano: 2027, Mes: 13}}, wantErr: true, wantCampo: "Ate"},
+		{name: "ano 0 em De", filtro: FiltroMigracoes{De: Mes{Ano: 0, Mes: time.March}, Ate: jan}, wantErr: true, wantCampo: "De"},
 		{name: "faixa de um mês", filtro: FiltroMigracoes{De: jan, Ate: jan}},
 		{name: "faixa válida", filtro: FiltroMigracoes{De: jan, Ate: fev}},
 	}

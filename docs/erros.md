@@ -53,7 +53,7 @@ Esta página é publicada no GitHub Pages a cada tag final `openapi/vX.Y.Z`, só
 
 "Repetir" segue a tabela de retries do SDK (a mesma regra de [`clientes.md`](clientes.md), seção 5): o SDK repete sozinho até 2 vezes o que está marcado como seguro, e mostra o erro só depois. `retryable` no Problem diz se repetir **agora** é seguro; `uncertain` diz que a escrita pode ter sido aplicada.
 
-Confiança: **visto no sandbox** quer dizer observado em 30/10/2026; **baixa** quer dizer não observado (hipótese a partir da estrutura do gateway ou da coleção pública); **do SDK** quer dizer comportamento do próprio SDK, coberto por testes locais. A coleção pública do Postman não cita nenhum código `ERR_*` além dos quatro vistos no sandbox (conferido em 30/10/2026).
+Confiança: **visto no sandbox** quer dizer observado em 30/10/2026 (quatro códigos) ou em 01/11/2026 (os dois de faixa de meses); **baixa** quer dizer não observado (hipótese a partir da estrutura do gateway ou da coleção pública); **do SDK** quer dizer comportamento do próprio SDK, coberto por testes locais. A coleção pública do Postman não cita nenhum código `ERR_*` além dos seis vistos no sandbox (conferido em 30/10/2026).
 
 ---
 

@@ -18,6 +18,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"unicode"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
@@ -264,7 +265,7 @@ var camposTemporais = map[string]bool{
 // tamanhoMaxMascara é o tamanho máximo, em caracteres, de uma máscara.
 const tamanhoMaxMascara = 40
 
-// mascarar troca cada dígito ASCII por 9 e cada letra ASCII por A, mantém os
+// mascarar troca cada dígito Unicode por 9 e cada letra Unicode por A, mantém os
 // demais caracteres e corta em tamanhoMaxMascara com "…". O valor em si nunca
 // sai daqui.
 func mascarar(valor string) string {
@@ -276,9 +277,9 @@ func mascarar(valor string) string {
 			break
 		}
 		switch {
-		case r >= '0' && r <= '9':
+		case unicode.IsDigit(r):
 			r = '9'
-		case (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z'):
+		case unicode.IsLetter(r):
 			r = 'A'
 		}
 		b.WriteRune(r)

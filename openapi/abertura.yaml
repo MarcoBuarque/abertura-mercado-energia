@@ -222,6 +222,10 @@ paths:
                   $ref: "#/components/examples/ErroPerfilObrigatorio"
                 validacao-campos:
                   $ref: "#/components/examples/ErroValidacaoCampos"
+                faixa-obrigatoria:
+                  $ref: "#/components/examples/ErroFaixaObrigatoria"
+                faixa-larga-demais:
+                  $ref: "#/components/examples/ErroFaixaLargaDemais"
         "403":
           $ref: "#/components/responses/Acesso403"
         "429":
@@ -954,6 +958,20 @@ components:
         status: 400
         error: ERR_MIGRACAO_SOLICITADA
         message: "Inventado: já existe migração ativa para esta UC e concessionária"
+    ErroFaixaObrigatoria:
+      summary: "Inventado: faixa de meses ausente"
+      value:
+        timestamp: "2027-01-10T10:00:00.000-03:00"
+        status: 400
+        error: ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO
+        message: "Inventado: informe o intervalo de meses de referência"
+    ErroFaixaLargaDemais:
+      summary: "Inventado: faixa de meses larga demais"
+      value:
+        timestamp: "2027-01-10T10:00:00.000-03:00"
+        status: 400
+        error: ERR_MES_REFERENCIA_INICIAL_DIFERENCA
+        message: "Inventado: o intervalo de meses é maior que o permitido"
     ErroCredencialInvalida:
       summary: "Inventado: credencial recusada"
       value:
@@ -1356,9 +1374,13 @@ components:
           type: string
           nullable: true
           description: |
-            Mês de referência. Formato ainda não registrado (D2, D20): em
-            01/11/2026 a resposta chegou, mas o SDK não a converteu; provável que
-            não seja AAAA-MM, MM-AAAA nem RFC 3339. Sem `format`.
+            Mês de referência. Formato ainda não registrado (D2, D20). Em
+            01/11/2026 a resposta chegou e validou contra esta spec, mas o
+            conversor do SDK falhou em algum campo do detalhe e a rodada não
+            identificou qual. Este é o principal suspeito, porque o formato
+            dele nunca foi registrado; é só uma suspeita, a confirmar na
+            próxima rodada. Se for ele, provavelmente não é AAAA-MM, MM-AAAA
+            nem RFC 3339. Sem `format`.
           x-confianca: baixa
         dataDenuncia:
           type: string

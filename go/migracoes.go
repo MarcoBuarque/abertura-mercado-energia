@@ -188,7 +188,9 @@ func (m *Migracoes) Editar(ctx context.Context, id string, mudar func(*EdicaoMig
 // Resultado vazio quer dizer "não criada". O filtro não olha o status: uma
 // migração anterior da mesma UC e mês (cancelada, por exemplo) também volta,
 // então confira Status e DataSolicitacao antes de concluir que a criação
-// aconteceu.
+// aconteceu. Uma ChaveMigracao com Mes zero (só possível se montada à mão)
+// falha antes de qualquer requisição com [ErrArgumentoInvalido], porque a
+// listagem exige a faixa de meses.
 func (m *Migracoes) ConferirCriacao(ctx context.Context, k ChaveMigracao, opts ...CallOption) ([]Migracao, error) {
 	filtro := FiltroMigracoes{De: k.Mes, Ate: k.Mes, UC: k.UC, Perfil: k.Perfil}
 	achadas := make([]Migracao, 0)
@@ -241,6 +243,10 @@ func validarFaixaDeMeses(f FiltroMigracoes) error {
 		return argumentoInvalido("o campo De é obrigatório")
 	case f.Ate.IsZero():
 		return argumentoInvalido("o campo Ate é obrigatório")
+	case !f.De.valido():
+		return argumentoInvalido("o campo De não é um mês válido: use um ano maior que zero e um mês de 1 a 12")
+	case !f.Ate.valido():
+		return argumentoInvalido("o campo Ate não é um mês válido: use um ano maior que zero e um mês de 1 a 12")
 	case f.Ate.Ano*12+int(f.Ate.Mes) < f.De.Ano*12+int(f.De.Mes):
 		return argumentoInvalido("o campo Ate não pode ser anterior a De")
 	}

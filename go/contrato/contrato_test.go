@@ -125,6 +125,16 @@ func descreve(err error) string {
 	if errors.As(err, &inc) {
 		return "resultado incerto em " + inc.Operation
 	}
+	var tipo *json.UnmarshalTypeError
+	if errors.As(err, &tipo) {
+		// Field é o caminho JSON, Value o tipo JSON ("string", "number") e
+		// Type o tipo Go; nenhum é um valor da resposta.
+		return fmt.Sprintf("campo com tipo inesperado na resposta: %s (%s → %s)", tipo.Field, tipo.Value, tipo.Type)
+	}
+	var sintaxe *json.SyntaxError
+	if errors.As(err, &sintaxe) {
+		return fmt.Sprintf("resposta não é JSON válido (offset %d)", sintaxe.Offset)
+	}
 	if m := reCampoIlegivel.FindStringSubmatch(err.Error()); m != nil {
 		return "campo ilegível na resposta: " + m[1]
 	}
