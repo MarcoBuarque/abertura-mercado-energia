@@ -4,8 +4,13 @@
 # parâmetro que vira obrigatório, enum fechado que perde valor).
 #
 # Sem tag anterior, pula com aviso e sai 0.
-# QUEBRA_SPEC=1: mostra a quebra, mas sai 0. Só para a 0.x, com a seção
-# "Quebras" no CHANGELOG e o rótulo `quebra-spec` no PR.
+# Quebra aceita (só na 0.x): a seção "### Quebras" de "## [Não lançado]" em
+# openapi/CHANGELOG.md tem conteúdo (scripts/quebra-spec.sh). Com ela, a quebra
+# aparece como aviso e o script sai 0; sem ela, falha.
+# QUEBRA_SPEC=1 força a aceitação (o CI põe quando o PR leva o rótulo
+# `quebra-spec`, depois de conferir a seção); QUEBRA_SPEC=0 força o modo
+# estrito; sem a variável, vale o que o CHANGELOG registra (CHANGELOG ou
+# scripts/quebra-spec.sh ausentes contam como 0).
 set -euo pipefail
 
 raiz="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -32,8 +37,16 @@ codigo=0
 docker run --rm -v "$tmp":/work -w /work "$imagem" \
   breaking --fail-on ERR base.yaml revisao.yaml || codigo=$?
 
-if [ "$codigo" -ne 0 ] && [ "${QUEBRA_SPEC:-0}" = 1 ]; then
-  echo "oasdiff: QUEBRA_SPEC=1, quebra aceita na 0.x. Registre-a na seção 'Quebras' do openapi/CHANGELOG.md" >&2
+quebra="${QUEBRA_SPEC:-}"
+if [ "$codigo" -ne 0 ] && [ -z "$quebra" ]; then
+  quebra=0
+  if [ -x scripts/quebra-spec.sh ] && [ -f openapi/CHANGELOG.md ]; then
+    quebra="$(scripts/quebra-spec.sh openapi/CHANGELOG.md 2>/dev/null || echo 0)"
+  fi
+fi
+
+if [ "$codigo" -ne 0 ] && [ "$quebra" = 1 ]; then
+  echo "oasdiff: quebra aceita na 0.x (QUEBRA_SPEC=1 ou seção 'Quebras' de [Não lançado] preenchida em openapi/CHANGELOG.md)" >&2
   exit 0
 fi
 exit "$codigo"

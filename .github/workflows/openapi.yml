@@ -32,10 +32,17 @@ jobs:
           cache: false
       - name: Regras próprias do lint provadas
         run: make testa-regras
+      - name: Leitura da seção Quebras provada
+        run: make testa-quebra-spec
       - name: Lint da spec (vacuum)
         run: make spec-lint
       - name: Exemplos inventados
         run: make spec-exemplos
+      - name: Rótulo quebra-spec conferido contra a seção Quebras
+        if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'quebra-spec')
+        run: |
+          scripts/quebra-spec.sh --exige
+          echo "QUEBRA_SPEC=1" >> "$GITHUB_ENV"
       - name: Compatibilidade com a última tag (oasdiff)
         run: make spec-diff
       - name: Página Redoc
