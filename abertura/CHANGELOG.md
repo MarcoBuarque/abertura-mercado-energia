@@ -4,6 +4,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). SDK ve
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-01
+
+Follows the spec `openapi/v0.2.0`. Pre-release: `abertura/v0.2.0-rc.1` (2026-11-01). Requires Go 1.26 or newer.
+
 ### Breaking
 
 The module moved from `go/` to `abertura/`, the whole public API is now in English, and the error catalog anchors changed. There are no known consumers of 0.1.0. Update the import path and apply the tables below.
@@ -174,4 +178,5 @@ Names in this section are those of 0.1.0; see the tables under Unreleased for th
 - The limiter is per process; several processes on the same IP or agent add up requests without it knowing.
 
 [0.1.0]: https://github.com/MarcoBuarque/abertura-mercado-energia/releases/tag/go/v0.1.0
-[Unreleased]: https://github.com/MarcoBuarque/abertura-mercado-energia/compare/go/v0.1.0...HEAD
+[0.2.0]: https://github.com/MarcoBuarque/abertura-mercado-energia/releases/tag/abertura/v0.2.0
+[Unreleased]: https://github.com/MarcoBuarque/abertura-mercado-energia/compare/abertura/v0.2.0...HEAD

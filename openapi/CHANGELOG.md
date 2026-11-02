@@ -8,6 +8,12 @@ This is an **unofficial**, hand-written description. The project is independent 
 
 ### Breaking
 
+None.
+
+## [0.2.0] - 2026-11-01
+
+### Breaking
+
 Everything in the spec is now named in English. Wire names do not change: JSON field names, enum values, `ERR_*` error codes, paths, HTTP methods, parameter `name:` values (query, path and header names) and header names are exactly as the API has them. A client generated from the spec sees renamed types, methods and tags, not a different API on the wire.
 
 Schemas (`components.schemas`):
@@ -189,4 +195,5 @@ Changes between the pre-releases (rc.1 to rc.3), recorded here because pre-relea
 None. The breaks between the pre-releases (rc.1 to rc.2: the token 400 without `message`, and the mandatory month filters of `listarMigracoes`) are under "Changed" and do not count against a published version. From here on, a break in 0.x is accepted when recorded under `### Breaking` of `[Unreleased]`; the PR label `breaking-spec` declares it and CI checks the declaration against that section (`scripts/breaking-spec.sh`).
 
 [0.1.0]: https://github.com/MarcoBuarque/abertura-mercado-energia/releases/tag/openapi/v0.1.0
-[Unreleased]: https://github.com/MarcoBuarque/abertura-mercado-energia/compare/openapi/v0.1.0...HEAD
+[0.2.0]: https://github.com/MarcoBuarque/abertura-mercado-energia/releases/tag/openapi/v0.2.0
+[Unreleased]: https://github.com/MarcoBuarque/abertura-mercado-energia/compare/openapi/v0.2.0...HEAD
