@@ -222,7 +222,7 @@ func TestDescribe_WhenSDKOwnError_PrintsOnlyFixedText(t *testing.T) {
 	}{
 		{name: "more than one migration", err: fmt.Errorf("getMigration: %w", errors.New("the API returned more than one migration for the id")), want: "the API returned more than one migration for the id"},
 		{name: "empty response", err: fmt.Errorf("getMigration: %w", errors.New("empty response")), want: "empty response"},
-		{name: "no identifiable migration", err: fmt.Errorf("createMigration: %w", errors.New("the response does not bring an identifiable migration")), want: "the response does not bring an identifiable migration"},
+		{name: "no identifiable migration", err: fmt.Errorf("createMigration: %w", errors.New("the response does not carry an identifiable migration")), want: "the response does not carry an identifiable migration"},
 		{name: "invalid JSON with byte", err: fmt.Errorf("getMigration: %w", errors.New("response is not valid JSON (byte 42)")), want: "response is not valid JSON (byte 42)"},
 		{name: "decode: only the prefix", err: fmt.Errorf("getMigration: decode response: %w", errors.New("secret-value")), want: "decode response: "},
 		{name: "not found", err: fmt.Errorf("getMigration: %w", abertura.ErrNotFound), want: "ErrNotFound"},
