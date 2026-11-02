@@ -67,7 +67,7 @@ What it does for you:
 - **Token and limits:** fetches and renews the token, and rate limits requests per process.
 - **Pagination:** `List` walks the pages; `ListPage` returns the cursor so you can resume later.
 - **Tolerated formats:** three month formats, detail as a list or an object, consumption as text or number, new fields and statuses.
-- **Writes without retries:** `Create` and `Edit` never retry on their own. If the result is uncertain, the error is a `*UncertainResultError` carrying the natural key, and `CheckCreated` or `CheckEdited` tell you what happened.
+- **Writes without retries:** `Create` and `Edit` never retry on their own. If the result is uncertain, the error is a `*UncertainResultError` carrying the natural key, and `FindCreated` or `CheckEdited` tell you what happened.
 - **Personal data:** `Document` is masked in `fmt`, `slog` and JSON; the SDK log never carries a consumer unit, document, e-mail or token.
 - **Routes without a method yet:** `Client.Do` uses the same token, limits and error loop.
 

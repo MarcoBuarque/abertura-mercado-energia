@@ -8,7 +8,7 @@ Two artifacts, two tag prefixes: `openapi/vX.Y.Z` (spec, Redoc page, mock image)
 2. `make ci` green locally and the `go` and `openapi` workflows green on GitHub for the commit you will tag.
 3. CHANGELOG: the version section exists with the date; renamed or removed exported identifiers are under `### Breaking` (SDK) and schema/operationId renames under `### Breaking` (spec). `make check-tag` verifies the entry.
 4. `README.md` and `README.pt-BR.md` show the same install line and the same example names.
-5. Pages: catalog slugs in `docs/errors.md` match `ErrorCatalogURL` fragments (`make verify-errors`).
+5. Pages: catalog slugs in `docs/errors.md` match `ErrorCatalogURL` fragments (`make docs` (runs `scripts/verify-errors.sh`)).
 
 ## Order
 
@@ -16,8 +16,9 @@ Two artifacts, two tag prefixes: `openapi/vX.Y.Z` (spec, Redoc page, mock image)
 
 ## Guards that run in `make ci`
 
-- `api-check`: exported surface equals `abertura/API.txt`.
+- `api-check`: exported surface equals `abertura/API.txt`. Also runs in the `go` workflow (Go 1.26 entry), as does `check-english`.
+- A test on the `go.mod` module path: it must equal the import path the docs show.
 - `naming_test.go` in the package: Portuguese words in identifiers, field/type stutter, non-ASCII in non-test sources, missing doc comments on exported names.
-- `golangci-lint` with `gochecknoglobals`, `revive` (exported, var-naming, receiver-naming) and `misspell` (US English).
+- `golangci-lint` with `gochecknoglobals`, `revive` (exported, var-naming, receiver-naming, package-comments, error-naming, redundant-import-alias) and `misspell` (US English).
 - `check-english`: documents and the spec read as English (`README.pt-BR.md` exempt).
 - `check-trademark`: the operator's name only in the non-affiliation notice.

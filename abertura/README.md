@@ -24,15 +24,16 @@ for m, err := range c.Migrations.List(ctx, abertura.MigrationFilter{
 }
 ```
 
-Methods: `Migrations` (`List`, `ListPage`, `Get`, `Create`, `Edit`, `CheckCreated`, `CheckEdited`), `Measurements` (`List`, `ListPage`) and `Client.Do` for routes that have no method yet. The runnable examples are in the `godoc`.
+Methods: `Migrations` (`List`, `ListPage`, `Get`, `Create`, `Edit`, `FindCreated`, `CheckEdited`), `Measurements` (`List`, `ListPage`) and `Client.Do` for routes that have no method yet. The runnable examples are in the `godoc`.
 
-Creating a migration takes a `abertura.CPF(...)` or `abertura.CNPJ(...)` document in `MigrationRequest.Document`; the document is masked whenever it is printed.
+Creating a migration takes an `abertura.CPF(...)` or `abertura.CNPJ(...)` document in `MigrationRequest.Document`; the document is masked whenever it is printed.
 
 Errors: `abertura.ProblemFrom(err)` turns any SDK error into a `Problem` in the RFC 9457 format (`application/problem+json`), with no personal data, whose `type` points to the [error catalog](https://marcobuarque.github.io/abertura-mercado-energia/errors/):
 
 ```go
 p := abertura.ProblemFrom(err) // also works with an error wrapped by %w
 w.Header().Set("Content-Type", abertura.ProblemContentType)
+w.WriteHeader(cmp.Or(p.Status, http.StatusInternalServerError)) // import "cmp" and "net/http"
 if err := json.NewEncoder(w).Encode(p); err != nil { // p.Retryable and p.Uncertain say whether retrying is safe
 	log.Print(err)
 }

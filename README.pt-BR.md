@@ -69,7 +69,7 @@ O que ele faz por você:
 - **Token e limites:** busca e renova o token, e limita as requisições por processo.
 - **Paginação:** `List` percorre as páginas; `ListPage` devolve o cursor para retomar depois.
 - **Formatos tolerados:** três formatos de mês, detalhe em lista ou objeto, consumo como texto ou número, campos e status novos.
-- **Escrita sem repetição:** `Create` e `Edit` nunca repetem sozinhos. Se o resultado é incerto, o erro é um `*UncertainResultError` com a chave natural, e `CheckCreated` ou `CheckEdited` dizem o que aconteceu.
+- **Escrita sem repetição:** `Create` e `Edit` nunca repetem sozinhos. Se o resultado é incerto, o erro é um `*UncertainResultError` com a chave natural, e `FindCreated` ou `CheckEdited` dizem o que aconteceu.
 - **Dado pessoal:** `Document` aparece mascarado em `fmt`, `slog` e JSON; o log do SDK nunca traz unidade consumidora, documento, e-mail nem token.
 - **Rotas ainda sem método:** `Client.Do` usa o mesmo laço de token, limites e erros.
 

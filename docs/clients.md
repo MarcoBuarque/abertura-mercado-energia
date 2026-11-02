@@ -48,8 +48,8 @@ another response or another example, send the `Prefer` header:
 | a 400 `ERR_MIGRACAO_SOLICITADA` when creating a migration | `Prefer: code=400, example=migration-already-requested` |
 
 Every example is invented: consumer unit `000000000000001`, codes in the
-`900000` range, e-mails at `example.org`. The name of each example starts with
-"Inventado:" in the spec.
+`900000` range, e-mails at `example.org`. The summary of each example and the `message` of each fabricated API error start with
+"Invented:" in the spec.
 
 ### Where the mock differs from the real API
 
@@ -70,7 +70,7 @@ the real API's**:
   sl-violations: [{"location":["request","header"],"severity":"Error","code":"required","message":"Request header must have required property 'codigoagente'"}]
   Content-type: application/json
 
-  {"timestamp":"2027-01-10T10:00:00.000-03:00","status":400,"error":"ERR_PERFIL_VAREJISTA_OBRIGATORIO","message":"Inventado: informe o perfil do varejista"}
+  {"timestamp":"2027-01-10T10:00:00.000-03:00","status":400,"error":"ERR_PERFIL_VAREJISTA_OBRIGATORIO","message":"Invented: provide the retailer profile"}
   ```
 
   Header and field names appear in lower case in these messages
@@ -120,10 +120,10 @@ gen typescript-fetch ts npmName=abertura-client,supportsES6=true
 gen java java library=native,groupId=example.abertura,artifactId=abertura-client,invokerPackage=example.abertura.client,apiPackage=example.abertura.client.api,modelPackage=example.abertura.client.model
 ```
 
-On 30/10/2026 all three generated without errors, with 2 generator warnings
+On 2026-10-30 all three generated without errors, with 2 generator warnings
 ("Failed to get the schema name" and "Ignoring complex example on request
 body") that do not affect the code. Only the Python client was installed and
-run; the TypeScript and Java ones were only generated, **not compiled**.
+run; the TypeScript and Java ones were only generated, **not compiled**. These generator-output claims date from the 2026-10-30 run and will be refreshed at `openapi/v0.2.0`.
 
 Two details of the generated clients:
 
@@ -205,7 +205,7 @@ except ApiException as err:
     print(err.status, err.body)  # 403 {"...","error":"ERR_CREDENCIAL_INVALIDA",...}
 ```
 
-Measured on 30/10/2026 on a Mac with Apple Silicon, with the images already
+Measured on 2026-10-30 on a Mac with Apple Silicon, with the images already
 downloaded (mock starting under emulation): 6 s to build and start the mock,
 1 s to generate the client, 2 s for the `venv` and `pip`, 10 s in total until
 the list appears. The first time, add the time to download the Prism and
@@ -396,7 +396,7 @@ except urllib.error.HTTPError as err:
     print(json.dumps(problem, ensure_ascii=False, indent=2))
 ```
 
-Expected output (run against the mock on 30/10/2026):
+Expected output (run against the mock on 2026-10-30):
 
 ```json
 {

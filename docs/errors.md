@@ -13,16 +13,16 @@ The Go SDK delivers the same error as **Problem Details** from [RFC 9457](https:
 As the API returns it (invented values):
 
 ```json
-{"timestamp":"2027-01-10T10:00:00.000-03:00","status":400,"error":"ERR_MIGRACAO_SOLICITADA","message":"Inventado: já existe migração ativa para a unidade consumidora"}
+{"timestamp":"2027-01-10T10:00:00.000-03:00","status":400,"error":"ERR_MIGRACAO_SOLICITADA","message":"Invented: an active migration already exists for this UC and distributor"}
 ```
 
 As the SDK delivers it, with `abertura.ProblemFrom(err)`:
 
 ```json
-{"type":"https://marcobuarque.github.io/abertura-mercado-energia/errors#migration-already-requested","title":"Migration already requested","status":400,"detail":"Operation createMigration: an active migration already exists for the same consumer unit and distributor. If the previous creation was uncertain, it probably took effect: check.","code":"ERR_MIGRACAO_SOLICITADA","operation":"createMigration","requestId":"req-inventado-0001","retryable":false,"uncertain":false}
+{"type":"https://marcobuarque.github.io/abertura-mercado-energia/errors#migration-already-requested","title":"Migration already requested","status":400,"detail":"Operation createMigration: an active migration already exists for the same consumer unit and distributor. If the previous creation was uncertain, it probably took effect: check.","code":"ERR_MIGRACAO_SOLICITADA","operation":"createMigration","requestId":"req-invented-0001","retryable":false,"uncertain":false}
 ```
 
-This page is published on GitHub Pages at every final `openapi/vX.Y.Z` tag, only with the repository public (`make docs` generates `out/docs/errors/index.html`; the old `/erros/` address redirects to `/errors/`); until the first publication the `type` address does not respond, and this file is the source. For anyone who does not use Go, the "Problem Details in a Python client" section of [`clients.md`](clients.md) shows the conversion.
+This page is published on GitHub Pages at every final `openapi/vX.Y.Z` tag, only with the repository public (`make docs` generates `out/docs/errors/index.html`; the old `/erros/` address redirects to `/errors/`); `/errors` responds once `openapi/v0.2.0` is published; until then the v0.1 page at `/erros` is live, and this file is the source. For anyone who does not use Go, the "Problem Details in a Python client" section of [`clients.md`](clients.md) shows the conversion.
 
 ## Index
 
@@ -53,7 +53,7 @@ This page is published on GitHub Pages at every final `openapi/vX.Y.Z` tag, only
 
 "Retry" follows the SDK's retry table (the same rule as [`clients.md`](clients.md), section 5): the SDK retries up to 2 times on its own what is marked safe, and shows the error only afterwards. `retryable` in the Problem says whether retrying **now** is safe; `uncertain` says the write may have been applied.
 
-Confidence: **seen in the sandbox** means observed on 30/10/2026 (four codes) or on 01/11/2026 (the two month-range ones); **low** means not observed (a hypothesis from the gateway's structure or from the public collection); **SDK** means the SDK's own behaviour, covered by local tests. The public Postman collection mentions no `ERR_*` code besides the six seen in the sandbox (checked on 30/10/2026).
+Confidence: **seen in the sandbox** means observed on 2026-10-30 (four codes) or on 2026-11-01 (the two month-range ones); **low** means not observed (a hypothesis from the gateway's structure or from the public collection); **SDK** means the SDK's own behavior, covered by local tests. The public Postman collection mentions no `ERR_*` code besides the six seen in the sandbox (checked on 2026-10-30).
 
 ---
 
@@ -107,7 +107,7 @@ Confidence: **seen in the sandbox** means observed on 30/10/2026 (four codes) or
 - **API code:** `ERR_MIGRACAO_SOLICITADA`.
 - **Status:** 400.
 - **When it happens:** a migration POST for a consumer unit and a distributor that already have an **active** migration. A closed or canceled migration was not tested.
-- **What to do:** if you yourself retried after an [uncertain result](#uncertain-result), the first creation probably took effect: list the consumer unit with `CheckCreated` to see what exists. It is not a data error: it is the server's defence against duplicates.
+- **What to do:** if you yourself retried after an [uncertain result](#uncertain-result), the first creation probably took effect: list the consumer unit with `FindCreated` to see what exists. It is not a data error: it is the server's defense against duplicates.
 - **Retry:** GET does not apply; write, no (check first).
 - **Go sentinel:** `ErrMigrationAlreadyRequested`.
 - **Confidence:** seen in the sandbox.
@@ -117,7 +117,7 @@ Confidence: **seen in the sandbox** means observed on 30/10/2026 (four codes) or
 
 - **API code:** `ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO`.
 - **Status:** 400.
-- **When it happens:** the migration listing was requested without `mesReferenciaInicial` and `mesReferenciaFinal` (`YYYY-MM`). The API requires both; seen in the sandbox on 01/11/2026.
+- **When it happens:** the migration listing was requested without `mesReferenciaInicial` and `mesReferenciaFinal` (`YYYY-MM`). The API requires both; seen in the sandbox on 2026-11-01.
 - **What to do:** provide the range. The SDK validates `From` and `To` before sending and returns `ErrInvalidArgument` without making a request; only `Client.Do` reaches this code. In your own client, add both months to the query.
 - **Retry:** GET and write, no, without fixing first.
 - **Go sentinel:** `ErrMonthRangeRequired`.
@@ -128,7 +128,7 @@ Confidence: **seen in the sandbox** means observed on 30/10/2026 (four codes) or
 
 - **API code:** `ERR_MES_REFERENCIA_INICIAL_DIFERENCA`.
 - **Status:** 400.
-- **When it happens:** the distance between the start month and the end month exceeded the API's limit. The limit was not published: in the sandbox, on 01/11/2026, 12-month ranges were accepted and 24, 48 and 96 were refused, so the cap lies between 12 and 24 months (probably 12).
+- **When it happens:** the distance between the start month and the end month exceeded the API's limit. The limit was not published: in the sandbox, on 2026-11-01, 12-month ranges were accepted and 24, 48 and 96 were refused, so the cap lies between 12 and 24 months (probably 12).
 - **What to do:** narrow the range or split the query into smaller parts, one at a time.
 - **Retry:** GET and write, no, without narrowing the range first.
 - **Go sentinel:** `ErrMonthRangeTooWide`.
@@ -241,8 +241,8 @@ Confidence: **seen in the sandbox** means observed on 30/10/2026 (four codes) or
 - **When it happens:** on a `Create` or `Edit` (or on a write `Do`), the request left, but the response does not say whether it was applied: network error after sending, timeout, 5xx, or 2xx with an unreadable body. The error is a `*UncertainResultError`, with the cause in `Err` and the natural key in `Key`.
 - **What to do, step by step:**
   1. Do not retry the write blindly.
-  2. Get the error: `var unc *abertura.UncertainResultError; errors.As(err, &unc)`. The key is in `unc.Key`, of type `NaturalKey`; convert it to the concrete type with `k, ok := unc.Key.(abertura.MigrationKey)` (or `abertura.EditKey`).
-  3. For a creation, call `CheckCreated(ctx, k)` with the `MigrationKey`; an empty list means "not created", and then you may retry `Create`. If it found any, check `Status` and `RequestDate`, because an earlier migration for the same consumer unit and month (canceled, for example) also comes back.
+  2. Get the error: `var unc *abertura.UncertainResultError; errors.As(err, &unc)`. The key is in `unc.Key`, of type `NaturalKey`; convert it to the concrete type with `k, ok := unc.Key.(abertura.CreateKey)` (or `abertura.EditKey`).
+  3. For a creation, call `FindCreated(ctx, k)` with the `CreateKey`; an empty list means "not created", and then you may retry `Create`. If it found any, check `Status` and `RequestDate`, because an earlier migration for the same consumer unit and month (canceled, for example) also comes back.
   4. For an edit, call `CheckEdited(ctx, k)` with the `EditKey`; the second return value says whether the migration already has the desired fields.
   5. Only retry the write if the check says it was not applied. If you retry `Create` with the migration active, you get [`ERR_MIGRACAO_SOLICITADA`](#migration-already-requested), which indicates the first one probably took effect: check again.
   6. On `Do`, `Key` comes empty: check on your own.
