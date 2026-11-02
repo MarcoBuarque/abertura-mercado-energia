@@ -120,12 +120,22 @@ gen typescript-fetch ts npmName=abertura-client,supportsES6=true
 gen java java library=native,groupId=example.abertura,artifactId=abertura-client,invokerPackage=example.abertura.client,apiPackage=example.abertura.client.api,modelPackage=example.abertura.client.model
 ```
 
-On 2026-10-30 all three generated without errors, with 2 generator warnings
-("Failed to get the schema name" and "Ignoring complex example on request
-body") that do not affect the code. Only the Python client was installed and
-run; the TypeScript and Java ones were only generated, **not compiled**. These generator-output claims date from the 2026-10-30 run and will be refreshed at `openapi/v0.2.0`.
+On 2026-11-02, with spec 0.2.0 (`openapi/v0.2.0`), all three generated
+without errors. The generator prints warnings that do not affect the code:
+"Failed to get the schema name" (all three), "Ignoring complex example on
+request body" (Java) and, in TypeScript, 21 notes that the `Error` schema was
+renamed to `ModelError` (see below). All three clients were also built: the
+Python one was installed and run (section 3), the TypeScript one compiled with
+`tsc` (CommonJS and ESM) and the Java one compiled with Maven. To build the
+last two without installing anything, from the root directory:
 
-Two details of the generated clients:
+```bash
+# `npm install` runs `tsc` through the package's `prepare` script
+docker run --rm -e HOME=/tmp -u "$(id -u):$(id -g)" -v "$OUT/ts":/app -w /app node:22 npm install --no-audit --no-fund
+docker run --rm -v "$OUT/java":/app -w /app maven:3.9-eclipse-temurin-17 mvn -q -B -DskipTests compile
+```
+
+Four details of the generated clients:
 
 - The spec tags are `Authentication`, `Migrations`, `Measurements` and
   `Change requests`, so the classes come out as `AuthenticationApi`,
@@ -134,6 +144,14 @@ Two details of the generated clients:
   TypeScript and Java).
 - Response dates have `format: date-time` in the spec, so the generated
   clients type them as `datetime` (see "What generated clients do not do").
+- The error envelope is the `Error` schema, and that name collides with
+  built-in types. The TypeScript client renames it to `ModelError`. The Java
+  client keeps `Error` in the model package, where it shadows
+  `java.lang.Error`: import `example.abertura.client.model.Error` explicitly
+  when a file needs both. Python keeps `abertura_client.models.Error`.
+- The generated packages take their version from the spec's `info.version`:
+  `abertura-client@0.2.0` in `package.json` and `0.2.0` in the Maven
+  `pom.xml`.
 
 ## 3. Python: from token to migration list
 
@@ -205,11 +223,12 @@ except ApiException as err:
     print(err.status, err.body)  # 403 {"...","error":"ERR_CREDENCIAL_INVALIDA",...}
 ```
 
-Measured on 2026-10-30 on a Mac with Apple Silicon, with the images already
-downloaded (mock starting under emulation): 6 s to build and start the mock,
-1 s to generate the client, 2 s for the `venv` and `pip`, 10 s in total until
-the list appears. The first time, add the time to download the Prism and
-generator images.
+Measured on 2026-11-02 on a Mac with Apple Silicon, with the images already
+downloaded (mock starting under emulation): 7 s to build and start the mock,
+1 s to generate the client, 5 s for the `venv` and `pip`, under 15 s in total
+until the list appears. Building the TypeScript client took 28 s and the Java
+client 35 s, both including the download of the `node` and `maven` images.
+The first time, add the time to download the Prism and generator images.
 
 ## 4. What generated clients do not do
 
@@ -396,7 +415,7 @@ except urllib.error.HTTPError as err:
     print(json.dumps(problem, ensure_ascii=False, indent=2))
 ```
 
-Expected output (run against the mock on 2026-10-30):
+Expected output (run against the mock on 2026-11-02):
 
 ```json
 {
