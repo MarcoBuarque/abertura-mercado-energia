@@ -1,10 +1,10 @@
-# Release do SDK Go: tag go/vX.Y.Z (ou go/vX.Y.Z-rc.N). Sem binário: o módulo é
-# o produto, servido pelo proxy do Go a partir da tag.
+# Go SDK release: tag abertura/vX.Y.Z (or abertura/vX.Y.Z-rc.N). No binary: the
+# module is the product, served by the Go proxy from the tag.
 name: release-go
 
 on:
   push:
-    tags: ['go/v*']
+    tags: ['abertura/v*']
 
 permissions:
   contents: read
@@ -21,20 +21,20 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Tag × version.Version × CHANGELOG
-        run: make checa-tag TIPO=go TAG="$TAG"
+      - name: Tag x version.Version x CHANGELOG
+        run: make check-tag KIND=abertura TAG="$TAG"
         env:
           TAG: ${{ github.ref_name }}
 
   ci:
-    uses: ./.github/workflows/go.yml # a CI completa do SDK, a mesma do go.yml
+    uses: ./.github/workflows/go.yml # the full SDK CI, the same as go.yml
 
   release:
     needs: [tag, ci]
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
-      contents: write # cria o release
+      contents: write # creates the release
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -44,7 +44,7 @@ jobs:
           go-version: '1.26.x'
           check-latest: true
           cache: false
-      - name: Release (sem binário)
+      - name: Release (no binary)
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
@@ -53,22 +53,22 @@ jobs:
           case "$TAG" in *-rc.*) flags+=(--prerelease) ;; esac
           gh release create "$TAG" \
             --verify-tag \
-            --title "SDK Go ${TAG#go/}" \
-            --notes "SDK Go. Mudanças em go/CHANGELOG.md nesta tag. Instalação: go get github.com/MarcoBuarque/abertura-mercado-energia/go@${TAG#go/}" \
+            --title "Go SDK ${TAG#abertura/}" \
+            --notes "Go SDK. Changes in abertura/CHANGELOG.md at this tag. Install: go get github.com/MarcoBuarque/abertura-mercado-energia/abertura@${TAG#abertura/}" \
             "${flags[@]}"
-      # O proxy só enxerga repositório público; antes disso o passo é pulado.
-      - name: O proxy do Go enxerga o módulo
+      # The proxy only sees a public repository; until then the step is skipped.
+      - name: The Go proxy sees the module
         if: github.event.repository.private == false
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          modulo="$(cd go && go list -m)"
-          versao="${TAG#go/}"
+          module="$(cd abertura && go list -m)"
+          version="${TAG#abertura/}"
           cd "$(mktemp -d)"
-          for tentativa in 1 2 3 4 5 6 7 8 9 10; do
-            if GOPROXY=https://proxy.golang.org GOFLAGS= go list -m "$modulo@$versao"; then exit 0; fi
-            echo "proxy ainda sem $modulo@$versao (tentativa $tentativa de 10)"
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            if GOPROXY=https://proxy.golang.org GOFLAGS= go list -m "$module@$version"; then exit 0; fi
+            echo "proxy does not have $module@$version yet (attempt $attempt of 10)"
             sleep 30
           done
-          echo "o proxy não serviu $modulo@$versao" >&2
+          echo "the proxy did not serve $module@$version" >&2
           exit 1

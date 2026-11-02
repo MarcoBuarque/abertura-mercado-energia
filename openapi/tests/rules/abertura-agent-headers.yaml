@@ -1,0 +1,75 @@
+openapi: 3.0.3
+info:
+  title: Minimal example (unofficial description)
+  version: 0.0.0
+  description: Minimal specification that passes all the project rules.
+  contact:
+    name: Independent project
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+  - url: http://localhost:4010
+tags:
+  - name: Test
+    description: Test operations.
+paths:
+  /token:
+    post:
+      operationId: getToken
+      tags: [Test]
+      summary: Gets the token
+      description: Operation that takes no agent headers.
+      x-confidence: high
+      x-verified-at: "2026-10-30"
+      responses:
+        "200":
+          description: Token issued.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+  /itens:
+    get:
+      operationId: listItems
+      tags: [Test]
+      summary: Lists items
+      description: Operation that takes the agent headers.
+      x-confidence: medium
+      parameters:
+        - $ref: "#/components/parameters/CodigoAgente"
+      responses:
+        "200":
+          description: List of items.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  emailUnidadeConsumidora:
+                    type: string
+                    example: pessoa@example.org
+              examples:
+                invented:
+                  summary: "Invented: test item"
+                  value:
+                    emailUnidadeConsumidora: pessoa@example.org
+components:
+  parameters:
+    CodigoAgente:
+      name: codigoAgente
+      in: header
+      required: true
+      description: Agent code.
+      schema:
+        type: integer
+    CodigoPerfil:
+      name: codigoPerfil
+      in: header
+      required: true
+      description: Profile code.
+      schema:
+        type: integer

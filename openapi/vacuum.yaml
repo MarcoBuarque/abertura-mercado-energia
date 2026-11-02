@@ -1,40 +1,41 @@
-# Regras do lint da spec. Estende o `recommended` do vacuum e acrescenta as
-# regras próprias do projeto, todas com severidade `error`. Cada uma é provada
-# por uma spec mínima em openapi/testes/regras/ (scripts/testa-regras.sh).
+# Spec lint rules. Extends the vacuum `recommended` ruleset and adds the
+# project's own rules, all with severity `error`. Each one is proven by a
+# minimal spec in openapi/tests/rules/ (scripts/test-rules.sh). The rule ids
+# keep their original names because the test script looks them up by id.
 extends:
   - [vacuum:oas, recommended]
 
 rules:
-  abertura-confianca:
-    description: Toda operação declara x-confianca como alta, media ou baixa.
+  abertura-confidence:
+    description: Every operation declares x-confidence as high, medium or low.
     message: "{{error}}"
     severity: error
     given: $.paths[*][get,post,put,patch,delete]
     then:
-      - field: x-confianca
+      - field: x-confidence
         function: defined
-      - field: x-confianca
+      - field: x-confidence
         function: schema
         functionOptions:
           schema:
             type: string
-            enum: [alta, media, baixa]
+            enum: [high, medium, low]
 
-  abertura-verificado-em:
-    description: Operação com confiança alta traz x-verificado-em no formato AAAA-MM-DD.
+  abertura-verified-at:
+    description: An operation with high confidence carries x-verified-at in YYYY-MM-DD format.
     message: "{{error}}"
     severity: error
-    given: $.paths[*][?(@['x-confianca'] == 'alta')]
+    given: $.paths[*][?(@['x-confidence'] == 'high')]
     then:
-      - field: x-verificado-em
+      - field: x-verified-at
         function: defined
-      - field: x-verificado-em
+      - field: x-verified-at
         function: pattern
         functionOptions:
           match: ^[0-9]{4}-[0-9]{2}-[0-9]{2}$
 
   abertura-operation-id:
-    description: O operationId é camelCase.
+    description: The operationId is camelCase.
     message: "{{error}}"
     severity: error
     given: $.paths[*][get,post,put,patch,delete]
@@ -46,11 +47,11 @@ rules:
         functionOptions:
           match: ^[a-z][a-zA-Z0-9]+$
 
-  abertura-cabecalhos-agente:
-    description: Toda operação, menos obterToken, referencia os cabeçalhos codigoAgente e codigoPerfil.
+  abertura-agent-headers:
+    description: Every operation, except getToken, references the codigoAgente and codigoPerfil headers.
     message: "{{error}}"
     severity: error
-    given: $.paths[*][?(@.operationId && @.operationId != 'obterToken')]
+    given: $.paths[*][?(@.operationId && @.operationId != 'getToken')]
     then:
       field: parameters
       function: schema
@@ -71,8 +72,8 @@ rules:
                   name: {const: codigoPerfil}
                   in: {const: header}
 
-  abertura-nao-oficial:
-    description: O título diz "não oficial" e os metadados do projeto não usam o nome da CCEE.
+  abertura-unofficial:
+    description: The title says "unofficial" and the project metadata does not use the CCEE name.
     message: "{{error}}"
     severity: error
     given: $
@@ -80,7 +81,7 @@ rules:
       - field: info.title
         function: pattern
         functionOptions:
-          match: não oficial
+          match: unofficial
       - field: info.contact.name
         function: pattern
         functionOptions:
@@ -110,13 +111,13 @@ rules:
         functionOptions:
           notMatch: (?i)ccee
 
-  abertura-email-exemplo:
-    description: Todo emailUnidadeConsumidora em exemplo termina em @example.org.
+  abertura-example-email:
+    description: Every example emailUnidadeConsumidora ends in @example.org.
     message: "{{error}}"
     severity: error
-    # O mesmo nome serve ao valor num exemplo (string) e à propriedade do schema
-    # (objeto, cujo `example` também é conferido). Por isso o primeiro passo
-    # aceita objeto e só cobra o sufixo de string.
+    # The same name serves the value in an example (string) and the schema
+    # property (object, whose `example` is also checked). So the first step
+    # accepts an object and only enforces the suffix on strings.
     given: $..emailUnidadeConsumidora
     then:
       - function: schema
