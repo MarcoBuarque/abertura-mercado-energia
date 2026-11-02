@@ -43,6 +43,12 @@ jobs:
         run: make go-gen
       - name: Build, vet and tests
         run: make go-test
+      - name: Exported API matches API.txt (Go 1.26 only)
+        if: matrix.go == '1.26.x'
+        run: make api-check
+      - name: Documents read as English (Go 1.26 only)
+        if: matrix.go == '1.26.x'
+        run: make check-english
       - name: Tests with -race and coverage
         run: make go-race
       - name: golangci-lint v2

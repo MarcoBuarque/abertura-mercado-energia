@@ -74,7 +74,35 @@ cat > "$legacy/index.html" <<'HTML'
 </head>
 <body>
 <p>This page moved to <a href="../errors/">the error catalog</a>.</p>
-<script>location.replace("../errors/" + location.hash);</script>
+<script>
+// Old Portuguese anchors map to the English slugs; the meta refresh is the fallback.
+var slugs = {
+  "argumento-invalido": "invalid-argument",
+  "chamada-cancelada": "call-canceled",
+  "codigo-desconhecido": "unknown-code",
+  "credencial-invalida-autorizador": "invalid-credential-authorizer",
+  "credencial-invalida-backend": "invalid-credential-backend",
+  "cursor-repetido": "repeated-cursor",
+  "erro-de-transporte": "transport-error",
+  "erro-interno": "internal-error",
+  "faixa-de-meses-larga-demais": "month-range-too-wide",
+  "faixa-de-meses-obrigatoria": "month-range-required",
+  "falha-ao-obter-token": "token-request-failed",
+  "falha-do-gateway": "gateway-failure",
+  "fora-do-catalogo": "not-in-catalog",
+  "limite-de-requisicoes": "rate-limited",
+  "migracao-solicitada": "migration-already-requested",
+  "nao-encontrado": "not-found",
+  "perfil-varejista-obrigatorio": "retailer-profile-required",
+  "recusa-sem-codigo": "refusal-without-code",
+  "resposta-ilegivel": "unreadable-response",
+  "resultado-incerto": "uncertain-result",
+  "tempo-esgotado": "timeout",
+  "validacao-campos": "field-validation"
+};
+var old = location.hash.slice(1);
+location.replace("../errors/" + (slugs[old] ? "#" + slugs[old] : location.hash));
+</script>
 </body>
 </html>
 HTML
