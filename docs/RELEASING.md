@@ -6,7 +6,7 @@ Two artifacts, two tag prefixes: `openapi/vX.Y.Z` (spec, Redoc page, mock image)
 
 1. **Read the exported API end to end.** Run `make api-check`; then read `abertura/API.txt` as a user would: one language, no field repeating its type name (`YearMonth.Month` is fine, `Month.Month` is not), no package-level mutable state, every name a plain English word or an accepted acronym (CPF, CNPJ, DHC, MUSD, CER, SIGA). Anything odd is fixed before the tag, not listed for later.
 2. `make ci` green locally and the `go` and `openapi` workflows green on GitHub for the commit you will tag.
-3. CHANGELOG: the version section exists with the date; renamed or removed exported identifiers are under `### Breaking` (SDK) and schema/operationId renames under `### Breaking` (spec). `make check-tag` verifies the entry.
+3. CHANGELOG: the version section exists with the date (the `breaking-spec` PR label is checked against `[Unreleased]` only, so a PR that already dates the section drops the label, or the release commit comes after the merge); renamed or removed exported identifiers are under `### Breaking` (SDK) and schema/operationId renames under `### Breaking` (spec). `make check-tag` verifies the entry.
 4. `README.md` and `README.pt-BR.md` show the same install line and the same example names.
 5. Pages: catalog slugs in `docs/errors.md` match `ErrorCatalogURL` fragments (`make docs` (runs `scripts/verify-errors.sh`)).
 
