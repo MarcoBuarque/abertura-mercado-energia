@@ -44,7 +44,7 @@ func collect(seq func(func(int, error) bool)) []result {
 
 func TestPaginate_WhenTwoPages_YieldsEverythingInOrder(t *testing.T) {
 	b := &fakeFetcher{pages: map[string]Page[int]{
-		"":   {Items: []int{1, 2}, Next: "p2"},
+		"":   {Items: []int{1, 2}, NextCursor: "p2"},
 		"p2": {Items: []int{3}},
 	}}
 	var items []int
@@ -74,7 +74,7 @@ func TestPaginate_WhenNoRange_FetchesNothing(t *testing.T) {
 
 func TestPaginate_WhenBreakOnFirstItem_FetchesOnlyOnce(t *testing.T) {
 	b := &fakeFetcher{pages: map[string]Page[int]{
-		"":   {Items: []int{1, 2}, Next: "p2"},
+		"":   {Items: []int{1, 2}, NextCursor: "p2"},
 		"p2": {Items: []int{3}},
 	}}
 	for item, err := range paginate(context.Background(), b.fetch) {
@@ -90,7 +90,7 @@ func TestPaginate_WhenBreakOnFirstItem_FetchesOnlyOnce(t *testing.T) {
 
 func TestPaginate_WhenBreakOnLastItemOfFirstPage_DoesNotFetchNext(t *testing.T) {
 	b := &fakeFetcher{pages: map[string]Page[int]{
-		"":   {Items: []int{1, 2}, Next: "p2"},
+		"":   {Items: []int{1, 2}, NextCursor: "p2"},
 		"p2": {Items: []int{3}},
 	}}
 	for item, err := range paginate(context.Background(), b.fetch) {
@@ -109,7 +109,7 @@ func TestPaginate_WhenBreakOnLastItemOfFirstPage_DoesNotFetchNext(t *testing.T) 
 func TestPaginate_WhenErrorOnSecondPage_YieldsOnceAndStops(t *testing.T) {
 	failure := errors.New("test failure")
 	b := &fakeFetcher{
-		pages: map[string]Page[int]{"": {Items: []int{1}, Next: "p2"}},
+		pages: map[string]Page[int]{"": {Items: []int{1}, NextCursor: "p2"}},
 		errAt: "p2",
 		err:   failure,
 	}
@@ -138,8 +138,8 @@ func TestPaginate_WhenRepeatedCursor_ReturnsErrRepeatedCursor(t *testing.T) {
 		{
 			name: "page pointing to itself yields no items",
 			pages: map[string]Page[int]{
-				"":   {Items: []int{1}, Next: "p2"},
-				"p2": {Items: []int{2}, Next: "p2"},
+				"":   {Items: []int{1}, NextCursor: "p2"},
+				"p2": {Items: []int{2}, NextCursor: "p2"},
 			},
 			want:  2,
 			items: []int{1},
@@ -147,9 +147,9 @@ func TestPaginate_WhenRepeatedCursor_ReturnsErrRepeatedCursor(t *testing.T) {
 		{
 			name: "cycle A, B, A yields the new items of B and does not fetch again",
 			pages: map[string]Page[int]{
-				"":  {Items: []int{1}, Next: "a"},
-				"a": {Items: []int{2}, Next: "b"},
-				"b": {Items: []int{3}, Next: "a"},
+				"":  {Items: []int{1}, NextCursor: "a"},
+				"a": {Items: []int{2}, NextCursor: "b"},
+				"b": {Items: []int{3}, NextCursor: "a"},
 			},
 			want:  3,
 			items: []int{1, 2, 3},
@@ -157,10 +157,10 @@ func TestPaginate_WhenRepeatedCursor_ReturnsErrRepeatedCursor(t *testing.T) {
 		{
 			name: "longer cycle C, D, E, C yields the items of E",
 			pages: map[string]Page[int]{
-				"":  {Items: []int{1}, Next: "c"},
-				"c": {Items: []int{2}, Next: "d"},
-				"d": {Items: []int{3}, Next: "e"},
-				"e": {Items: []int{4}, Next: "c"},
+				"":  {Items: []int{1}, NextCursor: "c"},
+				"c": {Items: []int{2}, NextCursor: "d"},
+				"d": {Items: []int{3}, NextCursor: "e"},
+				"e": {Items: []int{4}, NextCursor: "c"},
 			},
 			want:  4,
 			items: []int{1, 2, 3, 4},
@@ -195,7 +195,7 @@ func TestPaginate_WhenContextCanceledBetweenPages_ReturnsContextError(t *testing
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	b := &fakeFetcher{pages: map[string]Page[int]{
-		"":   {Items: []int{1}, Next: "p2"},
+		"":   {Items: []int{1}, NextCursor: "p2"},
 		"p2": {Items: []int{2}},
 	}}
 	b.onFetch = func(string) { cancel() }

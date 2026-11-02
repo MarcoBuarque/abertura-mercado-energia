@@ -56,43 +56,43 @@ func ParseYearMonth(s string) (YearMonth, error) {
 }
 
 // IsZero reports whether the month is absent.
-func (m YearMonth) IsZero() bool {
-	return m == YearMonth{}
+func (ym YearMonth) IsZero() bool {
+	return ym == YearMonth{}
 }
 
 // valid reports whether the month has a year greater than zero and a month
 // from 1 to 12. A YearMonth built by hand may not, and would reach the API as
 // "2027-00" or "2027-13".
-func (m YearMonth) valid() bool {
-	return m.Year > 0 && m.Month >= time.January && m.Month <= time.December
+func (ym YearMonth) valid() bool {
+	return ym.Year > 0 && ym.Month >= time.January && ym.Month <= time.December
 }
 
 // String returns the month as "2026-12", the format accepted when sending. An
 // absent month yields empty text.
-func (m YearMonth) String() string {
-	if m.IsZero() {
+func (ym YearMonth) String() string {
+	if ym.IsZero() {
 		return ""
 	}
-	return fmt.Sprintf("%04d-%02d", m.Year, int(m.Month))
+	return fmt.Sprintf("%04d-%02d", ym.Year, int(ym.Month))
 }
 
 // MarshalText implements [encoding.TextMarshaler] with the same text as
 // [YearMonth.String].
-func (m YearMonth) MarshalText() ([]byte, error) {
-	return []byte(m.String()), nil
+func (ym YearMonth) MarshalText() ([]byte, error) {
+	return []byte(ym.String()), nil
 }
 
 // UnmarshalText implements [encoding.TextUnmarshaler] with [ParseYearMonth].
 // Empty text leaves the month absent.
-func (m *YearMonth) UnmarshalText(text []byte) error {
+func (ym *YearMonth) UnmarshalText(text []byte) error {
 	if len(strings.TrimSpace(string(text))) == 0 {
-		*m = YearMonth{}
+		*ym = YearMonth{}
 		return nil
 	}
 	v, err := ParseYearMonth(string(text))
 	if err != nil {
 		return err
 	}
-	*m = v
+	*ym = v
 	return nil
 }

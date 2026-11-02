@@ -43,6 +43,9 @@ var portugueseWords = func() map[string]bool {
 		confianca verificado exemplo descricao titulo detalhe resumo mascara oculto vazio
 		vazia igual iguais diferente entrada saida ilegivel transporte interno recusa
 		desejado troca fornecimento ate apos com para por uma umas
+		uc de em ja tem atualizada atualizado metodo rota modelo sentinela limpar mensagem
+		operacao decisao busca grupo geral duracao dormir aceito agora vence sufixo
+		renovavel dados larga demais contrato teste testes
 	`)
 	m := make(map[string]bool, len(list))
 	for _, w := range list {
@@ -102,6 +105,41 @@ func parseSources(t *testing.T, includeTests bool) (*token.FileSet, map[string]*
 		parsed[path] = f
 	}
 	return fset, parsed
+}
+
+// portugueseWord reports whether a CamelCase segment is a listed Portuguese
+// word, also in its plural forms (agentes, varejistas, solicitacoes).
+func portugueseWord(seg string) (string, bool) {
+	w := strings.ToLower(seg)
+	candidates := []string{w}
+	if strings.HasSuffix(w, "oes") {
+		candidates = append(candidates, strings.TrimSuffix(w, "oes")+"ao")
+	}
+	if strings.HasSuffix(w, "es") {
+		candidates = append(candidates, strings.TrimSuffix(w, "es"))
+	}
+	if strings.HasSuffix(w, "s") {
+		candidates = append(candidates, strings.TrimSuffix(w, "s"))
+	}
+	for _, c := range candidates {
+		if portugueseWords[c] {
+			return c, true
+		}
+	}
+	return "", false
+}
+
+// portugueseFunctionWords are words that only occur in Portuguese prose; one
+// of them in a comment means the comment was not written in English.
+//
+//nolint:misspell // Portuguese words on purpose
+var portugueseFunctionWords = map[string]bool{
+	"não": true, "para": true, "uma": true, "são": true, "também": true, "então": true,
+	"porque": true, "até": true, "após": true, "ainda": true, "mês": true, "meses": true,
+	"isso": true, "isto": true, "está": true, "estão": true, "pelo": true, "pela": true,
+	"dos": true, "das": true, "aos": true, "às": true, "você": true, "quando": true,
+	"sempre": true, "nunca": true, "apenas": true, "cada": true, "entre": true, "sobre": true,
+	"que": true, "por": true, "mais": true, "como": true, "devolve": true, "campo": true,
 }
 
 // segments splits an identifier into its CamelCase words: "ParseYearMonth"
@@ -201,8 +239,8 @@ func TestNaming_WhenIdentifierHasPortugueseWord_Fails(t *testing.T) {
 	for _, f := range files {
 		for _, id := range declaredIdents(f) {
 			for _, seg := range segments(id.Name) {
-				if portugueseWords[strings.ToLower(seg)] {
-					t.Errorf("%s: identifier %q contains the Portuguese word %q", fset.Position(id.Pos()), id.Name, seg)
+				if w, ok := portugueseWord(seg); ok {
+					t.Errorf("%s: identifier %q contains the Portuguese word %q", fset.Position(id.Pos()), id.Name, w)
 				}
 			}
 		}
@@ -322,5 +360,37 @@ func TestNaming_WhenExportedNameLacksDoc_Fails(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+func TestNaming_WhenCommentIsPortuguese_Fails(t *testing.T) {
+	fset, files := parseSources(t, true)
+	for _, f := range files {
+		for _, group := range f.Comments {
+			text := strings.ReplaceAll(group.Text(), allowedNonASCII, "")
+			for _, word := range strings.FieldsFunc(text, func(r rune) bool { return !unicode.IsLetter(r) }) {
+				if portugueseFunctionWords[strings.ToLower(word)] {
+					t.Errorf("%s: comment contains the Portuguese word %q; comments are English", fset.Position(group.Pos()), word)
+					break
+				}
+			}
+		}
+	}
+}
+
+// TestModulePath_WhenRead_EndsWithThePackageName guards the import path: the
+// last element must be the package name, so the import needs no alias and no
+// /go suffix ever comes back.
+func TestModulePath_WhenRead_EndsWithThePackageName(t *testing.T) {
+	data, err := os.ReadFile("go.mod")
+	if err != nil {
+		t.Fatalf("read go.mod: %v", err)
+	}
+	const want = "module github.com/MarcoBuarque/abertura-mercado-energia/abertura\n"
+	if !strings.HasPrefix(string(data), want) {
+		t.Fatalf("go.mod must start with %q", strings.TrimSpace(want))
+	}
+	if filepath.Base(strings.TrimSpace(strings.TrimPrefix(want, "module "))) != "abertura" {
+		t.Fatal("the module path must end with the package name")
 	}
 }

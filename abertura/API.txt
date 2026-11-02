@@ -15,6 +15,7 @@ var (
 var ErrInvalidArgument error = &sentinel{text: "abertura: invalid argument"}
 var ErrRepeatedCursor = errors.New("abertura: the API returned a repeated pagination cursor")
 func NewClient(env Environment, opts ...Option) (*Client, error)
+func NewDocument(t DocumentType, number string) (Document, error)
 func ParseYearMonth(s string) (YearMonth, error)
 type APIError struct {
 	Operation string
@@ -41,6 +42,16 @@ type Client struct {
 func (c *Client) Do(ctx context.Context, method, path string, body, out any, opts ...CallOption) error
 func (c *Client) GoString() string
 func (c *Client) String() string
+type CreateKey struct {
+	ConsumerUnit string
+	Distributor int
+	Month YearMonth
+	Profile int
+}
+func (k CreateKey) Format(f fmt.State, _ rune)
+func (k CreateKey) GoString() string
+func (k CreateKey) LogValue() slog.Value
+func (k CreateKey) String() string
 type Decimal struct {
 }
 func (d Decimal) Float64() float64
@@ -67,9 +78,10 @@ const (
 	DocumentTypeCNPJ DocumentType = "CNPJ"
 )
 type EditKey struct {
-	ID      string
+	ID string
 	Desired MigrationEdit
 }
+func (k EditKey) Format(f fmt.State, _ rune)
 func (k EditKey) GoString() string
 func (k EditKey) LogValue() slog.Value
 func (k EditKey) String() string
@@ -85,11 +97,12 @@ type Measurement struct {
 	ID string
 	ConsumerUnit string
 	Distributor int
-	Day, Reference, UpdatedAt time.Time
+	ReadingDate, ReferenceDate, UpdatedAt time.Time
 	Consumption Decimal
 	ConsumptionType string
 	Status MeasurementStatus
 }
+func (m Measurement) Format(f fmt.State, _ rune)
 func (m Measurement) GoString() string
 func (m Measurement) LogValue() slog.Value
 func (m Measurement) String() string
@@ -99,13 +112,14 @@ type MeasurementFilter struct {
 	From, To time.Time
 	Status MeasurementStatus
 }
+func (f MeasurementFilter) Format(s fmt.State, _ rune)
 func (f MeasurementFilter) GoString() string
 func (f MeasurementFilter) LogValue() slog.Value
 func (f MeasurementFilter) String() string
 type MeasurementStatus string
 const (
-	MeasurementStatusConsistent MeasurementStatus = "CONSISTIDA"
-	MeasurementStatusRejected   MeasurementStatus = "REJEITADA"
+	MeasurementStatusValidated MeasurementStatus = "CONSISTIDA"
+	MeasurementStatusRejected  MeasurementStatus = "REJEITADA"
 )
 func (s MeasurementStatus) Known() bool
 type Measurements struct {
@@ -128,6 +142,7 @@ type Migration struct {
 	Justification, Comment, ConnectionType string
 	CERSigningID, SIGAProcessIndicator string
 }
+func (m Migration) Format(f fmt.State, _ rune)
 func (m Migration) GoString() string
 func (m Migration) LogValue() slog.Value
 func (m Migration) String() string
@@ -138,6 +153,7 @@ type MigrationEdit struct {
 	Email string
 	Status MigrationStatus
 }
+func (e MigrationEdit) Format(f fmt.State, _ rune)
 func (e MigrationEdit) GoString() string
 func (e MigrationEdit) LogValue() slog.Value
 func (e MigrationEdit) String() string
@@ -147,18 +163,10 @@ type MigrationFilter struct {
 	Status MigrationStatus
 	Profile int
 }
+func (f MigrationFilter) Format(s fmt.State, _ rune)
 func (f MigrationFilter) GoString() string
 func (f MigrationFilter) LogValue() slog.Value
 func (f MigrationFilter) String() string
-type MigrationKey struct {
-	ConsumerUnit string
-	Distributor  int
-	Month YearMonth
-	Profile int
-}
-func (k MigrationKey) GoString() string
-func (k MigrationKey) LogValue() slog.Value
-func (k MigrationKey) String() string
 type MigrationRequest struct {
 	ConsumerUnit string
 	Distributor int
@@ -168,9 +176,10 @@ type MigrationRequest struct {
 	TerminationNoticeDate time.Time
 	Comment string
 }
-func (n MigrationRequest) GoString() string
-func (n MigrationRequest) LogValue() slog.Value
-func (n MigrationRequest) String() string
+func (r MigrationRequest) Format(f fmt.State, _ rune)
+func (r MigrationRequest) GoString() string
+func (r MigrationRequest) LogValue() slog.Value
+func (r MigrationRequest) String() string
 type MigrationStatus string
 const (
 	MigrationStatusCreated                   MigrationStatus = "CRIADA"
@@ -184,10 +193,10 @@ const (
 func (s MigrationStatus) Known() bool
 type Migrations struct {
 }
-func (m *Migrations) CheckCreated(ctx context.Context, k MigrationKey, opts ...CallOption) ([]Migration, error)
 func (m *Migrations) CheckEdited(ctx context.Context, k EditKey, opts ...CallOption) (Migration, bool, error)
-func (m *Migrations) Create(ctx context.Context, n MigrationRequest, opts ...CallOption) (Migration, error)
+func (m *Migrations) Create(ctx context.Context, req MigrationRequest, opts ...CallOption) (Migration, error)
 func (m *Migrations) Edit(ctx context.Context, id string, change func(*MigrationEdit), opts ...CallOption) (Migration, error)
+func (m *Migrations) FindCreated(ctx context.Context, k CreateKey, opts ...CallOption) ([]Migration, error)
 func (m *Migrations) Get(ctx context.Context, id string, opts ...CallOption) (Migration, error)
 func (m *Migrations) List(ctx context.Context, f MigrationFilter, opts ...CallOption) iter.Seq2[Migration, error]
 func (m *Migrations) ListPage(ctx context.Context, f MigrationFilter, cursor string, opts ...CallOption) (Page[Migration], error)
@@ -205,8 +214,9 @@ func WithTokenSource(ts oauth2.TokenSource) Option
 func WithUserAgent(suffix string) Option
 type Page[T any] struct {
 	Items []T
-	Next string
+	NextCursor string
 }
+func (p Page[T]) LogValue() slog.Value
 type Problem struct {
 	Type string
 	Title string
@@ -223,9 +233,12 @@ func ProblemFrom(err error) Problem
 func (p Problem) MarshalJSON() ([]byte, error)
 type RateLimit struct {
 	Requests int
-	Per      time.Duration
+	Per time.Duration
 }
-type RateLimits struct{ Default, Measurements RateLimit }
+type RateLimits struct {
+	Default RateLimit
+	Measurements RateLimit
+}
 type TimeoutOption struct {
 }
 func WithTimeout(d time.Duration) TimeoutOption
@@ -243,12 +256,12 @@ type YearMonth struct {
 	Month time.Month
 }
 func NewYearMonth(year int, month time.Month) YearMonth
-func (m YearMonth) IsZero() bool
-func (m YearMonth) MarshalText() ([]byte, error)
-func (m YearMonth) String() string
-func (m *YearMonth) UnmarshalText(text []byte) error
+func (ym YearMonth) IsZero() bool
+func (ym YearMonth) MarshalText() ([]byte, error)
+func (ym YearMonth) String() string
+func (ym *YearMonth) UnmarshalText(text []byte) error
 type YesNo string
 const (
-	Yes YesNo = "SIM"
-	No  YesNo = "NAO"
+	YesNoYes YesNo = "SIM"
+	YesNoNo  YesNo = "NAO"
 )

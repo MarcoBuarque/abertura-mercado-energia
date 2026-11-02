@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 
-	abertura "github.com/MarcoBuarque/abertura-mercado-energia/abertura"
+	"github.com/MarcoBuarque/abertura-mercado-energia/abertura"
 )
 
 // ProblemFrom accepts the error directly or wrapped, and errors.Is keeps

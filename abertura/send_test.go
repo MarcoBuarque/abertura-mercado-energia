@@ -141,7 +141,7 @@ func readOp() operation {
 	}
 }
 
-var testKey = MigrationKey{ConsumerUnit: fakeConsumerUnit, Distributor: 900003}
+var testKey = CreateKey{ConsumerUnit: fakeConsumerUnit, Distributor: 900003}
 
 func writeOp(httpMethod string) operation {
 	return operation{

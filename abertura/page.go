@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"iter"
+	"log/slog"
 )
 
 // ErrRepeatedCursor indicates that the API returned, as the next page, a
@@ -16,8 +17,16 @@ var ErrRepeatedCursor = errors.New("abertura: the API returned a repeated pagina
 type Page[T any] struct {
 	// Items are the items on the page.
 	Items []T
-	// Next is the cursor of the following page; empty means there are no more.
-	Next string
+	// NextCursor is the cursor of the following page; empty means there are no more.
+	NextCursor string
+}
+
+// LogValue implements [slog.LogValuer] without the items: a page in a log shows
+// how many items it has and whether a next cursor exists. The items may carry
+// personal data and, through the slog JSON handler, would go through
+// json.Marshal in clear text.
+func (p Page[T]) LogValue() slog.Value {
+	return slog.GroupValue(slog.Int("items", len(p.Items)), slog.Bool("has_next", p.NextCursor != ""))
 }
 
 // paginate walks all pages by calling fetch and yields the items in order.
@@ -46,9 +55,9 @@ func paginate[T any](ctx context.Context, fetch func(ctx context.Context, cursor
 				yield(zero, err)
 				return
 			}
-			_, seen := used[page.Next]
-			repeated := page.Next != "" && seen
-			if repeated && page.Next == cursor {
+			_, seen := used[page.NextCursor]
+			repeated := page.NextCursor != "" && seen
+			if repeated && page.NextCursor == cursor {
 				yield(zero, ErrRepeatedCursor)
 				return
 			}
@@ -61,11 +70,11 @@ func paginate[T any](ctx context.Context, fetch func(ctx context.Context, cursor
 				yield(zero, ErrRepeatedCursor)
 				return
 			}
-			if page.Next == "" {
+			if page.NextCursor == "" {
 				return
 			}
-			used[page.Next] = struct{}{}
-			cursor = page.Next
+			used[page.NextCursor] = struct{}{}
+			cursor = page.NextCursor
 		}
 	}
 }

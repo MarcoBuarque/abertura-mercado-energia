@@ -54,7 +54,7 @@ func (m *Measurements) ListPage(ctx context.Context, f MeasurementFilter, cursor
 	if err := decodeOutput(body, &list); err != nil {
 		return Page[Measurement]{}, fmt.Errorf("%s: %w", id, err)
 	}
-	page := Page[Measurement]{Items: make([]Measurement, 0, len(list.Medicoes)), Next: list.IndexProximaPagina}
+	page := Page[Measurement]{Items: make([]Measurement, 0, len(list.Medicoes)), NextCursor: list.IndexProximaPagina}
 	for _, g := range list.Medicoes {
 		meas, err := measurementFrom(g)
 		if err != nil {

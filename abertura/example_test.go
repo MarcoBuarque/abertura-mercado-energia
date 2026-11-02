@@ -10,7 +10,7 @@ import (
 	"os"
 	"time"
 
-	abertura "github.com/MarcoBuarque/abertura-mercado-energia/abertura"
+	"github.com/MarcoBuarque/abertura-mercado-energia/abertura"
 )
 
 // exampleEnvironment starts a local server that mimics the API with the
@@ -108,7 +108,7 @@ func Example_listMigrations() {
 
 // Create does not retry the write. If the response is lost, the error is an
 // *UncertainResultError with the natural key of the migration, and
-// CheckCreated tells whether it was actually created.
+// FindCreated tells whether it was actually created.
 func ExampleMigrations_Create_uncertainResult() {
 	env, closeServer := exampleEnvironment()
 	defer closeServer()
@@ -129,13 +129,13 @@ func ExampleMigrations_Create_uncertainResult() {
 	}
 	fmt.Println("uncertain result in", uncertain.Operation)
 
-	key, ok := uncertain.Key.(abertura.MigrationKey)
+	key, ok := uncertain.Key.(abertura.CreateKey)
 	if !ok {
 		log.Fatalf("unexpected key: %T", uncertain.Key)
 	}
-	found, err := c.Migrations.CheckCreated(ctx, key)
+	found, err := c.Migrations.FindCreated(ctx, key)
 	if err != nil {
-		log.Fatalf("CheckCreated: %v", err)
+		log.Fatalf("FindCreated: %v", err)
 	}
 	fmt.Println("migrations found:", len(found))
 	// Output:
@@ -160,9 +160,9 @@ func ExampleMeasurements_ListPage() {
 		log.Fatalf("ListPage: %v", err)
 	}
 	for _, m := range page.Items {
-		fmt.Println(m.Day.Format("2006-01-02"), m.Consumption, m.Status)
+		fmt.Println(m.ReadingDate.Format("2006-01-02"), m.Consumption, m.Status)
 	}
-	fmt.Println("next page:", page.Next)
+	fmt.Println("next page:", page.NextCursor)
 	// Output:
 	// 2027-02-01 12.345 CONSISTIDA
 	// next page: fake-cursor-2

@@ -137,12 +137,12 @@ func TestLog_WhenMethodsRun_HasNoPersonalData(t *testing.T) {
 				if !errors.As(err, &inc) {
 					t.Fatalf("Create: %v", err)
 				}
-				key, ok := inc.Key.(MigrationKey)
+				key, ok := inc.Key.(CreateKey)
 				if !ok {
 					t.Fatalf("key = %#v", inc.Key)
 				}
-				if _, err := c.Migrations.CheckCreated(ctx, key); err != nil {
-					t.Fatalf("CheckCreated: %v", err)
+				if _, err := c.Migrations.FindCreated(ctx, key); err != nil {
+					t.Fatalf("FindCreated: %v", err)
 				}
 				logger.Warn("uncertain", "key", inc.Key.String(), "error", inc)
 			},
@@ -220,8 +220,8 @@ func TestKeysAndErrors_WhenFormatted_HaveNoPersonalData(t *testing.T) {
 
 	body := []byte(`{"error":"ERR_X","message":"m","consumerUnit":"000000000000001","email":"contato@example.org"}`)
 	apiErr := &APIError{Operation: "createMigration", StatusCode: 502, rawBody: body, httpMethod: http.MethodPost}
-	migKey := MigrationKey{ConsumerUnit: fakeConsumerUnit, Distributor: 999001, Month: YearMonth{}, Profile: 1}
-	editKey := EditKey{ID: testMigrationID, Desired: MigrationEdit{Email: "fresh@example.org", Profile: 1}}
+	migKey := CreateKey{ConsumerUnit: fakeConsumerUnit, Distributor: 999001, Month: YearMonth{}, Profile: 1}
+	editKey := EditKey{ID: testMigrationID, Desired: MigrationEdit{Email: "fresh@example.org", Profile: 1, Document: CNPJ("11111111000111")}}
 	uncertain := &UncertainResultError{Operation: "createMigration", Key: migKey, Err: apiErr}
 	uncertainEdit := &UncertainResultError{Operation: "editMigration", Key: editKey, Err: apiErr}
 
@@ -229,8 +229,8 @@ func TestKeysAndErrors_WhenFormatted_HaveNoPersonalData(t *testing.T) {
 		name string
 		v    any
 	}{
-		{"MigrationKey", migKey},
-		{"MigrationKey pointer", &migKey},
+		{"CreateKey", migKey},
+		{"CreateKey pointer", &migKey},
 		{"EditKey", editKey},
 		{"EditKey pointer", &editKey},
 		{"APIError", apiErr},
@@ -244,6 +244,8 @@ func TestKeysAndErrors_WhenFormatted_HaveNoPersonalData(t *testing.T) {
 			outputs := map[string]string{
 				"%v": fmt.Sprintf("%v", tc.v), "%+v": fmt.Sprintf("%+v", tc.v),
 				"%#v": fmt.Sprintf("%#v", tc.v), "%s": fmt.Sprintf("%s", tc.v),
+				"%q": fmt.Sprintf("%q", tc.v), "%d": fmt.Sprintf("%d", tc.v),
+				"%t": fmt.Sprintf("%t", tc.v), "%x": fmt.Sprintf("%x", tc.v),
 			}
 			var bj, bt bytes.Buffer
 			slog.New(slog.NewJSONHandler(&bj, nil)).Info("record", "value", tc.v)

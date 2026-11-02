@@ -26,12 +26,21 @@ type Environment struct {
 }
 
 // RateLimits are the limits of the local rate limiter, per process.
-type RateLimits struct{ Default, Measurements RateLimit }
+type RateLimits struct {
+	// Default applies to every call. The zero value disables the limiter.
+	Default RateLimit
+	// Measurements applies to the measurement listing. The zero value makes
+	// measurements share the Default bucket (as in the sandbox); set it to
+	// give them a bucket of their own (as in production).
+	Measurements RateLimit
+}
 
 // RateLimit allows Requests requests every Per. The zero value disables it.
 type RateLimit struct {
+	// Requests is the number of requests allowed in each Per window.
 	Requests int
-	Per      time.Duration
+	// Per is the length of the window.
+	Per time.Duration
 }
 
 // Sandbox returns the sandbox environment described in the public

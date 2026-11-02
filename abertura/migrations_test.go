@@ -239,8 +239,8 @@ func TestMigrationsListPage_WhenCursor_ReturnsTheNext(t *testing.T) {
 			if err != nil {
 				t.Fatalf("ListPage: %v", err)
 			}
-			if len(page.Items) != tc.wantItems || page.Next != tc.wantNext {
-				t.Errorf("page = %d items, next %q; want %d and %q", len(page.Items), page.Next, tc.wantItems, tc.wantNext)
+			if len(page.Items) != tc.wantItems || page.NextCursor != tc.wantNext {
+				t.Errorf("page = %d items, next %q; want %d and %q", len(page.Items), page.NextCursor, tc.wantItems, tc.wantNext)
 			}
 			reqs := calls(srv, http.MethodGet, listTemplate)
 			if got := reqs[0].URL.Query().Get("indexProximaPagina"); got != tc.cursor {
@@ -417,7 +417,7 @@ func TestMigrationsCreate_WhenFailure(t *testing.T) {
 			if !errors.As(err, &uncertain) {
 				t.Fatalf("err = %v, want *UncertainResultError", err)
 			}
-			want := MigrationKey{ConsumerUnit: fakeConsumerUnit, Distributor: 900001, Month: NewYearMonth(2027, time.March), Profile: fakeProfile}
+			want := CreateKey{ConsumerUnit: fakeConsumerUnit, Distributor: 900001, Month: NewYearMonth(2027, time.March), Profile: fakeProfile}
 			if uncertain.Operation != "createMigration" || uncertain.Key != want {
 				t.Errorf("uncertain = %q %v, want createMigration %v", uncertain.Operation, uncertain.Key, want)
 			}
@@ -430,34 +430,34 @@ func TestMigrationsCheckCreated(t *testing.T) {
 	tests := []struct {
 		name    string
 		fixture string
-		key     MigrationKey
+		key     CreateKey
 		wantIDs []string // newest first
 	}{
 		{
 			name: "filters by distributor and sorts newest first", fixture: "migrations_check.json",
-			key:     MigrationKey{ConsumerUnit: fakeConsumerUnit, Distributor: 900001, Month: NewYearMonth(2027, time.March)},
+			key:     CreateKey{ConsumerUnit: fakeConsumerUnit, Distributor: 900001, Month: NewYearMonth(2027, time.March)},
 			wantIDs: []string{"00000000-0000-4000-8000-000000000013", "00000000-0000-4000-8000-000000000011"},
 		},
 		{
 			name: "distributor without migration gives empty", fixture: "migrations_check.json",
-			key: MigrationKey{ConsumerUnit: fakeConsumerUnit, Distributor: 900042, Month: NewYearMonth(2027, time.March)},
+			key: CreateKey{ConsumerUnit: fakeConsumerUnit, Distributor: 900042, Month: NewYearMonth(2027, time.March)},
 		},
 		{
 			name: "empty list gives empty", fixture: "migrations_empty.json",
-			key: MigrationKey{ConsumerUnit: fakeConsumerUnit, Distributor: 900001, Month: NewYearMonth(2027, time.March)},
+			key: CreateKey{ConsumerUnit: fakeConsumerUnit, Distributor: 900001, Month: NewYearMonth(2027, time.March)},
 		},
 		{
 			name: "key Profile overrides the client one", fixture: "migrations_empty.json",
-			key: MigrationKey{ConsumerUnit: fakeConsumerUnit, Distributor: 900001, Month: NewYearMonth(2027, time.March), Profile: 900077},
+			key: CreateKey{ConsumerUnit: fakeConsumerUnit, Distributor: 900001, Month: NewYearMonth(2027, time.March), Profile: 900077},
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			c, srv := specClient(t, []testserver.Route{stubRoute(http.MethodGet, listTemplate, fixtureResponse(200, tc.fixture))})
-			got, err := c.Migrations.CheckCreated(context.Background(), tc.key)
+			got, err := c.Migrations.FindCreated(context.Background(), tc.key)
 			if err != nil {
-				t.Fatalf("CheckCreated: %v", err)
+				t.Fatalf("FindCreated: %v", err)
 			}
 			if got == nil {
 				t.Error("the empty result must be a non-nil slice")
@@ -633,7 +633,7 @@ func TestMigrationsCheckEdited_WhenMissing_ReturnsErrNotFound(t *testing.T) {
 
 // The natural keys must satisfy the interface; the compiler checks it.
 var (
-	_ NaturalKey = MigrationKey{}
+	_ NaturalKey = CreateKey{}
 	_ NaturalKey = EditKey{}
 )
 

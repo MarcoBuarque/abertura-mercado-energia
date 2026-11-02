@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	abertura "github.com/MarcoBuarque/abertura-mercado-energia/abertura"
+	"github.com/MarcoBuarque/abertura-mercado-energia/abertura"
 )
 
 // Script (go test -tags sandbox ./contract/... -count=1 -v):
@@ -43,13 +43,13 @@ import (
 // month) until the API accepts; the following steps reuse the accepted span.
 // Each response gets, besides the field names, the format mask of the
 // temporal fields (digit = 9, letter = A), never the value. Write (creates and
-// changes records in the sandbox): Create, CheckCreated, Edit, CheckEdited and
+// changes records in the sandbox): Create, FindCreated, Edit, CheckEdited and
 // the partial PUT through Do. In the write round, ErrFieldValidation on
 // Create, a check that finds no migration (after searching the consumer unit
 // over a wide month span when Create returned ErrMigrationAlreadyRequested)
 // and the lack of an active migration (not CANCELADA, ENCERRADA, EXPIRADA or
 // REPROVADA) become a finding plus t.Skip (a divergence to record, not an SDK
-// failure). An uncertain result on Create is checked with CheckCreated and, if
+// failure). An uncertain result on Create is checked with FindCreated and, if
 // the migration exists, the round goes on; any other error fails.
 
 type config struct {
@@ -284,7 +284,7 @@ func TestContract(t *testing.T) {
 			}
 		}
 		finding(t, "one-month list: %d items, %d with a reference month outside the YYYY-MM filter (0 with items = the filter holds; D2), cursor present: %v",
-			len(pag.Items), outside, pag.Next != "")
+			len(pag.Items), outside, pag.NextCursor != "")
 		if len(pag.Items) > 0 {
 			first = pag.Items[0]
 		}
@@ -354,7 +354,7 @@ func TestContract(t *testing.T) {
 			finding(t, "measurements: %s", describe(err))
 			t.Fatalf("ListPage: %s", describe(err))
 		}
-		finding(t, "measurements: %d items, cursor present: %v", len(pag.Items), pag.Next != "")
+		finding(t, "measurements: %d items, cursor present: %v", len(pag.Items), pag.NextCursor != "")
 	})
 
 	step("read/up to 3 pages over a wide span", func(t *testing.T) {
@@ -372,15 +372,15 @@ func TestContract(t *testing.T) {
 				}
 			}
 			seen += len(pag.Items)
-			if pag.Next == "" {
+			if pag.NextCursor == "" {
 				finding(t, "pagination: %d page(s), %d items, cursor did NOT appear on the last one", pageNo, seen)
 				return
 			}
-			if pag.Next == cursor {
+			if pag.NextCursor == cursor {
 				finding(t, "pagination: repeated cursor on page %d (ErrRepeatedCursor protects List)", pageNo)
 				return
 			}
-			cursor = pag.Next
+			cursor = pag.NextCursor
 		}
 		finding(t, "pagination: the cursor appeared and led to 3 pages, %d items", seen)
 	})
@@ -391,8 +391,8 @@ func TestContract(t *testing.T) {
 		})
 	} else {
 		var id string
-		step("write/Create and CheckCreated", func(t *testing.T) {
-			key := abertura.MigrationKey{ConsumerUnit: cfg.consumerUnit, Distributor: cfg.distributor, Month: nextMonth(month)}
+		step("write/Create and FindCreated", func(t *testing.T) {
+			key := abertura.CreateKey{ConsumerUnit: cfg.consumerUnit, Distributor: cfg.distributor, Month: nextMonth(month)}
 			_, err := c.Migrations.Create(ctx, abertura.MigrationRequest{
 				ConsumerUnit: cfg.consumerUnit, Distributor: cfg.distributor,
 				Document: cfg.document, Email: "contract@example.org",
@@ -413,20 +413,20 @@ func TestContract(t *testing.T) {
 				t.Skip("Create refused by field validation (finding recorded)")
 			case errors.As(err, &uncertain):
 				// The result is uncertain: check below, as the catalog says.
-				finding(t, "Create: uncertain result (%s); checking with CheckCreated", describe(err))
+				finding(t, "Create: uncertain result (%s); checking with FindCreated", describe(err))
 			default:
 				finding(t, "Create: %s", describe(err))
 				t.Fatalf("Create: %s", describe(err))
 			}
-			found, err := c.Migrations.CheckCreated(ctx, key)
+			found, err := c.Migrations.FindCreated(ctx, key)
 			if err != nil {
-				t.Fatalf("CheckCreated: %s", describe(err))
+				t.Fatalf("FindCreated: %s", describe(err))
 			}
-			finding(t, "CheckCreated: %d migration(s) for the key", len(found))
+			finding(t, "FindCreated: %d migration(s) for the key", len(found))
 			if len(found) == 0 && requested {
 				// With ErrMigrationAlreadyRequested the active migration may be in
 				// another month or profile: search the consumer unit over a wide month span.
-				finding(t, "CheckCreated: empty for the key month; searching the consumer unit over a wide month span")
+				finding(t, "FindCreated: empty for the key month; searching the consumer unit over a wide month span")
 				fx, err := wideSpan(t)
 				if err != nil {
 					t.Fatalf("wide span: %s", describe(err))

@@ -21,8 +21,9 @@ const ProblemContentType = "application/problem+json"
 // (out/docs/errors/index.html, with one id per slug) and published on GitHub
 // Pages, next to the Redoc description, by the release-openapi workflow at
 // every final openapi/vX.Y.Z tag (-rc.N pre-releases do not publish) and only
-// while the repository is public. Until the first publication the address does
-// not respond, and the catalog can be read in docs/errors.md.
+// while the repository is public. The /errors page responds once openapi/v0.2.0
+// is published; until then the catalog can be read in docs/errors.md and the
+// v0.1 page at /erros stays live.
 const ErrorCatalogURL = "https://marcobuarque.github.io/abertura-mercado-energia/errors"
 
 // Problem is an SDK error in the RFC 9457 format (Problem Details for HTTP
@@ -58,8 +59,8 @@ type Problem struct {
 	// Detail explains this occurrence with catalog text and the operation
 	// name. It never carries personal data.
 	Detail string
-	// Instance identifies this occurrence. It is empty in v0.1 and omitted from
-	// the JSON.
+	// Instance identifies this occurrence. It is always empty in this version
+	// and omitted from the JSON.
 	Instance string
 
 	// Code is the API code ("ERR_MIGRACAO_SOLICITADA"), if there is one and it
@@ -76,7 +77,7 @@ type Problem struct {
 	// gateway throttled.
 	Retryable bool
 	// Uncertain marks a write with an uncertain result: check the state
-	// (CheckCreated, CheckEdited) before retrying.
+	// (FindCreated, CheckEdited) before retrying.
 	Uncertain bool
 }
 

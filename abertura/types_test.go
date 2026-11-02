@@ -41,7 +41,7 @@ func TestTypes_WhenMeasurementStatus_ReportsKnown(t *testing.T) {
 		status MeasurementStatus
 		want   bool
 	}{
-		{"consistent is known", MeasurementStatusConsistent, true},
+		{"consistent is known", MeasurementStatusValidated, true},
 		{"rejected is known", MeasurementStatusRejected, true},
 		{"new value is not known", MeasurementStatus("NOVA"), false},
 		{"empty is not known", "", false},
@@ -78,7 +78,7 @@ func TestTypes_WhenLogValue_DoesNotLeakPersonalData(t *testing.T) {
 		ID:           "00000000-0000-0000-0000-000000000002",
 		ConsumerUnit: "000000000000001",
 		Consumption:  consumption,
-		Status:       MeasurementStatusConsistent,
+		Status:       MeasurementStatusValidated,
 	}
 
 	tests := []struct {
@@ -133,7 +133,7 @@ func TestTypes_WhenKeyString_OmitsPersonalData(t *testing.T) {
 	}{
 		{
 			name:           "migration",
-			key:            MigrationKey{ConsumerUnit: "000000000000001", Distributor: 900001, Month: NewYearMonth(2026, time.December), Profile: 900002},
+			key:            CreateKey{ConsumerUnit: "000000000000001", Distributor: 900001, Month: NewYearMonth(2026, time.December), Profile: 900002},
 			want:           "migration consumer_unit=***********0001 distributor=900001 month=2026-12 profile=900002",
 			mustNotContain: []string{"000000000000001", fakeCNPJ},
 		},
@@ -162,7 +162,7 @@ func TestTypes_WhenKeyString_OmitsPersonalData(t *testing.T) {
 
 func TestTypes_WhenNaturalKey_BothImplementIt(t *testing.T) {
 	// Only proves that the method exists; the NaturalKey interface is tested elsewhere.
-	var _ interface{ naturalKey() } = MigrationKey{}
+	var _ interface{ naturalKey() } = CreateKey{}
 	var _ interface{ naturalKey() } = EditKey{}
 }
 

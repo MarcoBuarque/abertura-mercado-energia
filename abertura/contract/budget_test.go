@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	abertura "github.com/MarcoBuarque/abertura-mercado-energia/abertura"
+	"github.com/MarcoBuarque/abertura-mercado-energia/abertura"
 )
 
 // The tests in this file run offline, against a local server: they prove the

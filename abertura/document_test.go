@@ -2,6 +2,7 @@ package abertura
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -133,6 +134,39 @@ func TestDocument_WhenString_MasksAllButLastTwo(t *testing.T) {
 			}
 			if got := tc.doc.IsZero(); got != (tc.want == "") {
 				t.Errorf("IsZero() = %v", got)
+			}
+		})
+	}
+}
+
+func TestNewDocument_WhenTypeKnown_BuildsIt(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		kind    DocumentType
+		number  string
+		want    Document
+		wantErr error
+	}{
+		{name: "cpf with punctuation", kind: DocumentTypeCPF, number: "111.111.111-11", want: CPF("11111111111")},
+		{name: "cnpj", kind: DocumentTypeCNPJ, number: "11111111000111", want: CNPJ("11111111000111")},
+		{name: "unknown type returns ErrInvalidArgument", kind: DocumentType("RG"), number: "1", wantErr: ErrInvalidArgument},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := NewDocument(tc.kind, tc.number)
+			if tc.wantErr != nil {
+				if !errors.Is(err, tc.wantErr) {
+					t.Fatalf("err = %v, want %v", err, tc.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("NewDocument: %v", err)
+			}
+			if got != tc.want {
+				t.Errorf("got %s, want %s", got, tc.want)
 			}
 		})
 	}

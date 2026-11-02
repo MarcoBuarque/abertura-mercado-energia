@@ -2,6 +2,7 @@ package abertura
 
 import (
 	"fmt"
+	"io"
 	"log/slog"
 	"time"
 )
@@ -40,14 +41,14 @@ type MeasurementStatus string
 // Measurement statuses published (see the spec). The public documentation
 // cites both; only CONSISTIDA was seen in the sandbox.
 const (
-	MeasurementStatusConsistent MeasurementStatus = "CONSISTIDA"
-	MeasurementStatusRejected   MeasurementStatus = "REJEITADA"
+	MeasurementStatusValidated MeasurementStatus = "CONSISTIDA"
+	MeasurementStatusRejected  MeasurementStatus = "REJEITADA"
 )
 
 // Known reports whether the status is one of those published in this version
 // of the SDK.
 func (s MeasurementStatus) Known() bool {
-	return s == MeasurementStatusConsistent || s == MeasurementStatusRejected
+	return s == MeasurementStatusValidated || s == MeasurementStatusRejected
 }
 
 // YesNo is a "SIM" or "NAO" field of the API. The set is open; empty means
@@ -56,8 +57,8 @@ type YesNo string
 
 // Values of [YesNo].
 const (
-	Yes YesNo = "SIM"
-	No  YesNo = "NAO"
+	YesNoYes YesNo = "SIM"
+	YesNoNo  YesNo = "NAO"
 )
 
 // Migration is a migration of a consumer unit to the free market, already
@@ -125,6 +126,9 @@ func (m Migration) String() string {
 // GoString makes %#v follow String, without the consumer unit, e-mail or document.
 func (m Migration) GoString() string { return m.String() }
 
+// Format implements [fmt.Formatter]: every verb prints the masked String.
+func (m Migration) Format(f fmt.State, _ rune) { formatMasked(f, m) }
+
 // Measurement is a consumption measurement of a consumer unit.
 //
 // fmt and slog show only the id and the status; the fields remain exported.
@@ -137,9 +141,9 @@ type Measurement struct {
 	ConsumerUnit string
 	// Distributor is the distributor agent code.
 	Distributor int
-	// Day, Reference and UpdatedAt are the reference day, the consumption
+	// ReadingDate, ReferenceDate and UpdatedAt are the reference day, the consumption
 	// reference date and the date of the last update.
-	Day, Reference, UpdatedAt time.Time
+	ReadingDate, ReferenceDate, UpdatedAt time.Time
 	// Consumption is the measured consumption. The API does not declare the unit.
 	Consumption Decimal
 	// ConsumptionType is the reported consumption type.
@@ -166,8 +170,13 @@ func (m Measurement) String() string {
 // GoString makes %#v follow String, without the consumer unit and consumption.
 func (m Measurement) GoString() string { return m.String() }
 
+// Format implements [fmt.Formatter]: every verb prints the masked String.
+func (m Measurement) Format(f fmt.State, _ rune) { formatMasked(f, m) }
+
 // MigrationFilter filters the migration listing. From and To are required;
-// zero in the other fields means no filter.
+// zero in the other fields means no filter. fmt and slog mask the consumer
+// unit; json.Marshal carries it in clear text, so the JSON is for storing,
+// never for logs.
 type MigrationFilter struct {
 	// From and To delimit the range of reference months, and the API requires
 	// both. To must not be earlier than From.
@@ -189,6 +198,9 @@ func (f MigrationFilter) String() string {
 // GoString makes %#v follow String, without the consumer unit.
 func (f MigrationFilter) GoString() string { return f.String() }
 
+// Format implements [fmt.Formatter]: every verb prints the masked String.
+func (f MigrationFilter) Format(s fmt.State, _ rune) { formatMasked(s, f) }
+
 // LogValue implements [slog.LogValuer] without the consumer unit.
 func (f MigrationFilter) LogValue() slog.Value {
 	return slog.GroupValue(
@@ -199,7 +211,9 @@ func (f MigrationFilter) LogValue() slog.Value {
 	)
 }
 
-// MeasurementFilter filters the measurement listing.
+// MeasurementFilter filters the measurement listing. fmt and slog mask the
+// consumer unit; json.Marshal carries it in clear text, so the JSON is for
+// storing, never for logs.
 type MeasurementFilter struct {
 	// ConsumerUnit and Distributor identify the consumer unit.
 	ConsumerUnit string
@@ -219,6 +233,9 @@ func (f MeasurementFilter) String() string {
 
 // GoString makes %#v follow String, without the consumer unit.
 func (f MeasurementFilter) GoString() string { return f.String() }
+
+// Format implements [fmt.Formatter]: every verb prints the masked String.
+func (f MeasurementFilter) Format(s fmt.State, _ rune) { formatMasked(s, f) }
 
 // LogValue implements [slog.LogValuer] without the consumer unit.
 func (f MeasurementFilter) LogValue() slog.Value {
@@ -253,18 +270,21 @@ type MigrationRequest struct {
 
 // String describes the request without the consumer unit, document, e-mail or
 // comment: only the distributor and the month.
-func (n MigrationRequest) String() string {
-	return fmt.Sprintf("MigrationRequest{distributor=%d month=%s}", n.Distributor, n.Month)
+func (r MigrationRequest) String() string {
+	return fmt.Sprintf("MigrationRequest{distributor=%d month=%s}", r.Distributor, r.Month)
 }
 
 // GoString makes %#v follow String, without personal data.
-func (n MigrationRequest) GoString() string { return n.String() }
+func (r MigrationRequest) GoString() string { return r.String() }
+
+// Format implements [fmt.Formatter]: every verb prints the masked String.
+func (r MigrationRequest) Format(f fmt.State, _ rune) { formatMasked(f, r) }
 
 // LogValue implements [slog.LogValuer] without personal data.
-func (n MigrationRequest) LogValue() slog.Value {
+func (r MigrationRequest) LogValue() slog.Value {
 	return slog.GroupValue(
-		slog.Int("distributor", n.Distributor),
-		slog.String("month", n.Month.String()),
+		slog.Int("distributor", r.Distributor),
+		slog.String("month", r.Month.String()),
 	)
 }
 
@@ -293,6 +313,9 @@ func (e MigrationEdit) String() string {
 // GoString makes %#v follow String, without personal data.
 func (e MigrationEdit) GoString() string { return e.String() }
 
+// Format implements [fmt.Formatter]: every verb prints the masked String.
+func (e MigrationEdit) Format(f fmt.State, _ rune) { formatMasked(f, e) }
+
 // LogValue implements [slog.LogValuer] without personal data.
 func (e MigrationEdit) LogValue() slog.Value {
 	return slog.GroupValue(
@@ -302,7 +325,7 @@ func (e MigrationEdit) LogValue() slog.Value {
 	)
 }
 
-// MigrationKey identifies a migration created from its data: a consumer unit
+// CreateKey identifies a migration created from its data: a consumer unit
 // and distributor with an active migration. It serves to check, after an
 // uncertain result, whether the creation happened.
 //
@@ -310,9 +333,11 @@ func (e MigrationEdit) LogValue() slog.Value {
 // is meant for storing the key and checking later, and carries the consumer
 // unit in clear text. Store it like any other personal data and do not use it
 // in logs.
-type MigrationKey struct {
+type CreateKey struct {
+	// ConsumerUnit is the consumer unit code (UC) of the migration.
 	ConsumerUnit string
-	Distributor  int
+	// Distributor is the agent code of the distribution utility.
+	Distributor int
 	// Month is the reference month; the listing requires a month range.
 	Month YearMonth
 	// Profile is the profile of the query; 0 means the client's profile.
@@ -321,19 +346,22 @@ type MigrationKey struct {
 
 // String describes the key without personal data: the consumer unit is masked,
 // keeping only its last four characters.
-func (k MigrationKey) String() string {
+func (k CreateKey) String() string {
 	return fmt.Sprintf("migration consumer_unit=%s distributor=%d month=%s profile=%d",
 		mask(k.ConsumerUnit, 4), k.Distributor, k.Month, k.Profile)
 }
 
 // GoString makes %#v follow String, without the consumer unit in clear text.
-func (k MigrationKey) GoString() string { return k.String() }
+func (k CreateKey) GoString() string { return k.String() }
+
+// Format implements [fmt.Formatter]: every verb prints the masked String.
+func (k CreateKey) Format(f fmt.State, _ rune) { formatMasked(f, k) }
 
 // LogValue implements [slog.LogValuer] with the masked String: a slog call
 // recording the key does not write the consumer unit.
-func (k MigrationKey) LogValue() slog.Value { return slog.StringValue(k.String()) }
+func (k CreateKey) LogValue() slog.Value { return slog.StringValue(k.String()) }
 
-func (MigrationKey) naturalKey() {}
+func (CreateKey) naturalKey() {}
 
 // EditKey identifies an edit by the migration id and the desired fields. It
 // serves to check, after an uncertain result, whether the edit happened.
@@ -343,7 +371,9 @@ func (MigrationKey) naturalKey() {}
 // fails on the document. To store the key, store the fields separately (the
 // document through Desired.Document.Number()), as personal data.
 type EditKey struct {
-	ID      string
+	// ID is the migration id.
+	ID string
+	// Desired holds the fields the edit asked for.
 	Desired MigrationEdit
 }
 
@@ -356,6 +386,9 @@ func (k EditKey) String() string {
 
 // GoString makes %#v follow String, without document or e-mail.
 func (k EditKey) GoString() string { return k.String() }
+
+// Format implements [fmt.Formatter]: every verb prints the masked String.
+func (k EditKey) Format(f fmt.State, _ rune) { formatMasked(f, k) }
 
 // LogValue implements [slog.LogValuer] with String, without document or e-mail.
 func (k EditKey) LogValue() slog.Value { return slog.StringValue(k.String()) }
@@ -377,4 +410,14 @@ func mask(s string, n int) string {
 	}
 	copy(out[len(s)-n:], s[len(s)-n:])
 	return string(out)
+}
+
+// formatMasked implements [fmt.Formatter] for the types that carry personal
+// data: whatever the verb (%v, %+v, %#v, %s, %q, %d, %t, %x), the output is
+// the masked String, so no verb reaches the raw fields.
+func formatMasked(f fmt.State, v fmt.Stringer) {
+	if _, err := io.WriteString(f, v.String()); err != nil {
+		// fmt.State has no way to return an error; the write failed at the destination.
+		return
+	}
 }

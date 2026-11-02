@@ -44,8 +44,9 @@ func (m *Migrations) List(ctx context.Context, f MigrationFilter, opts ...CallOp
 	})
 }
 
-// ListPage fetches one page. An empty cursor asks for the first page; the
-// returned [Page].Next can be used as a cursor to resume later.
+// ListPage fetches one page of migrations; the filter is validated as in
+// List. An empty cursor asks for the first page; the returned
+// [Page].NextCursor can be used as a cursor to resume later.
 func (m *Migrations) ListPage(ctx context.Context, f MigrationFilter, cursor string, opts ...CallOption) (Page[Migration], error) {
 	const id = "listMigrations"
 	if err := validateMonthRange(f); err != nil {
@@ -74,7 +75,7 @@ func (m *Migrations) ListPage(ctx context.Context, f MigrationFilter, cursor str
 	if err := decodeOutput(body, &list); err != nil {
 		return Page[Migration]{}, fmt.Errorf("%s: %w", id, err)
 	}
-	page := Page[Migration]{Items: make([]Migration, 0, len(list.Migracao)), Next: list.IndexProximaPagina}
+	page := Page[Migration]{Items: make([]Migration, 0, len(list.Migracao)), NextCursor: list.IndexProximaPagina}
 	for _, r := range list.Migracao {
 		migration, err := migrationFromSummary(r)
 		if err != nil {
@@ -88,7 +89,7 @@ func (m *Migrations) ListPage(ctx context.Context, f MigrationFilter, cursor str
 // Get returns a migration by id. The API answers with a one-item list or with
 // an object; the SDK accepts both. An empty list yields [ErrNotFound].
 //
-// If the list has more than one item, the item whose IdMigracao is the
+// If the list has more than one item, the item whose `idMigracao` field is the
 // requested id wins (compared after trimming spaces): if exactly one matches,
 // it is returned; if none matches, the result is [ErrNotFound]. If more than
 // one matches and all are equal once decoded (field order does not count), the
@@ -181,16 +182,16 @@ func currentEntry(items []gen.MigrationDetail) (gen.MigrationDetail, bool) {
 // from the client (or from the call, with [WithAgent]).
 //
 // The write is not retried. If the result is uncertain, the error is a
-// [*UncertainResultError] with a [MigrationKey]: check it with
-// [Migrations.CheckCreated]. Repeating the creation while a migration is
+// [*UncertainResultError] with a [CreateKey]: check it with
+// [Migrations.FindCreated]. Repeating the creation while a migration is
 // active yields [ErrMigrationAlreadyRequested].
-func (m *Migrations) Create(ctx context.Context, n MigrationRequest, opts ...CallOption) (Migration, error) {
+func (m *Migrations) Create(ctx context.Context, req MigrationRequest, opts ...CallOption) (Migration, error) {
 	const op = "createMigration"
 	p := m.c.params(newCallConfig(opts...))
-	key := MigrationKey{ConsumerUnit: n.ConsumerUnit, Distributor: n.Distributor, Month: n.Month, Profile: p.profile}
+	key := CreateKey{ConsumerUnit: req.ConsumerUnit, Distributor: req.Distributor, Month: req.Month, Profile: p.profile}
 	_, body, err := m.c.send(ctx, operation{
 		id: op, httpMethod: http.MethodPost, pathTemplate: routeListMigrations, path: routeListMigrations,
-		body: migrationRequestToGen(n, p.agent, p.profile), group: groupGeneral, key: key,
+		body: migrationRequestToGen(req, p.agent, p.profile), group: groupGeneral, key: key,
 	}, newCallConfig(opts...))
 	if err != nil {
 		return Migration{}, err
@@ -249,16 +250,16 @@ func (m *Migrations) Edit(ctx context.Context, id string, change func(*Migration
 	return migration, nil
 }
 
-// CheckCreated reports what exists for the key after an uncertain result in
+// FindCreated reports what exists for the key after an uncertain result in
 // [Migrations.Create]. It lists by consumer unit and month, filters by
 // distributor and returns what it finds, from newest to oldest. An empty
 // result means "not created". The filter ignores the status: an earlier
 // migration of the same consumer unit and month (canceled, for example) also
 // comes back, so check Status and RequestDate before concluding that the
-// creation happened. A MigrationKey with a zero Month (only possible if built
+// creation happened. A CreateKey with a zero Month (only possible if built
 // by hand) fails with [ErrInvalidArgument] before any request, because the
 // listing requires a month range.
-func (m *Migrations) CheckCreated(ctx context.Context, k MigrationKey, opts ...CallOption) ([]Migration, error) {
+func (m *Migrations) FindCreated(ctx context.Context, k CreateKey, opts ...CallOption) ([]Migration, error) {
 	filter := MigrationFilter{From: k.Month, To: k.Month, ConsumerUnit: k.ConsumerUnit, Profile: k.Profile}
 	found := make([]Migration, 0)
 	for migration, err := range m.List(ctx, filter, opts...) {

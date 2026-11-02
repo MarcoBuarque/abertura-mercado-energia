@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	abertura "github.com/MarcoBuarque/abertura-mercado-energia/abertura"
+	"github.com/MarcoBuarque/abertura-mercado-energia/abertura"
 )
 
 // isActive says whether the migration still counts as active. Canceled,

@@ -185,10 +185,10 @@ func measurementFrom(m gen.Measurement) (Measurement, error) {
 	if out.Consumption, err = decimalField("consumo", m.Consumo); err != nil {
 		return Measurement{}, err
 	}
-	if out.Day, err = parseDate("diaReferencia", m.DiaReferencia); err != nil {
+	if out.ReadingDate, err = parseDate("diaReferencia", m.DiaReferencia); err != nil {
 		return Measurement{}, err
 	}
-	if out.Reference, err = parseDate("dataReferenciaConsumo", m.DataReferenciaConsumo); err != nil {
+	if out.ReferenceDate, err = parseDate("dataReferenciaConsumo", m.DataReferenciaConsumo); err != nil {
 		return Measurement{}, err
 	}
 	if out.UpdatedAt, err = parseDate("dataAtualizacao", m.DataAtualizacao); err != nil {

@@ -38,7 +38,7 @@ func TestMeasurementsList_WhenTwoPages_ConsumptionAsStringAndNumber(t *testing.T
 	if items[0].Distributor != 900001 || items[1].Distributor != 900001 {
 		t.Errorf("distributors = %d and %d", items[0].Distributor, items[1].Distributor)
 	}
-	if items[0].Status != MeasurementStatusConsistent || !items[0].Day.Equal(time.Date(2027, 2, 1, 0, 0, 0, 0, brasiliaZone)) {
+	if items[0].Status != MeasurementStatusValidated || !items[0].ReadingDate.Equal(time.Date(2027, 2, 1, 0, 0, 0, 0, brasiliaZone)) {
 		t.Errorf("first measurement = %v", items[0])
 	}
 	reqs := calls(srv, http.MethodGet, measurementsTemplate)
@@ -65,7 +65,7 @@ func TestMeasurementsList_WhenStatus_GoesInTheQuery(t *testing.T) {
 	t.Parallel()
 	c, srv := specClient(t, []testserver.Route{stubRoute(http.MethodGet, measurementsTemplate, fixtureResponse(200, "measurements_empty.json"))})
 	f := testMeasurementFilter()
-	f.Status = MeasurementStatusConsistent
+	f.Status = MeasurementStatusValidated
 	items, err := collectSeq(t, c.Measurements.List(context.Background(), f))
 	if err != nil || len(items) != 0 {
 		t.Fatalf("items = %d, err = %v", len(items), err)
@@ -82,8 +82,8 @@ func TestMeasurementsListPage_WhenCursor_ReturnsTheNext(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ListPage: %v", err)
 	}
-	if len(page.Items) != 1 || page.Next != "fake-cursor-2" {
-		t.Errorf("page = %d items, next %q", len(page.Items), page.Next)
+	if len(page.Items) != 1 || page.NextCursor != "fake-cursor-2" {
+		t.Errorf("page = %d items, next %q", len(page.Items), page.NextCursor)
 	}
 }
 

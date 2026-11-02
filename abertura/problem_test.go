@@ -68,7 +68,7 @@ func TestProblemFrom_WhenSDKError_ClassifiesInCatalog(t *testing.T) {
 		{name: "APIError embrulhado com %w", err: fmt.Errorf("layer: %w", apiError("POST", 400, "ERR_MIGRACAO_SOLICITADA", "")), wantType: "migration-already-requested", wantStatus: 400, wantCode: "ERR_MIGRACAO_SOLICITADA"},
 		{
 			name:     "uncertain with 502 cause",
-			err:      &UncertainResultError{Operation: "createMigration", Key: MigrationKey{ConsumerUnit: "000000000000001"}, Err: apiError("POST", 502, "", "")},
+			err:      &UncertainResultError{Operation: "createMigration", Key: CreateKey{ConsumerUnit: "000000000000001"}, Err: apiError("POST", 502, "", "")},
 			wantType: "uncertain-result", wantStatus: 502, wantUncertain: true,
 		},
 		{
@@ -258,7 +258,7 @@ func TestProblemFrom_WhenMessageHasPersonalData_DoesNotLeak(t *testing.T) {
 	errs := map[string]error{
 		"api":         api,
 		"dirty code":  dirtyCode,
-		"uncertain":   &UncertainResultError{Operation: "createMigration", Key: MigrationKey{ConsumerUnit: "000000000000001", Distributor: 900001}, Err: api},
+		"uncertain":   &UncertainResultError{Operation: "createMigration", Key: CreateKey{ConsumerUnit: "000000000000001", Distributor: 900001}, Err: api},
 		"dirty cause": dirtyCause,
 		"foreign":     errors.New(message),
 	}
@@ -473,7 +473,7 @@ func TestCatalog_WhenConditionWithoutCode_HasDocsEntry(t *testing.T) {
 	t.Parallel()
 
 	doc := readFile(t, "../docs/errors.md")
-	for _, name := range []string{"ErrNotFound", "ErrRateLimited", "ErrRepeatedCursor", "ErrInvalidArgument", "UncertainResultError", "CheckCreated", "CheckEdited"} {
+	for _, name := range []string{"ErrNotFound", "ErrRateLimited", "ErrRepeatedCursor", "ErrInvalidArgument", "UncertainResultError", "FindCreated", "CheckEdited"} {
 		if !strings.Contains(doc, name) {
 			t.Errorf("docs/errors.md does not mention %s", name)
 		}

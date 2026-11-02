@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	abertura "github.com/MarcoBuarque/abertura-mercado-energia/abertura"
+	"github.com/MarcoBuarque/abertura-mercado-energia/abertura"
 )
 
 func TestPickActive_WhenAmongFound_PicksAnActiveOne(t *testing.T) {
@@ -211,7 +211,7 @@ func TestFindAcceptedSpan_WhenTooWide_NarrowsUntilTheAPIAccepts(t *testing.T) {
 				if monthsInSpan(from, to) > tc.cap {
 					return abertura.Page[abertura.Migration]{}, abertura.ErrMonthRangeTooWide
 				}
-				return abertura.Page[abertura.Migration]{Next: "c"}, nil
+				return abertura.Page[abertura.Migration]{NextCursor: "c"}, nil
 			}
 			r, err := findAcceptedSpan(from0, to0, center, try)
 			if attempts != tc.wantAttempts {
@@ -226,8 +226,8 @@ func TestFindAcceptedSpan_WhenTooWide_NarrowsUntilTheAPIAccepts(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error: %v", err)
 			}
-			if r.Months != tc.wantN || r.Refused != tc.wantRefused || r.Page.Next != "c" {
-				t.Errorf("result = %d months, refused %d, page %q; want %d, %d", r.Months, r.Refused, r.Page.Next, tc.wantN, tc.wantRefused)
+			if r.Months != tc.wantN || r.Refused != tc.wantRefused || r.Page.NextCursor != "c" {
+				t.Errorf("result = %d months, refused %d, page %q; want %d, %d", r.Months, r.Refused, r.Page.NextCursor, tc.wantN, tc.wantRefused)
 			}
 		})
 	}

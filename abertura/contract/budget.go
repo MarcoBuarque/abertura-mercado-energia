@@ -232,6 +232,7 @@ var reAPICode = regexp.MustCompile(`^ERR_[A-Z0-9_]{1,80}$`)
 
 // oauth2Codes are the six fixed error codes of RFC 6749, section 5.2. The
 // token endpoint answers with them; they tell which request failed.
+//
 //nolint:gochecknoglobals // read-only table, never written after initialization
 var oauth2Codes = map[string]bool{
 	"invalid_request": true, "invalid_client": true, "invalid_grant": true,
@@ -240,6 +241,7 @@ var oauth2Codes = map[string]bool{
 
 // oauth2Descriptions are the only Keycloak error descriptions that may be
 // printed, because they are fixed, known text. Any other is ignored.
+//
 //nolint:gochecknoglobals // read-only table, never written after initialization
 var oauth2Descriptions = map[string]bool{
 	"duplicated parameter":               true,
@@ -285,6 +287,7 @@ func errorCode(body []byte) string {
 
 // temporalFields are the only date and time fields whose format may be
 // described: none of them is personal data.
+//
 //nolint:gochecknoglobals // read-only table, never written after initialization
 var temporalFields = map[string]bool{
 	"mesReferencia": true, "dataReferencia": true, "dataDenuncia": true, "dataSolicitacao": true,
@@ -483,7 +486,7 @@ func hasKey(m map[string]any, k string) bool {
 // sameJSON compares two decoded values by their canonical form (keys sorted
 // by the encoder).
 func sameJSON(a, b any) bool {
-	ja, erra := json.Marshal(a)
-	jb, errb := json.Marshal(b)
-	return erra == nil && errb == nil && bytes.Equal(ja, jb)
+	jsonA, errA := json.Marshal(a)
+	jsonB, errB := json.Marshal(b)
+	return errA == nil && errB == nil && bytes.Equal(jsonA, jsonB)
 }

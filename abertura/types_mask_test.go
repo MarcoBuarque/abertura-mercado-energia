@@ -40,7 +40,7 @@ func measurementWithData(t *testing.T) Measurement {
 	if err != nil {
 		t.Fatalf("decimalFrom: %v", err)
 	}
-	return Measurement{ID: "measurement-id-1", ConsumerUnit: maskConsumerUnit, Distributor: 900003, Consumption: consumption, Status: MeasurementStatusConsistent}
+	return Measurement{ID: "measurement-id-1", ConsumerUnit: maskConsumerUnit, Distributor: 900003, Consumption: consumption, Status: MeasurementStatusValidated}
 }
 
 // forms prints v in every fmt form and in both slog handlers.
@@ -50,6 +50,10 @@ func forms(v any) map[string]string {
 		"%+v": fmt.Sprintf("%+v", v),
 		"%#v": fmt.Sprintf("%#v", v),
 		"%s":  fmt.Sprintf("%s", v),
+		"%q":  fmt.Sprintf("%q", v),
+		"%d":  fmt.Sprintf("%d", v),
+		"%t":  fmt.Sprintf("%t", v),
+		"%x":  fmt.Sprintf("%x", v),
 	}
 	var text, js bytes.Buffer
 	slog.New(slog.NewTextHandler(&text, nil)).Info("m", "v", v)
@@ -62,7 +66,7 @@ func TestPublicTypes_WhenPrinted_DoNotShowPersonalData(t *testing.T) {
 	t.Parallel()
 
 	migrationFilter := MigrationFilter{From: NewYearMonth(2027, time.January), To: NewYearMonth(2027, time.March), ConsumerUnit: maskConsumerUnit, Status: MigrationStatusCreated, Profile: fakeProfile}
-	measurementFilter := MeasurementFilter{ConsumerUnit: maskConsumerUnit, Distributor: 900003, From: time.Date(2027, 1, 1, 0, 0, 0, 0, brasiliaZone), To: time.Date(2027, 1, 31, 0, 0, 0, 0, brasiliaZone), Status: MeasurementStatusConsistent}
+	measurementFilter := MeasurementFilter{ConsumerUnit: maskConsumerUnit, Distributor: 900003, From: time.Date(2027, 1, 1, 0, 0, 0, 0, brasiliaZone), To: time.Date(2027, 1, 31, 0, 0, 0, 0, brasiliaZone), Status: MeasurementStatusValidated}
 	tests := []struct {
 		name  string
 		value any
@@ -75,6 +79,7 @@ func TestPublicTypes_WhenPrinted_DoNotShowPersonalData(t *testing.T) {
 		{name: "MigrationEdit", value: MigrationEdit{Month: NewYearMonth(2027, time.February), Profile: fakeProfile, Document: CNPJ(documentNumber), Email: maskEmail, Status: MigrationStatusCanceled}, want: "CANCELADA"},
 		{name: "MigrationFilter", value: migrationFilter, want: "CRIADA"},
 		{name: "MeasurementFilter", value: measurementFilter, want: "CONSISTIDA"},
+		{name: "Page[Migration]", value: Page[Migration]{Items: []Migration{migrationWithData(t)}, NextCursor: "fake-cursor-2"}, want: "migration-id-1"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

@@ -33,6 +33,21 @@ func CPF(number string) Document {
 	return Document{kind: DocumentTypeCPF, number: cleanDocument(number)}
 }
 
+// NewDocument builds a [Document] of the given type from a number the caller
+// kept in its own storage: the JSON of a Document is masked, so this is the
+// way back. It strips punctuation and does not validate check digits. An
+// unknown type returns [ErrInvalidArgument].
+func NewDocument(t DocumentType, number string) (Document, error) {
+	switch t {
+	case DocumentTypeCPF:
+		return CPF(number), nil
+	case DocumentTypeCNPJ:
+		return CNPJ(number), nil
+	default:
+		return Document{}, invalidArgument("unknown document type %q", string(t))
+	}
+}
+
 // CNPJ builds a CNPJ [Document]. It strips punctuation and does not validate
 // check digits.
 func CNPJ(number string) Document {

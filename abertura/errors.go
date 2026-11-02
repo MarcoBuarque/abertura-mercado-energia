@@ -182,7 +182,7 @@ var (
 	ErrMonthRangeRequired error = &sentinel{text: "abertura: month range required (ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO)", code: "ERR_MES_REFERENCIA_INICIAL_OBRIGATORIO"}
 	// ErrMonthRangeTooWide matches a range between the start and end months
 	// that exceeded the API limit (ERR_MES_REFERENCIA_INICIAL_DIFERENCA). The
-	// limit is not published; in the sandbox, on 01/11/2026, 12 months passed
+	// limit is not published; in the sandbox, on 2026-11-01, 12 months passed
 	// and 24 did not (cap between 12 and 24, SOURCES D22). Narrow the range or
 	// split the query.
 	ErrMonthRangeTooWide error = &sentinel{text: "abertura: month range too wide (ERR_MES_REFERENCIA_INICIAL_DIFERENCA)", code: "ERR_MES_REFERENCIA_INICIAL_DIFERENCA"}
