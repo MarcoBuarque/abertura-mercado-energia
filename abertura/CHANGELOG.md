@@ -43,7 +43,7 @@ Types, fields and methods
 | Old | New |
 |---|---|
 | `ChaveNatural` | `NaturalKey` |
-| `ChaveMigracao{UC, Concessionaria, Mes, Perfil}` | `MigrationKey{ConsumerUnit, Distributor, Month, Profile}` |
+| `ChaveMigracao{UC, Concessionaria, Mes, Perfil}` | `CreateKey{ConsumerUnit, Distributor, Month, Profile}` (pairs with `EditKey`) |
 | `ChaveEdicao{ID, Desejado}` | `EditKey{ID, Desired}` |
 | `Client{Migracoes, Medicoes}` | `Client{Migrations, Measurements}` |
 | `Documento`, `Numero()`, `Tipo()` | `Document`, `Number()`, `Type()` |
@@ -51,7 +51,7 @@ Types, fields and methods
 | `EdicaoMigracao{Mes, Perfil, Documento, Email, Status}` | `MigrationEdit{Month, Profile, Document, Email, Status}` |
 | `FiltroMedicoes{UC, Concessionaria, Inicio, Fim, Situacao}` | `MeasurementFilter{ConsumerUnit, Distributor, From, To, Status}` |
 | `FiltroMigracoes{De, Ate, UC, Status, Perfil}` | `MigrationFilter{From, To, ConsumerUnit, Status, Profile}` |
-| `Medicao{ID, UC, Concessionaria, Dia, Referencia, AtualizadaEm, Consumo, TipoConsumo, Situacao}` | `Measurement{ID, ConsumerUnit, Distributor, Day, Reference, UpdatedAt, Consumption, ConsumptionType, Status}` |
+| `Medicao{ID, UC, Concessionaria, Dia, Referencia, AtualizadaEm, Consumo, TipoConsumo, Situacao}` | `Measurement{ID, ConsumerUnit, Distributor, ReadingDate, ReferenceDate, UpdatedAt, Consumption, ConsumptionType, Status}` |
 | `Medicoes`; `Listar`, `ListarPagina` | `Measurements`; `List`, `ListPage` |
 | `Mes{Ano, Mes}` | `YearMonth{Year, Month}` |
 | `Migracao` | `Migration` |
@@ -62,17 +62,17 @@ Types, fields and methods
 | `Migracao.IDCelebracaoCER`, `.IndicadorProcessoSiga` | `.CERSigningID`, `.SIGAProcessIndicator` |
 | `Migracoes`; `Listar`, `ListarPagina`, `Obter`, `Criar` | `Migrations`; `List`, `ListPage`, `Get`, `Create` |
 | `Migracoes.Editar(ctx, id, mudar func(*EdicaoMigracao))` | `Migrations.Edit(ctx, id, change func(*MigrationEdit))` |
-| `ConferirCriacao`, `ConferirEdicao` | `CheckCreated`, `CheckEdited` |
+| `ConferirCriacao`, `ConferirEdicao` | `Migrations.FindCreated` (returns `[]Migration`), `Migrations.CheckEdited` (returns `(Migration, bool, error)`) |
 | `NovaMigracao{UC, Concessionaria, Documento, Email, Mes, DataDenuncia, Comentario}` | `MigrationRequest{ConsumerUnit, Distributor, Document, Email, Month, TerminationNoticeDate, Comment}` |
-| `Pagina[T]{Itens, Proxima}` | `Page[T]{Items, Next}` |
-| `SimNao`, `Sim`, `Nao` | `YesNo`, `Yes`, `No` (JSON values `SIM` and `NAO` unchanged) |
-| `SituacaoMedicao`, `SituacaoConsistida`, `SituacaoRejeitada`, `Conhecido()` | `MeasurementStatus`, `MeasurementStatusConsistent`, `MeasurementStatusRejected`, `Known()` |
+| `Pagina[T]{Itens, Proxima}` | `Page[T]{Items, NextCursor}` |
+| `SimNao`, `Sim`, `Nao` | `YesNo`, `YesNoYes`, `YesNoNo` (JSON values `SIM` and `NAO` unchanged) |
+| `SituacaoMedicao`, `SituacaoConsistida`, `SituacaoRejeitada`, `Conhecido()` | `MeasurementStatus`, `MeasurementStatusValidated` (CONSISTIDA: passed the consistency checks), `MeasurementStatusRejected`, `Known()` |
 | `StatusMigracao`, `Conhecido()` | `MigrationStatus`, `Known()` |
 | `StatusCriada`, `StatusConcluida`, `StatusReprovada` | `MigrationStatusCreated`, `MigrationStatusCompleted`, `MigrationStatusRejected` |
 | `StatusEncerrada`, `StatusCancelada`, `StatusExpirada` | `MigrationStatusClosed`, `MigrationStatusCanceled`, `MigrationStatusExpired` |
 | `StatusAprovadaComPendencia` | `MigrationStatusApprovedWithPendingIssues` |
 
-Unchanged: `NewClient`, `Client.Do`, `Decimal` and its methods, `APIError`, `Problem`, `ProblemFrom`, `ProblemContentType`, `UncertainResultError`, `ErrNotFound`, `ErrRateLimited`, `Environment`, `RateLimit`, `Option`, `CallOption`, `AgentOption`, `TimeoutOption` and the other `With*` functions.
+Unchanged names: `APIError`, `Problem` and `UncertainResultError` keep their fields (their values changed, see "Values and serialized forms"), `NewClient`, `Client.Do`, `Decimal` and its methods, `ProblemFrom`, `ProblemContentType`, `ErrNotFound`, `ErrRateLimited`, `Environment`, `RateLimit`, `Option`, `CallOption`, `AgentOption`, `TimeoutOption` and the other `With*` functions.
 
 Error texts and `Problem` anchors
 
@@ -104,8 +104,25 @@ Error texts and `Problem` anchors
 | `#tempo-esgotado` | `#timeout` |
 | `#validacao-campos` | `#field-validation` |
 
+### Values and serialized forms
+
+These break callers that compare, store or parse text, even when the Go code compiles.
+
+- `APIError.Operation` and `UncertainResultError.Operation` values, and the `Problem.Detail` prefix, use the English operation ids: `obterToken` is now `getToken`, `listarMigracoes` `listMigrations`, `obterMigracao` `getMigration`, `criarMigracao` `createMigration`, `editarMigracao` `editMigration` and `listarMedicoes` `listMeasurements`. `Problem.Operation` follows.
+- `slog` attribute keys: `metodo` is now `method`, `rota` `route`, `codigo` `code` and `falha` `failure`; `mes` is `month`, `situacao` `status`, `de` `from`, `ate` `to`, `perfil` `profile`, `concessionaria` `distributor`, and `inicio`/`fim` `from`/`to`. The keys now emitted are `op`, `method`, `route`, `status`, `request_id`, `duration_ms`, `attempt`, `code`, `failure`, `wait_ms`, `id`, `month`, `profile`, `distributor`, `from` and `to`.
+- JSON keys of `Migration`, `Measurement`, the filters and the keys follow the Go field names. A key stored by 0.1 (`{"UC":...,"Mes":...}`) no longer decodes: rebuild it from your own storage.
+- The catalog URL and the slugs changed (`/erros#...` is now `/errors#...`, slugs in the table above); `/erros` only redirects.
+- The User-Agent product token is `abertura-mercado-energia/<version>`.
+
+### Added
+
+- `NewDocument(t DocumentType, number string) (Document, error)`: builds a document of a known type; an unknown type returns `ErrInvalidArgument`.
+- `Format(fmt.State, rune)` on `Migration`, `Measurement`, `MigrationRequest`, `MigrationEdit`, `MigrationFilter`, `MeasurementFilter`, `CreateKey` and `EditKey`: every fmt verb (including `%d`, `%t`, `%x` and `%q`) prints the masked form.
+- `Page[T].LogValue`: `slog` records the item count and whether there is a next cursor, not the items.
+
 ### Changed
 
+- The JSON of `Document` stays masked (output only). A caller that stores a document keeps the number in its own storage and rebuilds it with `NewDocument`, `CPF` or `CNPJ`.
 - The Go module path is now `github.com/MarcoBuarque/abertura-mercado-energia/abertura`, and the package is imported without an alias.
 - All documentation, comments, godoc, tests and diagnostics are in English; the only Portuguese document is the root `README.pt-BR.md`.
 - The User-Agent product token is now `abertura-mercado-energia/<version>` (it was `abertura-mercado-energia-go/<version>`).
