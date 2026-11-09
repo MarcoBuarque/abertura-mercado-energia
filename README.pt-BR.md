@@ -106,6 +106,8 @@ O teste de contrato (`go test -tags sandbox ./contract/...`, em `abertura/`) é 
 
 Dúvidas e problemas de uso: abra uma issue neste repositório. Outros assuntos: contato@quantogasta.com.br.
 
+Mantido por Marco Oliveira. O projeto é apresentado na [página para desenvolvedores do QuantoGasta](https://quantogasta.com.br/desenvolvedores), junto com uma API aberta de tarifas residenciais de energia.
+
 ## Licença
 
 Apache-2.0. Veja [LICENSE](LICENSE) e [NOTICE](NOTICE).
