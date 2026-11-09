@@ -104,6 +104,8 @@ The contract test (`go test -tags sandbox ./contract/...`, inside `abertura/`) i
 
 Questions and usage problems: open an issue in this repository. Anything else: contato@quantogasta.com.br.
 
+Maintained by Marco Oliveira. The project is presented, in Portuguese, on the [QuantoGasta developer page](https://quantogasta.com.br/desenvolvedores), next to an open API of residential electricity tariffs.
+
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
