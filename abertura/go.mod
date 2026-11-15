@@ -2,7 +2,7 @@ module github.com/MarcoBuarque/abertura-mercado-energia/abertura
 
 go 1.26.0
 
-require golang.org/x/oauth2 v0.37.0
+require golang.org/x/oauth2 v0.38.0
 
 require (
 	github.com/getkin/kin-openapi v0.152.0
